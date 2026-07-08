@@ -1,0 +1,38 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: santor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: santor
+      POSTGRES_PASSWORD: santor123
+      POSTGRES_DB: santor
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - santor-network
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: santor-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - santor-network
+
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+networks:
+  santor-network:
+    driver: bridge
