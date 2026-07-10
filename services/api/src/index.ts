@@ -1,26 +1,22 @@
 import "dotenv/config";
-import { createApp } from "./app.js";
+
 import { env } from "./config/env.js";
+import { createApp } from "./server.js";
 
-
-const start = async () => {
+async function start() {
   const app = await createApp();
 
   try {
     await app.listen({
-      port: env.PORT,
       host: "0.0.0.0",
+      port: env.PORT,
     });
 
-    console.log(
-      `Santor API running on port ${env.PORT}`
-    );
-
-  } catch (error) {
-    app.log.error(error);
+    app.log.info(`Santor API running on port ${env.PORT}`);
+  } catch (err) {
+    app.log.error(err);
     process.exit(1);
   }
-};
-
+}
 
 start();
