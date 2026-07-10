@@ -3,9 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+
   "exports": {
     "./eslint": "./eslint/index.js",
-    "./typescript": "./typescript/base.json",
-    "./prettier": "./prettier/index.js"
-  }
+    "./prettier": "./prettier/index.js",
+
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/react": "./typescript/react.json",
+    "./typescript/node": "./typescript/node.json"
+  },
+
+  "files": [
+    "eslint",
+    "prettier",
+    "typescript"
+  ]
 }

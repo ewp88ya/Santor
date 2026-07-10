@@ -1,28 +1,66 @@
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000";
+export interface ApiClientOptions {
+  baseUrl: string;
+}
 
 
-export async function apiClient<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(
-    `${API_URL}${endpoint}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      ...options,
+export class ApiClient {
+  private baseUrl: string;
+
+
+  constructor(options: ApiClientOptions) {
+    this.baseUrl = options.baseUrl;
+  }
+
+
+  async request<T>(
+    path: string,
+    options?: RequestInit
+  ): Promise<T> {
+
+    const response = await fetch(
+      `${this.baseUrl}${path}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        ...options,
+      }
+    );
+
+
+    if (!response.ok) {
+      throw new Error(
+        `API Error ${response.status}`
+      );
     }
-  );
 
 
-  if (!response.ok) {
-    throw new Error(
-      `API Error: ${response.status}`
+    return response.json() as Promise<T>;
+  }
+
+
+  get<T>(path: string) {
+    return this.request<T>(
+      path,
+      {
+        method: "GET",
+      }
     );
   }
 
 
-  return response.json();
+  post<T>(
+    path: string,
+    body: unknown
+  ) {
+
+    return this.request<T>(
+      path,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      }
+    );
+
+  }
 }

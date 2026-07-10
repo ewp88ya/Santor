@@ -8,10 +8,10 @@ services:
       POSTGRES_USER: santor
       POSTGRES_PASSWORD: santor123
       POSTGRES_DB: santor
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
       - santor-network
 
@@ -20,10 +20,30 @@ services:
     image: redis:7-alpine
     container_name: santor-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - santor-network
+
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+    container_name: santor-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://santor:santor123@postgres:5432/santor?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:3000"
     networks:
       - santor-network
 

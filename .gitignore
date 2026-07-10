@@ -1,3 +1,14 @@
 
 # Private Documentation
 docs/private/
+
+# build output
+dist/
+**/dist/
+
+# prisma generated
+**/generated/prisma/
+
+# temp
+*.tsbuildinfo
+node_modules/

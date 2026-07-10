@@ -1,47 +1,21 @@
-import { useState } from "react";
-
-import { Button } from "@santor/ui";
-import { apiClient } from "@santor/api-client";
+import { Button, Card } from "@santor/ui";
+import "@santor/ui/styles.css";
 
 
-export default function App() {
-  const [status, setStatus] = useState<string>("");
-
-
-  async function testApi() {
-    const response = await apiClient<{
-      status: string;
-      service: string;
-      timestamp: string;
-    }>("/api/v1/health");
-
-    setStatus(
-      `${response.status} - ${response.service}`
-    );
-  }
-
+function App() {
 
   return (
-    <main>
-      <section>
-        <h1>Santor Web</h1>
+    <Card>
 
-        <p>
-          Frontend workspace berhasil terhubung dengan shared UI
-        </p>
+      <h1>Santor Web</h1>
 
-        <Button />
+      <Button>
+        Test UI Package
+      </Button>
 
-        <br />
-
-        <button onClick={testApi}>
-          Test API Connection
-        </button>
-
-        <p>
-          {status}
-        </p>
-      </section>
-    </main>
+    </Card>
   );
 }
+
+
+export default App;
