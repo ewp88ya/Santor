@@ -3,7 +3,6 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-
 export interface User {
   id: string;
   email: string;

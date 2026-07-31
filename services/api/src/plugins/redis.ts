@@ -1,39 +1,30 @@
-import fp from "fastify-plugin";
-import Redis from "ioredis";
+import fp from 'fastify-plugin';
+import Redis from 'ioredis';
 
-import { env } from "../config/env.js";
+import { env } from '../config/env.js';
 
+const RedisClient = Redis as unknown as typeof import('ioredis').default;
 
-const RedisClient = Redis as unknown as typeof import("ioredis").default;
-
-
-declare module "fastify" {
+declare module 'fastify' {
   interface FastifyInstance {
     redis: InstanceType<typeof RedisClient>;
   }
 }
 
-
 export default fp(async (app) => {
-
   const redis = new RedisClient(env.REDIS_URL);
 
-
-  redis.on("connect", () => {
-    app.log.info("Redis connected");
+  redis.on('connect', () => {
+    app.log.info('Redis connected');
   });
 
-
-  redis.on("error", (error: Error) => {
+  redis.on('error', (error: Error) => {
     app.log.error(error);
   });
 
+  app.decorate('redis', redis);
 
-  app.decorate("redis", redis);
-
-
-  app.addHook("onClose", async () => {
+  app.addHook('onClose', async () => {
     await redis.quit();
   });
-
 });

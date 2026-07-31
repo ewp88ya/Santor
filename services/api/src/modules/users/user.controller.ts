@@ -1,10 +1,5 @@
-import {
-  getUser
-} from "./user.service.js";
+import { getUser } from './user.service.js';
 
-
-export async function userController(id:string){
-
+export async function userController(id: string) {
   return getUser(id);
-
 }

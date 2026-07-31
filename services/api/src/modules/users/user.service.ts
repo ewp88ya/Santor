@@ -1,10 +1,5 @@
-import {
-  findUserById
-} from "./user.repository.js";
+import { findUserById } from './user.repository.js';
 
-
-export async function getUser(id:string){
-
+export async function getUser(id: string) {
   return findUserById(id);
-
 }

@@ -1,12 +1,12 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from '@prisma/client';
 
 export async function seedUsers(prisma: PrismaClient) {
-  void prisma;  
+  void prisma;
 
-  console.log("=================================");
-  console.log("🌱 Seeding users...");
-  console.log("=================================");
-  
+  console.log('=================================');
+  console.log('🌱 Seeding users...');
+  console.log('=================================');
+
   /*
    * Auth belum dibuat.
    * Setelah Auth selesai, di sini akan dibuat:
@@ -17,5 +17,5 @@ export async function seedUsers(prisma: PrismaClient) {
    * - Super Admin User
    */
 
-  console.log("✓ Users seed completed");
+  console.log('✓ Users seed completed');
 }

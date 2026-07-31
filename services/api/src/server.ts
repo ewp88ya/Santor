@@ -1,16 +1,14 @@
-import Fastify from "fastify";
-import cors from "@fastify/cors";
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
 
-import prismaPlugin from "./plugins/prisma.js";
-import redisPlugin from "./plugins/redis.js";
-import { registerRoutes } from "./routes/index.js";
-
+import prismaPlugin from './plugins/prisma.js';
+import redisPlugin from './plugins/redis.js';
+import { registerRoutes } from './routes/index.js';
 
 export async function createApp() {
   const app = Fastify({
     logger: true,
   });
-
 
   await app.register(cors);
 
@@ -19,7 +17,6 @@ export async function createApp() {
   await app.register(redisPlugin);
 
   await registerRoutes(app);
-
 
   return app;
 }

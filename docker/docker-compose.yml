@@ -1,5 +1,4 @@
 services:
-
   postgres:
     image: postgres:16
     container_name: santor-postgres
@@ -11,10 +10,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
     networks:
       - santor-network
-
 
   redis:
     image: redis:7-alpine
@@ -23,10 +21,9 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - '6379:6379'
     networks:
       - santor-network
-
 
   api:
     build:
@@ -43,15 +40,13 @@ services:
       DATABASE_URL: postgresql://santor:santor123@postgres:5432/santor?schema=public
       REDIS_URL: redis://redis:6379
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - santor-network
-
 
 volumes:
   postgres_data:
   redis_data:
-
 
 networks:
   santor-network:

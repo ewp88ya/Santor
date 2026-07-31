@@ -1,18 +1,13 @@
 export interface RegisterInput {
+  email: string;
 
-  email:string;
+  password: string;
 
-  password:string;
-
-  name?:string;
-
+  name?: string;
 }
 
-
 export interface LoginInput {
+  email: string;
 
-  email:string;
-
-  password:string;
-
+  password: string;
 }

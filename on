@@ -1,0 +1,38 @@
+[1mdiff --git a/eslint.config.js b/eslint.config.js[m
+[1mindex 0ee5e18..042aa19 100644[m
+[1m--- a/eslint.config.js[m
+[1m+++ b/eslint.config.js[m
+[36m@@ -1,4 +1,18 @@[m
+[31m-import js from '@eslint/js';[m
+[31m-import tseslint from 'typescript-eslint';[m
+[32m+[m[32mimport js from "@eslint/js";[m
+[32m+[m[32mimport { defineConfig } from "eslint/config";[m
+ [m
+[31m-export default tseslint.config(js.configs.recommended, ...tseslint.configs.recommended);[m
+[32m+[m[32mexport default defineConfig([[m
+[32m+[m[32m  {[m
+[32m+[m[32m    ignores: [[m
+[32m+[m[32m      "**/node_modules/**",[m
+[32m+[m[32m      "**/dist/**",[m
+[32m+[m[32m      "**/.turbo/**",[m
+[32m+[m[32m      "**/coverage/**",[m
+[32m+[m[32m      "apps/**",[m
+[32m+[m[32m      "services/**",[m
+[32m+[m[32m      "packages/**",[m
+[32m+[m[32m    ],[m
+[32m+[m[32m  },[m
+[32m+[m
+[32m+[m[32m  js.configs.recommended,[m
+[32m+[m[32m]);[m
+[1mdiff --git a/package.json b/package.json[m
+[1mindex c08d2a4..0d06cdf 100644[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@ -2,6 +2,7 @@[m
+   "name": "santor",[m
+   "version": "1.0.0",[m
+   "private": true,[m
+[32m+[m[32m  "type": "module",[m
+   "packageManager": "pnpm@11.10.0",[m
+   "scripts": {[m
+     "lint": "pnpm --filter @santor/web lint && pnpm --filter @santor/admin lint",[m

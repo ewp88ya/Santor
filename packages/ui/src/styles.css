@@ -5,25 +5,21 @@
   cursor: pointer;
 }
 
-
 .ui-button-primary {
   background: black;
   color: white;
 }
-
 
 .ui-button-secondary {
   background: gray;
   color: white;
 }
 
-
 .ui-card {
   padding: 16px;
   border-radius: 12px;
   border: 1px solid #ddd;
 }
-
 
 .ui-input {
   padding: 8px 12px;

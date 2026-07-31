@@ -1,14 +1,14 @@
-import "dotenv/config";
+import 'dotenv/config';
 
-import { env } from "./config/env.js";
-import { createApp } from "./server.js";
+import { env } from './config/env.js';
+import { createApp } from './server.js';
 
 async function start() {
   const app = await createApp();
 
   try {
     await app.listen({
-      host: "0.0.0.0",
+      host: '0.0.0.0',
       port: env.PORT,
     });
 

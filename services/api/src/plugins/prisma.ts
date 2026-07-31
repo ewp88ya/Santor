@@ -1,7 +1,7 @@
-import fp from "fastify-plugin";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { env } from "../config/env.js";
+import fp from 'fastify-plugin';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { env } from '../config/env.js';
 
 export default fp(async (app) => {
   const adapter = new PrismaPg({
@@ -14,9 +14,9 @@ export default fp(async (app) => {
 
   await prisma.$connect();
 
-  app.decorate("prisma", prisma);
+  app.decorate('prisma', prisma);
 
-  app.addHook("onClose", async () => {
+  app.addHook('onClose', async () => {
     await prisma.$disconnect();
   });
 });
