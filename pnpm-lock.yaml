@@ -120,9 +120,6 @@ importers:
 
   packages/api-client:
     dependencies:
-      '@santor/api-client':
-        specifier: workspace:*
-        version: 'link:'
       zod:
         specifier: ^3.25.0
         version: 3.25.76

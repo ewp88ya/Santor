@@ -9,7 +9,6 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@santor/api-client": "workspace:*",
     "zod": "^3.25.0"
   },
   "devDependencies": {
