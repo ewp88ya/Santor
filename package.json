@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.10.0",
   "scripts": {
     "lint": "pnpm --filter @santor/web lint && pnpm --filter @santor/admin lint",
-    "build": "pnpm --filter @santor/web build && pnpm --filter @santor/admin build"
+    "build": "pnpm -r --if-present build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
