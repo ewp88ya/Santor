@@ -32,7 +32,7 @@ export async function createUser(
   data: {
     email: string;
     name?: string;
-    password: string;
+    passwordHash: string;
   }
 ) {
 
@@ -81,7 +81,7 @@ export async function createUser(
 
       name: data.name,
 
-      password: data.password,
+      passwordHash: data.passwordHash,
 
 
       tenantId:

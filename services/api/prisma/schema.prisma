@@ -1,63 +1,175 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
+  id   String @id @default(uuid())
+  name String
 
   users User[]
-}
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  password  String
+  id            String  @id @default(uuid())
+  email         String  @unique
+  name          String?
+  passwordHash  String
+  status        String  @default("active")
+  emailVerified Boolean @default(false)
 
   tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   roleId String
-  role Role @relation(fields: [roleId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id   String @id @default(uuid())
+  name String @unique
+
+  users       User[]
+  permissions RolePermission[]
 
   createdAt DateTime @default(now())
 }
 
-
-model Role {
-  id String @id @default(uuid())
-  name String @unique
-
-  users User[]
-  permissions RolePermission[]
-}
-
-
 model Permission {
-  id String @id @default(uuid())
+  id   String @id @default(uuid())
   name String @unique
 
   roles RolePermission[]
-}
 
+  createdAt DateTime @default(now())
+}
 
 model RolePermission {
   id String @id @default(uuid())
 
   roleId String
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   permissionId String
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
+}
+
+model Product {
+  id   String @id @default(uuid())
+  name String
+  code String @unique
+
+  price    Int
+  currency String @default("USD")
+
+  durationDays Int
+  deviceLimit  Int @default(1)
+
+  active Boolean @default(true)
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  status String @default("pending")
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  license License?
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model License {
+  id String @id @default(uuid())
+
+  subscriptionId String       @unique
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  key    String @unique
+  status String @default("active")
+
+  vpnAccess VPNAccess?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VPNAccess {
+  id String @id @default(uuid())
+
+  licenseId String  @unique
+  license   License @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+
+  protocol   String
+  serverNode String
+
+  configUrl String?
+
+  devices Device[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Device {
+  id String @id @default(uuid())
+
+  vpnAccessId String
+  vpnAccess   VPNAccess @relation(fields: [vpnAccessId], references: [id], onDelete: Cascade)
+
+  name      String
+  publicKey String?
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  provider String
+
+  amount   Int
+  currency String
+
+  status String @default("pending")
+
+  transactionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

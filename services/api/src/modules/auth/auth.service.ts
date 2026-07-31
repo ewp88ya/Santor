@@ -37,15 +37,10 @@ export async function register(
 
   const user =
     await createUser({
-
       email,
-
       name,
-
-      password: hashedPassword,
-
+      passwordHash: hashedPassword,
     });
-
 
 
   return {
@@ -94,10 +89,9 @@ export async function login(
 
   const valid =
     await argon2.verify(
-      user.password,
+      user.passwordHash,
       password
     );
-
 
 
   if (!valid) {
