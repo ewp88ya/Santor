@@ -1,14 +1,11 @@
-import { prisma } from "../../config/database.js";
+import { prisma } from '../../config/database.js';
 
-export async function createLicense(
-  subscriptionId: string,
-  licenseKey: string,
-) {
+export async function createLicense(subscriptionId: string, licenseKey: string) {
   return prisma.license.create({
     data: {
       subscriptionId,
       licenseKey,
-      status: "active",
+      status: 'active',
     },
 
     include: {
@@ -45,9 +42,7 @@ export async function findLicenseById(id: string) {
   });
 }
 
-export async function findLicenseBySubscription(
-  subscriptionId: string,
-) {
+export async function findLicenseBySubscription(subscriptionId: string) {
   return prisma.license.findUnique({
     where: {
       subscriptionId,
@@ -88,7 +83,7 @@ export async function listLicenses() {
     },
 
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
   });
 }
