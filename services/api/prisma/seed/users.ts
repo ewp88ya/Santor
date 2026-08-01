@@ -1,21 +1,63 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from "@prisma/client";
+import argon2 from "argon2";
 
 export async function seedUsers(prisma: PrismaClient) {
-  void prisma;
+  console.log("=================================");
+  console.log("🌱 Seeding users...");
+  console.log("=================================");
 
-  console.log('=================================');
-  console.log('🌱 Seeding users...');
-  console.log('=================================');
+  let tenant = await prisma.tenant.findFirst({
+    where: {
+      name: "Santor",
+    },
+  });
 
-  /*
-   * Auth belum dibuat.
-   * Setelah Auth selesai, di sini akan dibuat:
-   *
-   * - Default Tenant
-   * - Super Admin Role
-   * - Permission
-   * - Super Admin User
-   */
+  if (!tenant) {
+    tenant = await prisma.tenant.create({
+      data: {
+        name: "Santor",
+      },
+    });
+  }
 
-  console.log('✓ Users seed completed');
+
+  let role = await prisma.role.findFirst({
+    where: {
+      name: "USER",
+    },
+  });
+
+  if (!role) {
+    role = await prisma.role.create({
+      data: {
+        name: "USER",
+      },
+    });
+  }
+
+
+  const passwordHash = await argon2.hash(
+    "password123",
+  );
+
+
+  const user = await prisma.user.upsert({
+    where: {
+      email: "demo@santor.app",
+    },
+
+    update: {},
+
+    create: {
+      email: "demo@santor.app",
+      name: "Demo User",
+      passwordHash,
+      tenantId: tenant.id,
+      roleId: role.id,
+    },
+  });
+
+
+  console.log("✓ User:", user.email);
+  console.log("✓ Users seed completed");
 }

@@ -1,5 +1,4 @@
-import { prisma } from "../../config/database.js";
-
+import { prisma } from '../../config/database.js';
 
 export async function findActiveProducts() {
   return prisma.product.findMany({
@@ -7,15 +6,12 @@ export async function findActiveProducts() {
       active: true,
     },
     orderBy: {
-      price: "asc",
+      price: 'asc',
     },
   });
 }
 
-
-export async function findProductById(
-  id: string,
-) {
+export async function findProductById(id: string) {
   return prisma.product.findUnique({
     where: {
       id,
