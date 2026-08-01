@@ -47,3 +47,44 @@ export async function findUserSubscriptions(userId: string) {
     },
   });
 }
+
+export async function activateSubscription(id: string) {
+  const subscription = await prisma.subscription.findUnique({
+    where: {
+      id,
+    },
+
+    include: {
+      product: true,
+    },
+  });
+
+  if (!subscription) {
+    throw new Error('Subscription not found');
+  }
+
+  const startDate = new Date();
+
+  const endDate = new Date(startDate);
+
+  endDate.setDate(endDate.getDate() + subscription.product.durationDays);
+
+  return prisma.subscription.update({
+    where: {
+      id,
+    },
+
+    data: {
+      status: 'active',
+      startDate,
+      endDate,
+    },
+
+    include: {
+      product: true,
+      user: true,
+      payments: true,
+      license: true,
+    },
+  });
+}
