@@ -1,0 +1,6 @@
+{
+  "common.ok": "OK",
+  "common.error": "Error",
+  "auth.login_success": "Login successful",
+  "auth.invalid_credentials": "Invalid credentials"
+}

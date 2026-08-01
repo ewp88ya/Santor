@@ -1,0 +1,6 @@
+{
+  "common.ok": "确定",
+  "common.error": "错误",
+  "auth.login_success": "登录成功",
+  "auth.invalid_credentials": "邮箱或密码错误"
+}

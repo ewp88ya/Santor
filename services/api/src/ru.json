@@ -1,0 +1,6 @@
+{
+  "common.ok": "OK",
+  "common.error": "Ошибка",
+  "auth.login_success": "Вход выполнен",
+  "auth.invalid_credentials": "Неверный email или пароль"
+}

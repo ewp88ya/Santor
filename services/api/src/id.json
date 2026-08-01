@@ -1,0 +1,6 @@
+{
+  "common.ok": "OK",
+  "common.error": "Kesalahan",
+  "auth.login_success": "Login berhasil",
+  "auth.invalid_credentials": "Email atau password salah"
+}

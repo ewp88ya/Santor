@@ -1,0 +1,6 @@
+{
+  "common.ok": "OK",
+  "common.error": "Lỗi",
+  "auth.login_success": "Đăng nhập thành công",
+  "auth.invalid_credentials": "Email hoặc mật khẩu không đúng"
+}

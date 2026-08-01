@@ -1,0 +1,6 @@
+{
+  "common.ok": "ตกลง",
+  "common.error": "ข้อผิดพลาด",
+  "auth.login_success": "เข้าสู่ระบบสำเร็จ",
+  "auth.invalid_credentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+}

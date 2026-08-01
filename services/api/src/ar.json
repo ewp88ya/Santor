@@ -1,0 +1,6 @@
+{
+  "common.ok": "حسنًا",
+  "common.error": "خطأ",
+  "auth.login_success": "تم تسجيل الدخول بنجاح",
+  "auth.invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+}
