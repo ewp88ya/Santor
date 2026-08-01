@@ -18,5 +18,7 @@ export async function createApp() {
 
   await registerRoutes(app);
 
+  console.log(app.printRoutes());
+
   return app;
 }

@@ -1,0 +1,77 @@
+import type { PrismaClient } from "@prisma/client";
+
+
+export async function seedProducts(
+  prisma: PrismaClient,
+) {
+
+  console.log("=================================");
+  console.log("🌱 Seeding products...");
+  console.log("=================================");
+
+
+  const products = [
+    {
+      name: "General Free",
+      code: "GENERAL-FREE",
+      price: 0,
+      currency: "USD",
+      durationDays: 30,
+      deviceLimit: 1,
+    },
+    {
+      name: "General Pro",
+      code: "GENERAL-PRO",
+      price: 999,
+      currency: "USD",
+      durationDays: 30,
+      deviceLimit: 3,
+    },
+    {
+      name: "WireGuard 1 Month",
+      code: "WG-1M",
+      price: 499,
+      currency: "USD",
+      durationDays: 30,
+      deviceLimit: 3,
+    },
+    {
+      name: "WireGuard 3 Months",
+      code: "WG-3M",
+      price: 1299,
+      currency: "USD",
+      durationDays: 90,
+      deviceLimit: 3,
+    },
+    {
+      name: "WireGuard 6 Months",
+      code: "WG-6M",
+      price: 2299,
+      currency: "USD",
+      durationDays: 180,
+      deviceLimit: 3,
+    },
+    {
+      name: "WireGuard 12 Months",
+      code: "WG-12M",
+      price: 3999,
+      currency: "USD",
+      durationDays: 365,
+      deviceLimit: 3,
+    },
+  ];
+
+
+  for (const product of products) {
+    await prisma.product.upsert({
+      where: {
+        code: product.code,
+      },
+      update: product,
+      create: product,
+    });
+  }
+
+
+  console.log("✓ Products seed completed");
+}
