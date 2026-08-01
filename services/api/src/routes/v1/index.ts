@@ -8,6 +8,7 @@ import paymentRoutes from '../../modules/payment/payment.routes.js';
 import { licenseRoutes } from '../../modules/license/license.routes.js';
 import { vpnAccessRoutes } from '../../modules/vpn-access/vpn-access.routes.js';
 import deviceRoutes from '../../modules/device/device.routes.js';
+import wireguardRoutes from '../../modules/wireguard/wireguard.routes.js';
 
 export default async function v1Routes(app: FastifyInstance) {
   await app.register(healthRoute);
@@ -25,5 +26,8 @@ export default async function v1Routes(app: FastifyInstance) {
   });
   await app.register(deviceRoutes, {
     prefix: '/devices',
+  });
+  await app.register(wireguardRoutes, {
+    prefix: '/wireguard',
   });
 }

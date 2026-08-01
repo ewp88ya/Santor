@@ -24,3 +24,14 @@ export async function listDevices(vpnAccessId: string) {
     },
   });
 }
+
+export async function countActiveDevices(
+  vpnAccessId: string,
+) {
+  return prisma.device.count({
+    where: {
+      vpnAccessId,
+      active: true,
+    },
+  });
+}

@@ -27,3 +27,16 @@ export async function findVPNAccessByLicense(licenseId: string) {
     },
   });
 }
+export async function updateVPNAccessConfig(
+  id: string,
+  configUrl: string,
+) {
+  return prisma.vPNAccess.update({
+    where: {
+      id,
+    },
+    data: {
+      configUrl,
+    },
+  });
+}
