@@ -100,9 +100,9 @@ model Subscription {
   startDate DateTime?
   endDate   DateTime?
 
-  license License?
-
   payments Payment[]
+
+  license License?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -114,8 +114,8 @@ model License {
   subscriptionId String       @unique
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
-  key    String @unique
-  status String @default("active")
+  licenseKey String @unique
+  status     String @default("active")
 
   vpnAccess VPNAccess?
 
