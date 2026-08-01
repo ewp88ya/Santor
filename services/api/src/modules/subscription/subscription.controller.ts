@@ -2,51 +2,22 @@ import {
   createUserSubscription,
   getSubscription,
   listUserSubscriptions,
-} from "./subscription.service.js";
+} from './subscription.service.js';
 
-export async function createSubscriptionController(
-  request: any,
-) {
+export async function createSubscriptionController(request: any) {
+  const { userId, productId } = request.body;
 
-  const {
-    userId,
-    productId,
-  } = request.body;
-
-
-  return createUserSubscription(
-    userId,
-    productId,
-  );
-
+  return createUserSubscription(userId, productId);
 }
 
-
-
-export async function listSubscriptionController(
-  request: any,
-) {
-
-  const {
-    userId,
-  } = request.query;
-
+export async function listSubscriptionController(request: any) {
+  const { userId } = request.query;
 
   return listUserSubscriptions(userId);
-
 }
 
-
-
-export async function detailSubscriptionController(
-  request: any,
-) {
-
-  const {
-    id,
-  } = request.params;
-
+export async function detailSubscriptionController(request: any) {
+  const { id } = request.params;
 
   return getSubscription(id);
-
 }

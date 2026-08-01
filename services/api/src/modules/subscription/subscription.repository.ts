@@ -1,17 +1,11 @@
-import { prisma } from "../../config/database.js";
+import { prisma } from '../../config/database.js';
 
-
-export async function createSubscription(
-  data: {
-    userId: string;
-    productId: string;
-  }
-) {
+export async function createSubscription(data: { userId: string; productId: string }) {
   return prisma.subscription.create({
     data: {
       userId: data.userId,
       productId: data.productId,
-      status: "pending",
+      status: 'pending',
     },
 
     include: {
@@ -21,10 +15,7 @@ export async function createSubscription(
   });
 }
 
-
-export async function findSubscriptionById(
-  id: string,
-) {
+export async function findSubscriptionById(id: string) {
   return prisma.subscription.findUnique({
     where: {
       id,
@@ -39,10 +30,7 @@ export async function findSubscriptionById(
   });
 }
 
-
-export async function findUserSubscriptions(
-  userId: string,
-) {
+export async function findUserSubscriptions(userId: string) {
   return prisma.subscription.findMany({
     where: {
       userId,
@@ -55,7 +43,7 @@ export async function findUserSubscriptions(
     },
 
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
   });
 }
