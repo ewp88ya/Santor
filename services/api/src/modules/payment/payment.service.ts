@@ -6,6 +6,7 @@ import {
 } from './payment.repository.js';
 
 import createError from 'http-errors';
+import { generateLicense } from '../license/license.service.js';
 
 export async function createNewPayment(data: {
   subscriptionId: string;
@@ -52,6 +53,10 @@ export async function markPaymentSuccess(id: string, transactionId: string) {
   if (!payment) {
     throw createError(404, 'Payment not found');
   }
+
+  const updatedPayment = await updatePaymentStatus(id, 'success', transactionId);
+
+  await generateLicense(payment.subscriptionId);
 
   return updatePaymentStatus(id, 'success', transactionId);
 }

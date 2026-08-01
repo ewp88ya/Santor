@@ -6,6 +6,8 @@ import subscriptionRoutes from '../../modules/subscription/subscription.routes.j
 
 import paymentRoutes from '../../modules/payment/payment.routes.js';
 import { licenseRoutes } from '../../modules/license/license.routes.js';
+import { vpnAccessRoutes } from '../../modules/vpn-access/vpn-access.routes.js';
+import deviceRoutes from '../../modules/device/device.routes.js';
 
 export default async function v1Routes(app: FastifyInstance) {
   await app.register(healthRoute);
@@ -17,4 +19,11 @@ export default async function v1Routes(app: FastifyInstance) {
   await app.register(paymentRoutes);
 
   await app.register(licenseRoutes);
+
+  await app.register(vpnAccessRoutes, {
+    prefix: '/vpn-access',
+  });
+  await app.register(deviceRoutes, {
+    prefix: '/devices',
+  });
 }

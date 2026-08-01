@@ -7,6 +7,8 @@ import {
   listLicenses,
 } from './license.repository.js';
 
+import { generateVPNAccess } from '../vpn-access/vpn-access.service.js';
+
 export async function generateLicense(subscriptionId: string) {
   const existing = await findLicenseBySubscription(subscriptionId);
 
@@ -16,7 +18,11 @@ export async function generateLicense(subscriptionId: string) {
 
   const licenseKey = `SANTOR-${randomUUID().replaceAll('-', '').toUpperCase()}`;
 
-  return createLicense(subscriptionId, licenseKey);
+  const license = await createLicense(subscriptionId, licenseKey);
+
+  await generateVPNAccess(license.id);
+
+  return license;
 }
 
 export async function getLicense(id: string) {
