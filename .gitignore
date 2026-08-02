@@ -12,3 +12,4 @@ dist/
 # temp
 *.tsbuildinfo
 node_modules/
+.env

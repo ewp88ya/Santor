@@ -12,7 +12,15 @@ export async function findDeviceById(id: string) {
       id,
     },
     include: {
-      vpnAccess: true,
+      vpnAccess: {
+        include: {
+          license: {
+            include: {
+              subscription: true,
+            },
+          },
+        },
+      },
     },
   });
 }
@@ -30,6 +38,17 @@ export async function countActiveDevices(vpnAccessId: string) {
     where: {
       vpnAccessId,
       active: true,
+    },
+  });
+}
+
+export async function revokeDevice(id: string) {
+  return prisma.device.update({
+    where: {
+      id,
+    },
+    data: {
+      active: false,
     },
   });
 }

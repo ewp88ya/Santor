@@ -134,6 +134,8 @@ model VPNAccess {
 
   configUrl String?
 
+  active Boolean @default(true)
+
   devices Device[]
 
   createdAt DateTime @default(now())

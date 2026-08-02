@@ -4,6 +4,7 @@ import {
   createSubscriptionController,
   listSubscriptionController,
   detailSubscriptionController,
+  expireSubscriptionJob,
 } from './subscription.controller.js';
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
@@ -12,4 +13,6 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
   app.get('/subscriptions', listSubscriptionController);
 
   app.get('/subscriptions/:id', detailSubscriptionController);
+
+  app.post('/subscriptions/expire-check', expireSubscriptionJob);
 }

@@ -36,7 +36,7 @@ export async function createWireGuardConfig(vpnAccessId: string) {
   return updateVPNAccessConfig(vpnAccessId, configUrl);
 }
 
-export async function getWireGuardConfig(deviceId: string) {
+export async function getWireGuardConfig(userId: string, deviceId: string) {
   const peer = await prisma.wireGuardPeer.findUnique({
     where: {
       deviceId,
@@ -44,7 +44,15 @@ export async function getWireGuardConfig(deviceId: string) {
     include: {
       device: {
         include: {
-          vpnAccess: true,
+          vpnAccess: {
+            include: {
+              license: {
+                include: {
+                  subscription: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -52,6 +60,10 @@ export async function getWireGuardConfig(deviceId: string) {
 
   if (!peer) {
     throw new Error('WireGuard peer not found');
+  }
+
+  if (peer.device.vpnAccess.license.subscription.userId !== userId) {
+    throw new Error('Forbidden');
   }
 
   return `

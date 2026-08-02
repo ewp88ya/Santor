@@ -1,3 +1,5 @@
+import { expireSubscriptions } from './subscription.expire.service.js';
+
 import {
   createUserSubscription,
   getSubscription,
@@ -20,4 +22,12 @@ export async function detailSubscriptionController(request: any) {
   const { id } = request.params;
 
   return getSubscription(id);
+}
+
+export async function expireSubscriptionJob() {
+  const total = await expireSubscriptions();
+
+  return {
+    expired: total,
+  };
 }
