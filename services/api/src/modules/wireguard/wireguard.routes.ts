@@ -1,19 +1,7 @@
-import {
-  generateWireGuard,
-  downloadWireGuardConfig,
-} from './wireguard.controller.js';
-
+import { generateWireGuard, downloadWireGuardConfig } from './wireguard.controller.js';
 
 export default async function wireguardRoutes(app: any) {
+  app.post('/generate', generateWireGuard);
 
-  app.post(
-    '/generate',
-    generateWireGuard,
-  );
-
-  app.get(
-    '/config/:deviceId',
-    downloadWireGuardConfig,
-  );
-
+  app.get('/config/:deviceId', downloadWireGuardConfig);
 }

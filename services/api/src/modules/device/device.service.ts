@@ -11,16 +11,11 @@ import { prisma } from '../../config/database.js';
 
 import createError from 'http-errors';
 
-
 function generateClientKey() {
   return randomUUID().replaceAll('-', '');
 }
 
-
-export async function addDevice(
-  vpnAccessId: string,
-  name: string,
-) {
+export async function addDevice(vpnAccessId: string, name: string) {
   const vpnAccess = await prisma.vPNAccess.findUnique({
     where: {
       id: vpnAccessId,
@@ -38,37 +33,19 @@ export async function addDevice(
     },
   });
 
-
   if (!vpnAccess) {
-    throw createError(
-      404,
-      'VPN Access not found',
-    );
+    throw createError(404, 'VPN Access not found');
   }
 
+  const limit = vpnAccess.license.subscription.product.deviceLimit;
 
-  const limit =
-    vpnAccess
-      .license
-      .subscription
-      .product
-      .deviceLimit;
-
-
-  const activeDevices =
-    await countActiveDevices(vpnAccessId);
-
+  const activeDevices = await countActiveDevices(vpnAccessId);
 
   if (activeDevices >= limit) {
-    throw createError(
-      403,
-      `Device limit reached (${limit})`,
-    );
+    throw createError(403, `Device limit reached (${limit})`);
   }
 
-
   const publicKey = generateClientKey();
-
 
   return createDevice({
     vpnAccessId,
@@ -77,11 +54,9 @@ export async function addDevice(
   });
 }
 
-
 export async function getDevice(id: string) {
   return findDeviceById(id);
 }
-
 
 export async function getDevices(vpnAccessId: string) {
   return listDevices(vpnAccessId);
