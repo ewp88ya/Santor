@@ -2,7 +2,13 @@ import type { FastifyRequest } from 'fastify';
 
 import createError from 'http-errors';
 
-import { addDevice, getDevice, getDevices, disableDevice } from './device.service.js';
+import {
+  addDevice,
+  getDevice,
+  getDevices,
+  disableDevice,
+  regenerateDeviceConfig,
+} from './device.service.js';
 
 function getUserId(request: FastifyRequest) {
   const user = request.user as {
@@ -55,4 +61,14 @@ export async function revokeDeviceController(request: FastifyRequest) {
   };
 
   return disableDevice(userId, params.id);
+}
+
+export async function regenerateDeviceController(request: FastifyRequest) {
+  const userId = getUserId(request);
+
+  const params = request.params as {
+    id: string;
+  };
+
+  return regenerateDeviceConfig(userId, params.id);
 }

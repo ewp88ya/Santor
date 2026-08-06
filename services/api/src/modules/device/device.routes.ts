@@ -3,6 +3,7 @@ import {
   listDeviceController,
   detailDeviceController,
   revokeDeviceController,
+  regenerateDeviceController,
 } from './device.controller.js';
 
 import { authMiddleware } from '../../middleware/auth.middleware.js';
@@ -45,6 +46,16 @@ export default async function deviceRoutes(app: any) {
     },
     async (request: any) => {
       return revokeDeviceController(request);
+    },
+  );
+
+  app.post(
+    '/:id/regenerate',
+    {
+      preHandler: authMiddleware,
+    },
+    async (request: any) => {
+      return regenerateDeviceController(request);
     },
   );
 }

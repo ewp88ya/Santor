@@ -23,6 +23,9 @@ export async function createWireGuardPeer(data: {
 export async function updateWireGuardPeer(
   id: string,
   data: {
+    privateKey?: string;
+    publicKey?: string;
+    address?: string;
     endpoint?: string;
   },
 ) {
