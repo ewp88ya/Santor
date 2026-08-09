@@ -6,13 +6,11 @@ import {
   regenerateWireGuardConfig,
 } from './wireguard.service.js';
 
-
 export async function generateWireGuard(request: any) {
   const { deviceId } = request.body;
 
   return generateWireGuardPeer(deviceId);
 }
-
 
 export async function regenerateWireGuard(request: any) {
   const user = request.user as {
@@ -25,17 +23,10 @@ export async function regenerateWireGuard(request: any) {
 
   const { deviceId } = request.params;
 
-  return regenerateWireGuardConfig(
-    user.id,
-    deviceId,
-  );
+  return regenerateWireGuardConfig(user.id, deviceId);
 }
 
-
-export async function downloadWireGuardConfig(
-  request: any,
-  reply: any,
-) {
+export async function downloadWireGuardConfig(request: any, reply: any) {
   const user = request.user as {
     id?: string;
   };
@@ -46,15 +37,9 @@ export async function downloadWireGuardConfig(
 
   const { deviceId } = request.params;
 
-  const config = await getWireGuardConfig(
-    user.id,
-    deviceId,
-  );
+  const config = await getWireGuardConfig(user.id, deviceId);
 
-  reply.header(
-    'Content-Disposition',
-    'attachment; filename=wireguard.conf',
-  );
+  reply.header('Content-Disposition', 'attachment; filename=wireguard.conf');
 
   reply.type('text/plain');
 

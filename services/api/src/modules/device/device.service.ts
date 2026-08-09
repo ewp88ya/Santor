@@ -17,27 +17,17 @@ import {
   regenerateWireGuardConfig,
 } from '../wireguard/wireguard.service.js';
 
-
 function generateClientKey() {
   return randomUUID().replaceAll('-', '');
 }
 
-
-function checkOwnership(
-  ownerId: string | undefined,
-  userId: string,
-) {
+function checkOwnership(ownerId: string | undefined, userId: string) {
   if (!ownerId || ownerId !== userId) {
     throw createError(403, 'Forbidden');
   }
 }
 
-
-export async function addDevice(
-  userId: string,
-  vpnAccessId: string,
-  name: string,
-) {
+export async function addDevice(userId: string, vpnAccessId: string, name: string) {
   const vpnAccess = await prisma.vPNAccess.findUnique({
     where: {
       id: vpnAccessId,
@@ -55,36 +45,21 @@ export async function addDevice(
     },
   });
 
-
   if (!vpnAccess) {
     throw createError(404, 'VPN Access not found');
   }
 
+  checkOwnership(vpnAccess.license?.subscription?.userId, userId);
 
-  checkOwnership(
-    vpnAccess.license?.subscription?.userId,
-    userId,
-  );
+  const limit = vpnAccess.license.subscription.product.deviceLimit;
 
-
-  const limit =
-    vpnAccess.license.subscription.product.deviceLimit;
-
-
-  const activeDevices =
-    await countActiveDevices(vpnAccessId);
-
+  const activeDevices = await countActiveDevices(vpnAccessId);
 
   if (activeDevices >= limit) {
-    throw createError(
-      403,
-      `Device limit reached (${limit})`,
-    );
+    throw createError(403, `Device limit reached (${limit})`);
   }
 
-
   const publicKey = generateClientKey();
-
 
   const device = await createDevice({
     vpnAccessId,
@@ -92,43 +67,25 @@ export async function addDevice(
     publicKey,
   });
 
-
   // create WireGuard peer automatically
   await generateWireGuardPeer(device.id);
-
 
   return device;
 }
 
-
-
-export async function getDevice(
-  userId: string,
-  id: string,
-) {
+export async function getDevice(userId: string, id: string) {
   const device = await findDeviceById(id);
-
 
   if (!device) {
     throw createError(404, 'Device not found');
   }
 
-
-  checkOwnership(
-    device.vpnAccess?.license?.subscription?.userId,
-    userId,
-  );
-
+  checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId);
 
   return device;
 }
 
-
-
-export async function getDevices(
-  userId: string,
-  vpnAccessId: string,
-) {
+export async function getDevices(userId: string, vpnAccessId: string) {
   const vpnAccess = await prisma.vPNAccess.findUnique({
     where: {
       id: vpnAccessId,
@@ -142,66 +99,35 @@ export async function getDevices(
     },
   });
 
-
   if (!vpnAccess) {
     throw createError(404, 'VPN Access not found');
   }
 
-
-  checkOwnership(
-    vpnAccess.license?.subscription?.userId,
-    userId,
-  );
-
+  checkOwnership(vpnAccess.license?.subscription?.userId, userId);
 
   return listDevices(vpnAccessId);
 }
 
-
-
-export async function disableDevice(
-  userId: string,
-  deviceId: string,
-) {
+export async function disableDevice(userId: string, deviceId: string) {
   const device = await findDeviceById(deviceId);
-
 
   if (!device) {
     throw createError(404, 'Device not found');
   }
 
-
-  checkOwnership(
-    device.vpnAccess?.license?.subscription?.userId,
-    userId,
-  );
-
+  checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId);
 
   return revokeDevice(deviceId);
 }
 
-
-
-export async function regenerateDeviceConfig(
-  userId: string,
-  deviceId: string,
-) {
+export async function regenerateDeviceConfig(userId: string, deviceId: string) {
   const device = await findDeviceById(deviceId);
-
 
   if (!device) {
     throw createError(404, 'Device not found');
   }
 
+  checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId);
 
-  checkOwnership(
-    device.vpnAccess?.license?.subscription?.userId,
-    userId,
-  );
-
-
-return regenerateWireGuardConfig(
-  userId,
-  deviceId,
-);
+  return regenerateWireGuardConfig(userId, deviceId);
 }

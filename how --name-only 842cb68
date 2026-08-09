@@ -1,0 +1,37 @@
+[33mcommit 842cb684e7fdabcd3a60a84c7f0fc5d3fdc57eb7[m
+Author: ewp88ya <ardhysetyawan88@gmail.com>
+Date:   Sun Aug 2 16:59:50 2026 +0300
+
+    feat(api): add vpn access, dashboard, and worker expiry service
+
+ .gitignore                                 |  1 [32m+[m
+ pnpm-lock.yaml                             | 63 [32m+++++++++++++++[m
+ .../migration.sql                          |  2 [32m+[m
+ services/api/prisma/schema.prisma          |  2 [32m+[m
+ services/api/scripts/check-vpn.ts          | 22 [32m++++++[m
+ services/api/scripts/set-expired.ts        | 18 [32m+++++[m
+ .../api/src/middleware/auth.middleware.ts  | 34 [32m++++++++[m
+ .../src/modules/auth/auth.controller.ts    | 30 [32m++++++++[m
+ .../api/src/modules/auth/auth.routes.ts    |  9 [32m+++[m
+ .../dashboard/dashboard.controller.ts      | 17 [32m++++[m
+ .../dashboard/dashboard.repository.ts      | 25 [32m++++++[m
+ .../modules/dashboard/dashboard.routes.ts  | 15 [32m++++[m
+ .../modules/dashboard/dashboard.service.ts | 62 [32m+++++++++++++++[m
+ .../modules/device/device.controller.ts    | 59 [32m++++++++++++[m[31m--[m
+ .../modules/device/device.repository.ts    | 21 [32m++++[m[31m-[m
+ .../src/modules/device/device.routes.ts    | 49 [32m+++++++++[m[31m---[m
+ .../src/modules/device/device.service.ts   | 56 [32m+++++++++++++[m[31m-[m
+ .../subscription.controller.ts             | 10 [32m+++[m
+ .../subscription.expire.service.ts         | 58 [32m++++++++++++++[m
+ .../subscription/subscription.routes.ts    |  3 [32m+[m
+ .../wireguard/wireguard.controller.ts      | 12 [32m++[m[31m-[m
+ .../modules/wireguard/wireguard.service.ts | 16 [32m+++[m[31m-[m
+ services/api/src/routes/v1/index.ts        |  8 [32m++[m
+ services/api/src/types/fastify.d.ts        |  4 [32m+[m
+ services/worker/package.json               | 26 [32m+++++++[m
+ services/worker/prisma.config.ts           | 10 [32m+++[m
+ services/worker/src/index.ts               | 16 [32m++++[m
+ services/worker/src/jobs/expiry.job.ts     | 64 [32m++++++++++++++++[m
+ services/worker/src/lib/prisma.ts          | 10 [32m+++[m
+ services/worker/tsconfig.json              | 12 [32m+++[m
+ 30 files changed, 710 insertions(+), 24 deletions(-)
