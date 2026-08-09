@@ -180,3 +180,78 @@
     border-right-color: var(--border);
   }
 }
+
+.dashboard {
+  width: min(100% - 40px, 1000px);
+  margin: 0 auto;
+  padding: 48px 0;
+  text-align: left;
+}
+
+.dashboard-header {
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-header h1 {
+  margin: 0 0 8px;
+}
+
+.subscription-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px;
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.subscription-card.expired {
+  border-color: var(--accent-border);
+}
+
+.subscription-card h2 {
+  margin-bottom: 12px;
+}
+
+.remaining {
+  margin-top: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.expired-text {
+  color: #dc2626;
+}
+
+.subscription-list {
+  display: grid;
+  gap: 16px;
+}
+
+.subscription-list > h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .dashboard {
+    width: min(100% - 24px, 1000px);
+    padding: 24px 0;
+  }
+
+  .subscription-card {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 24px;
+  }
+}

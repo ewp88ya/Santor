@@ -17,12 +17,29 @@ import {
   regenerateWireGuardConfig,
 } from '../wireguard/wireguard.service.js';
 
+import { auditLog } from '../audit/audit.service.js';
+
 function generateClientKey() {
   return randomUUID().replaceAll('-', '');
 }
 
-function checkOwnership(ownerId: string | undefined, userId: string) {
+async function checkOwnership(
+  ownerId: string | undefined,
+  userId: string,
+  resource: string,
+  resourceId: string,
+) {
   if (!ownerId || ownerId !== userId) {
+    await auditLog({
+      userId,
+      action: 'ACCESS_DENIED',
+      resource,
+      resourceId,
+      metadata: {
+        reason: 'OWNERSHIP_MISMATCH',
+      },
+    });
+
     throw createError(403, 'Forbidden');
   }
 }
@@ -49,13 +66,24 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
     throw createError(404, 'VPN Access not found');
   }
 
-  checkOwnership(vpnAccess.license?.subscription?.userId, userId);
+  await checkOwnership(vpnAccess.license?.subscription?.userId, userId, 'VPN_ACCESS', vpnAccessId);
 
   const limit = vpnAccess.license.subscription.product.deviceLimit;
 
   const activeDevices = await countActiveDevices(vpnAccessId);
 
   if (activeDevices >= limit) {
+    await auditLog({
+      userId,
+      action: 'DEVICE_LIMIT_REACHED',
+      resource: 'DEVICE',
+      resourceId: vpnAccessId,
+      metadata: {
+        limit,
+        activeDevices,
+      },
+    });
+
     throw createError(403, `Device limit reached (${limit})`);
   }
 
@@ -67,8 +95,14 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
     publicKey,
   });
 
-  // create WireGuard peer automatically
   await generateWireGuardPeer(device.id);
+
+  await auditLog({
+    userId,
+    action: 'DEVICE_CREATED',
+    resource: 'DEVICE',
+    resourceId: device.id,
+  });
 
   return device;
 }
@@ -80,7 +114,7 @@ export async function getDevice(userId: string, id: string) {
     throw createError(404, 'Device not found');
   }
 
-  checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId);
+  await checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId, 'DEVICE', id);
 
   return device;
 }
@@ -103,7 +137,7 @@ export async function getDevices(userId: string, vpnAccessId: string) {
     throw createError(404, 'VPN Access not found');
   }
 
-  checkOwnership(vpnAccess.license?.subscription?.userId, userId);
+  await checkOwnership(vpnAccess.license?.subscription?.userId, userId, 'VPN_ACCESS', vpnAccessId);
 
   return listDevices(vpnAccessId);
 }
@@ -115,9 +149,18 @@ export async function disableDevice(userId: string, deviceId: string) {
     throw createError(404, 'Device not found');
   }
 
-  checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId);
+  await checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId, 'DEVICE', deviceId);
 
-  return revokeDevice(deviceId);
+  const result = await revokeDevice(deviceId);
+
+  await auditLog({
+    userId,
+    action: 'DEVICE_REVOKED',
+    resource: 'DEVICE',
+    resourceId: deviceId,
+  });
+
+  return result;
 }
 
 export async function regenerateDeviceConfig(userId: string, deviceId: string) {
@@ -127,7 +170,16 @@ export async function regenerateDeviceConfig(userId: string, deviceId: string) {
     throw createError(404, 'Device not found');
   }
 
-  checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId);
+  await checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId, 'DEVICE', deviceId);
 
-  return regenerateWireGuardConfig(userId, deviceId);
+  const result = await regenerateWireGuardConfig(userId, deviceId);
+
+  await auditLog({
+    userId,
+    action: 'DEVICE_CONFIG_REGENERATED',
+    resource: 'DEVICE',
+    resourceId: deviceId,
+  });
+
+  return result;
 }

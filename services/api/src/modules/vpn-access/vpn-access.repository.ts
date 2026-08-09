@@ -27,6 +27,23 @@ export async function findVPNAccessByLicense(licenseId: string) {
     },
   });
 }
+
+export async function findVPNAccessOwnership(licenseId: string) {
+  return prisma.license.findUnique({
+    where: {
+      id: licenseId,
+    },
+    select: {
+      id: true,
+      subscription: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+}
+
 export async function updateVPNAccessConfig(id: string, configUrl: string) {
   return prisma.vPNAccess.update({
     where: {

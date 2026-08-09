@@ -2,6 +2,20 @@ import createError from 'http-errors';
 
 import { getUserDashboard } from './dashboard.repository.js';
 
+function calculateRemainingDays(endDate: Date | null) {
+  if (!endDate) {
+    return null;
+  }
+
+  const remainingMs = endDate.getTime() - Date.now();
+
+  if (remainingMs <= 0) {
+    return 0;
+  }
+
+  return Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+}
+
 export async function getDashboard(userId: string) {
   const user = await getUserDashboard(userId);
 
@@ -9,20 +23,25 @@ export async function getDashboard(userId: string) {
     throw createError(404, 'User not found');
   }
 
-  return {
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      status: user.status,
-      emailVerified: user.emailVerified,
-    },
+  const subscriptions = user.subscriptions.map((subscription) => {
+    const remainingDays = calculateRemainingDays(subscription.endDate);
 
-    subscriptions: user.subscriptions.map((subscription) => ({
+    const expired =
+      subscription.status === 'expired' ||
+      (subscription.endDate !== null && subscription.endDate.getTime() <= Date.now());
+
+    return {
       id: subscription.id,
-      status: subscription.status,
+      status: expired ? 'expired' : subscription.status,
       startDate: subscription.startDate,
       endDate: subscription.endDate,
+
+      lifecycle: {
+        expired,
+        remainingDays,
+        canUpgrade: expired || subscription.status !== 'active',
+        upgradeUrl: '/pricing',
+      },
 
       product: {
         id: subscription.product.id,
@@ -45,6 +64,7 @@ export async function getDashboard(userId: string) {
                   id: subscription.license.vpnAccess.id,
                   protocol: subscription.license.vpnAccess.protocol,
                   serverNode: subscription.license.vpnAccess.serverNode,
+                  active: subscription.license.vpnAccess.active,
 
                   devices: subscription.license.vpnAccess.devices.map((device) => ({
                     id: device.id,
@@ -57,6 +77,30 @@ export async function getDashboard(userId: string) {
               : null,
           }
         : null,
-    })),
+    };
+  });
+
+  const activeSubscription =
+    subscriptions.find(
+      (subscription) => subscription.status === 'active' && !subscription.lifecycle.expired,
+    ) ?? null;
+
+  return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      status: user.status,
+      emailVerified: user.emailVerified,
+    },
+
+    subscription: activeSubscription,
+
+    subscriptions,
+
+    upgrade: {
+      available: !activeSubscription,
+      url: '/pricing',
+    },
   };
 }
