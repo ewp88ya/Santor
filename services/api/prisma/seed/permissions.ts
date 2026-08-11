@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 
-const permissions = [
+const userPermissions = [
   'dashboard:read',
   'subscription:read',
   'subscription:create',
@@ -11,6 +11,8 @@ const permissions = [
   'device:revoke',
   'device:regenerate',
 ];
+
+const adminPermissions = ['vpn-node:read', 'vpn-node:create', 'vpn-node:update'];
 
 export async function seedPermissions(prisma: PrismaClient) {
   const userRole = await prisma.role.upsert({
@@ -23,7 +25,17 @@ export async function seedPermissions(prisma: PrismaClient) {
     },
   });
 
-  for (const name of permissions) {
+  const adminRole = await prisma.role.upsert({
+    where: {
+      name: 'ADMIN',
+    },
+    update: {},
+    create: {
+      name: 'ADMIN',
+    },
+  });
+
+  for (const name of userPermissions) {
     const permission = await prisma.permission.upsert({
       where: {
         name,
@@ -44,6 +56,32 @@ export async function seedPermissions(prisma: PrismaClient) {
       update: {},
       create: {
         roleId: userRole.id,
+        permissionId: permission.id,
+      },
+    });
+  }
+
+  for (const name of adminPermissions) {
+    const permission = await prisma.permission.upsert({
+      where: {
+        name,
+      },
+      update: {},
+      create: {
+        name,
+      },
+    });
+
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: adminRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: adminRole.id,
         permissionId: permission.id,
       },
     });

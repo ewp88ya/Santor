@@ -101,7 +101,15 @@ model Subscription {
   startDate DateTime?
   endDate   DateTime?
 
+  renewalAttempts      Int       @default(0)
+  gracePeriodEnd       DateTime?
+  nextRenewalAttemptAt DateTime?
+
   payments Payment[]
+
+  autoDebitEnabled  Boolean @default(false)
+  paymentCustomerId String?
+  paymentMethodId   String?
 
   license License?
 
@@ -124,14 +132,35 @@ model License {
   updatedAt DateTime @updatedAt
 }
 
+model VPNNode {
+  id String @id @default(uuid())
+
+  name     String @unique
+  hostname String
+  port     Int    @default(51820)
+  protocol String @default("wireguard")
+
+  publicKey       String?
+  provisioningUrl String?
+  provisioningKey String?
+  active          Boolean @default(true)
+
+  vpnAccesses VPNAccess[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model VPNAccess {
   id String @id @default(uuid())
 
   licenseId String  @unique
   license   License @relation(fields: [licenseId], references: [id], onDelete: Cascade)
 
-  protocol   String
-  serverNode String
+  vpnNodeId String
+  vpnNode   VPNNode @relation(fields: [vpnNodeId], references: [id])
+
+  protocol String
 
   configUrl String?
 
@@ -191,6 +220,11 @@ model Payment {
   status String @default("pending")
 
   transactionId String?
+
+  type              String  @default("one_time")
+  autoDebit         Boolean @default(false)
+  providerPaymentId String?
+  webhookEventId    String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
