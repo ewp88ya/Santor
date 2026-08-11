@@ -4,6 +4,7 @@ import {
   createVPNAccess,
   findVPNAccessByLicense,
   findVPNAccessOwnership,
+  findActiveVPNNode,
 } from './vpn-access.repository.js';
 
 import { createWireGuardConfig } from '../wireguard/wireguard.service.js';
@@ -21,10 +22,16 @@ export async function generateVPNAccess(licenseId: string) {
     return existing;
   }
 
+  const vpnNode = await findActiveVPNNode();
+
+  if (!vpnNode) {
+    throw createError(503, 'No active VPN node available');
+  }
+
   const vpnAccess = await createVPNAccess({
     licenseId,
     protocol: 'wireguard',
-    serverNode: 'node-1',
+    vpnNodeId: vpnNode.id,
   });
 
   await createWireGuardConfig(vpnAccess.id);

@@ -3,16 +3,17 @@ import { prisma } from '../../config/database.js';
 export async function createVPNAccess(data: {
   licenseId: string;
   protocol: string;
-  serverNode: string;
+  vpnNodeId: string;
 }) {
   return prisma.vPNAccess.create({
     data: {
       licenseId: data.licenseId,
       protocol: data.protocol,
-      serverNode: data.serverNode,
+      vpnNodeId: data.vpnNodeId,
     },
     include: {
       license: true,
+      vpnNode: true,
     },
   });
 }
@@ -24,6 +25,7 @@ export async function findVPNAccessByLicense(licenseId: string) {
     },
     include: {
       license: true,
+      vpnNode: true,
     },
   });
 }
@@ -51,6 +53,18 @@ export async function updateVPNAccessConfig(id: string, configUrl: string) {
     },
     data: {
       configUrl,
+    },
+  });
+}
+
+export async function findActiveVPNNode() {
+  return prisma.vPNNode.findFirst({
+    where: {
+      active: true,
+      protocol: 'wireguard',
+    },
+    orderBy: {
+      createdAt: 'asc',
     },
   });
 }
