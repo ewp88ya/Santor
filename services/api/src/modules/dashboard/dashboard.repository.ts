@@ -13,6 +13,7 @@ export async function getUserDashboard(userId: string) {
             include: {
               vpnAccess: {
                 include: {
+                  vpnNode: true,
                   devices: true,
                 },
               },
