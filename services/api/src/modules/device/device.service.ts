@@ -15,12 +15,37 @@ import {
 import {
   generateWireGuardPeer,
   regenerateWireGuardConfig,
+  revokeWireGuardPeer,
 } from '../wireguard/wireguard.service.js';
 
 import { auditLog } from '../audit/audit.service.js';
 
-function generateClientKey() {
+const DEVICE_LIMIT = 3;
+
+function devicePublicKey() {
   return randomUUID().replaceAll('-', '');
+}
+
+function ensureDeviceVPNNodeConsistency(vpnAccess: {
+  id: string;
+  vpnNodeId: string;
+  vpnNode: {
+    id: string;
+    active: boolean;
+    protocol: string;
+  };
+}) {
+  if (vpnAccess.vpnNodeId !== vpnAccess.vpnNode.id) {
+    throw createError(503, 'VPN Access and VPN node are inconsistent');
+  }
+
+  if (!vpnAccess.vpnNode.active) {
+    throw createError(503, 'VPN node is inactive');
+  }
+
+  if (vpnAccess.vpnNode.protocol !== 'wireguard') {
+    throw createError(503, 'VPN node protocol is not supported');
+  }
 }
 
 async function checkOwnership(
@@ -44,12 +69,58 @@ async function checkOwnership(
   }
 }
 
+function ensureActiveSubscription(
+  subscription:
+    | {
+        status: string;
+      }
+    | null
+    | undefined,
+) {
+  if (!subscription) {
+    throw createError(403, 'Active subscription required');
+  }
+
+  if (subscription.status !== 'active') {
+    throw createError(403, 'Subscription is not active');
+  }
+}
+
+function ensureActiveVPNAccess(active: boolean) {
+  if (!active) {
+    throw createError(403, 'VPN Access is inactive');
+  }
+}
+
+function ensureValidVPNNode(
+  node:
+    | {
+        active: boolean;
+        protocol: string;
+      }
+    | null
+    | undefined,
+) {
+  if (!node) {
+    throw createError(503, 'VPN node not configured');
+  }
+
+  if (!node.active) {
+    throw createError(503, 'VPN node is inactive');
+  }
+
+  if (node.protocol.toLowerCase() !== 'wireguard') {
+    throw createError(503, 'VPN node protocol is not supported');
+  }
+}
+
 export async function addDevice(userId: string, vpnAccessId: string, name: string) {
   const vpnAccess = await prisma.vPNAccess.findUnique({
     where: {
       id: vpnAccessId,
     },
     include: {
+      vpnNode: true,
       license: {
         include: {
           subscription: {
@@ -68,34 +139,46 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
 
   await checkOwnership(vpnAccess.license?.subscription?.userId, userId, 'VPN_ACCESS', vpnAccessId);
 
-  const limit = vpnAccess.license.subscription.product.deviceLimit;
+  ensureActiveSubscription(vpnAccess.license?.subscription);
+
+  ensureActiveVPNAccess(vpnAccess.active);
+
+  ensureValidVPNNode(vpnAccess.vpnNode);
 
   const activeDevices = await countActiveDevices(vpnAccessId);
 
-  if (activeDevices >= limit) {
+  if (activeDevices >= DEVICE_LIMIT) {
     await auditLog({
       userId,
       action: 'DEVICE_LIMIT_REACHED',
       resource: 'DEVICE',
       resourceId: vpnAccessId,
       metadata: {
-        limit,
+        limit: DEVICE_LIMIT,
         activeDevices,
       },
     });
 
-    throw createError(403, `Device limit reached (${limit})`);
+    throw createError(403, `Device limit reached (${DEVICE_LIMIT})`);
   }
-
-  const publicKey = generateClientKey();
 
   const device = await createDevice({
     vpnAccessId,
     name,
-    publicKey,
+    publicKey: devicePublicKey(),
   });
 
-  await generateWireGuardPeer(device.id);
+  try {
+    await generateWireGuardPeer(device.id);
+  } catch (error) {
+    await prisma.device.delete({
+      where: {
+        id: device.id,
+      },
+    });
+
+    throw error;
+  }
 
   await auditLog({
     userId,
@@ -104,7 +187,7 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
     resourceId: device.id,
   });
 
-  return device;
+  return findDeviceById(device.id);
 }
 
 export async function getDevice(userId: string, id: string) {
@@ -116,6 +199,12 @@ export async function getDevice(userId: string, id: string) {
 
   await checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId, 'DEVICE', id);
 
+  ensureActiveSubscription(device.vpnAccess?.license?.subscription);
+
+  ensureActiveVPNAccess(device.vpnAccess?.active ?? false);
+
+  ensureValidVPNNode(device.vpnAccess?.vpnNode);
+
   return device;
 }
 
@@ -125,6 +214,7 @@ export async function getDevices(userId: string, vpnAccessId: string) {
       id: vpnAccessId,
     },
     include: {
+      vpnNode: true,
       license: {
         include: {
           subscription: true,
@@ -139,6 +229,12 @@ export async function getDevices(userId: string, vpnAccessId: string) {
 
   await checkOwnership(vpnAccess.license?.subscription?.userId, userId, 'VPN_ACCESS', vpnAccessId);
 
+  ensureActiveSubscription(vpnAccess.license?.subscription);
+
+  ensureActiveVPNAccess(vpnAccess.active);
+
+  ensureValidVPNNode(vpnAccess.vpnNode);
+
   return listDevices(vpnAccessId);
 }
 
@@ -150,6 +246,12 @@ export async function disableDevice(userId: string, deviceId: string) {
   }
 
   await checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId, 'DEVICE', deviceId);
+
+  if (!device.active) {
+    return device;
+  }
+
+  await revokeWireGuardPeer(deviceId);
 
   const result = await revokeDevice(deviceId);
 
@@ -171,6 +273,16 @@ export async function regenerateDeviceConfig(userId: string, deviceId: string) {
   }
 
   await checkOwnership(device.vpnAccess?.license?.subscription?.userId, userId, 'DEVICE', deviceId);
+
+  ensureActiveSubscription(device.vpnAccess?.license?.subscription);
+
+  ensureActiveVPNAccess(device.vpnAccess?.active ?? false);
+
+  ensureValidVPNNode(device.vpnAccess?.vpnNode);
+
+  if (!device.active) {
+    throw createError(403, 'Device is inactive');
+  }
 
   const result = await regenerateWireGuardConfig(userId, deviceId);
 

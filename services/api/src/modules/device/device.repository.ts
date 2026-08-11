@@ -14,6 +14,7 @@ export async function findDeviceById(id: string) {
     include: {
       vpnAccess: {
         include: {
+          vpnNode: true,
           license: {
             include: {
               subscription: true,
@@ -29,6 +30,12 @@ export async function listDevices(vpnAccessId: string) {
   return prisma.device.findMany({
     where: {
       vpnAccessId,
+    },
+    include: {
+      wireguardPeer: true,
+    },
+    orderBy: {
+      createdAt: 'asc',
     },
   });
 }

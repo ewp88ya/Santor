@@ -8,12 +8,13 @@ import {
 
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
+import { deviceRateLimit } from '../../middleware/rate-limit.middleware.js';
 
 export default async function deviceRoutes(app: any) {
   app.post(
     '/',
     {
-      preHandler: [authMiddleware, requirePermission('device:create')],
+      preHandler: [authMiddleware, requirePermission('device:create'), deviceRateLimit],
     },
     async (request: any) => {
       return createDeviceController(request);
@@ -23,7 +24,7 @@ export default async function deviceRoutes(app: any) {
   app.get(
     '/:id',
     {
-      preHandler: [authMiddleware, requirePermission('device:read')],
+      preHandler: [authMiddleware, requirePermission('device:read'), deviceRateLimit],
     },
     async (request: any) => {
       return detailDeviceController(request);
@@ -33,7 +34,7 @@ export default async function deviceRoutes(app: any) {
   app.get(
     '/vpn/:vpnAccessId',
     {
-      preHandler: [authMiddleware, requirePermission('device:read')],
+      preHandler: [authMiddleware, requirePermission('device:read'), deviceRateLimit],
     },
     async (request: any) => {
       return listDeviceController(request);
@@ -43,7 +44,7 @@ export default async function deviceRoutes(app: any) {
   app.delete(
     '/:id',
     {
-      preHandler: [authMiddleware, requirePermission('device:revoke')],
+      preHandler: [authMiddleware, requirePermission('device:revoke'), deviceRateLimit],
     },
     async (request: any) => {
       return revokeDeviceController(request);
@@ -53,7 +54,7 @@ export default async function deviceRoutes(app: any) {
   app.post(
     '/:id/regenerate',
     {
-      preHandler: [authMiddleware, requirePermission('device:regenerate')],
+      preHandler: [authMiddleware, requirePermission('device:regenerate'), deviceRateLimit],
     },
     async (request: any) => {
       return regenerateDeviceController(request);
