@@ -1,11 +1,13 @@
 import { prisma } from '../../config/database.js';
 
 export async function expireSubscriptions() {
-  const expired = await prisma.subscription.findMany({
+  const now = new Date();
+
+  const subscriptions = await prisma.subscription.findMany({
     where: {
       status: 'active',
       endDate: {
-        lt: new Date(),
+        lt: now,
       },
     },
     include: {
@@ -21,7 +23,26 @@ export async function expireSubscriptions() {
     },
   });
 
-  for (const subscription of expired) {
+  let expired = 0;
+
+  for (const subscription of subscriptions) {
+    /*
+     * Auto-debit subscriptions are handled by the
+     * renewal worker before permanent expiration.
+     *
+     * Keep them active while they are inside the
+     * renewal/grace lifecycle.
+     */
+    if (subscription.autoDebitEnabled) {
+      if (subscription.gracePeriodEnd && subscription.gracePeriodEnd > now) {
+        continue;
+      }
+
+      if (!subscription.gracePeriodEnd) {
+        continue;
+      }
+    }
+
     await prisma.subscription.update({
       where: {
         id: subscription.id,
@@ -52,7 +73,9 @@ export async function expireSubscriptions() {
         },
       });
     }
+
+    expired += 1;
   }
 
-  return expired.length;
+  return expired;
 }
