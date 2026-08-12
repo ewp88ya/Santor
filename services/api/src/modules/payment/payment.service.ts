@@ -2,7 +2,6 @@ import createError from 'http-errors';
 
 import {
   createPayment,
-  findPaymentById,
   findPaymentByIdForUser,
   listPayments,
   updatePaymentStatus,
@@ -12,16 +11,47 @@ import {
 import { generateLicense } from '../license/license.service.js';
 import { auditLog } from '../audit/audit.service.js';
 
+import { routePaymentProvider } from './payment.router.js';
+import type { PaymentMethod } from './providers/payment.provider.js';
+
+import { GlobalCardAdapter, XenditAdapter, RussiaPaymentAdapter } from './providers/index.js';
+
+const globalCardAdapter = new GlobalCardAdapter();
+const xenditAdapter = new XenditAdapter();
+const russiaPaymentAdapter = new RussiaPaymentAdapter();
+
+function getPaymentProvider(country: string, paymentMethod: PaymentMethod) {
+  return routePaymentProvider(country, paymentMethod, {
+    globalCard: globalCardAdapter,
+    xendit: xenditAdapter,
+    russia: russiaPaymentAdapter,
+  });
+}
+
 export async function createNewPayment(data: {
   userId: string;
   subscriptionId: string;
-  provider: string;
-  amount: number;
+  country: string;
   currency: string;
+  paymentMethod: PaymentMethod;
+  settlementCurrency?: string;
   autoDebit?: boolean;
 }) {
   try {
-    const payment = await createPayment(data);
+    const normalizedCountry = data.country.trim().toUpperCase();
+    const normalizedCurrency = data.currency.trim().toUpperCase();
+
+    const paymentProvider = getPaymentProvider(normalizedCountry, data.paymentMethod);
+
+    const payment = await createPayment({
+      subscriptionId: data.subscriptionId,
+      provider: paymentProvider.constructor.name,
+      country: normalizedCountry,
+      currency: normalizedCurrency,
+      paymentMethod: data.paymentMethod,
+      settlementCurrency: data.settlementCurrency,
+      autoDebit: data.autoDebit,
+    });
 
     if (!payment) {
       throw createError(404, 'Payment not found');
@@ -37,10 +67,13 @@ export async function createNewPayment(data: {
       resource: 'payment',
       resourceId: payment.id,
       metadata: {
-        provider: data.provider,
-        amount: data.amount,
-        currency: data.currency,
-        autoDebit: data.autoDebit ?? false,
+        provider: payment.provider,
+        country: payment.country,
+        currency: payment.currency,
+        paymentMethod: payment.paymentMethod,
+        amount: payment.amount,
+        settlementCurrency: payment.settlementCurrency,
+        autoDebit: payment.autoDebit,
       },
     });
 
@@ -54,6 +87,10 @@ export async function createNewPayment(data: {
 
     if (error.message === 'Subscription not found') {
       throw createError(404, 'Subscription not found');
+    }
+
+    if (typeof error.message === 'string' && error.message.startsWith('No active price found')) {
+      throw createError(400, error.message);
     }
 
     throw error;

@@ -82,9 +82,28 @@ model Product {
   active Boolean @default(true)
 
   subscriptions Subscription[]
+  prices        ProductPrice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProductPrice {
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  country  String?
+  currency String
+  amount   Int
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, country, currency])
 }
 
 model Subscription {
@@ -212,10 +231,12 @@ model Payment {
   subscriptionId String
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
-  provider String
-
-  amount   Int
-  currency String
+  provider           String
+  country            String?
+  currency           String
+  paymentMethod      String?
+  amount             Int
+  settlementCurrency String?
 
   status String @default("pending")
 

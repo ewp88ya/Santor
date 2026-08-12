@@ -9,11 +9,42 @@ const paymentInclude = {
   },
 } as const;
 
+export async function findProductPrice(productId: string, country: string, currency: string) {
+  const normalizedCountry = country.trim().toUpperCase();
+  const normalizedCurrency = currency.trim().toUpperCase();
+
+  return prisma.productPrice.findFirst({
+    where: {
+      productId,
+      currency: normalizedCurrency,
+      active: true,
+      OR: [
+        {
+          country: normalizedCountry,
+        },
+        {
+          country: null,
+        },
+      ],
+    },
+    orderBy: [
+      {
+        country: 'desc',
+      },
+      {
+        createdAt: 'desc',
+      },
+    ],
+  });
+}
+
 export async function createPayment(data: {
   subscriptionId: string;
   provider: string;
-  amount: number;
+  country: string;
   currency: string;
+  paymentMethod: string;
+  settlementCurrency?: string;
   type?: string;
   autoDebit?: boolean;
   providerPaymentId?: string;
@@ -32,6 +63,19 @@ export async function createPayment(data: {
     throw new Error('Subscription already active');
   }
 
+  const normalizedCountry = data.country.trim().toUpperCase();
+  const normalizedCurrency = data.currency.trim().toUpperCase();
+
+  const price = await findProductPrice(
+    subscription.productId,
+    normalizedCountry,
+    normalizedCurrency,
+  );
+
+  if (!price) {
+    throw new Error(`No active price found for ${normalizedCountry}/${normalizedCurrency}`);
+  }
+
   const existingPayment = await prisma.payment.findFirst({
     where: {
       subscriptionId: data.subscriptionId,
@@ -47,8 +91,11 @@ export async function createPayment(data: {
     data: {
       subscriptionId: data.subscriptionId,
       provider: data.provider,
-      amount: data.amount,
-      currency: data.currency,
+      country: normalizedCountry,
+      currency: price.currency,
+      paymentMethod: data.paymentMethod,
+      amount: price.amount,
+      settlementCurrency: data.settlementCurrency,
       status: 'pending',
       type: data.type ?? 'one_time',
       autoDebit: data.autoDebit ?? false,

@@ -11,6 +11,8 @@ import {
   markPaymentSuccess,
 } from './payment.service.js';
 
+import type { PaymentMethod } from './providers/payment.provider.js';
+
 function getUserId(request: FastifyRequest) {
   const user = request.user as {
     id?: string;
@@ -26,14 +28,20 @@ function getUserId(request: FastifyRequest) {
 export async function createPaymentController(request: FastifyRequest) {
   const body = request.body as {
     subscriptionId: string;
-    provider: string;
-    amount: number;
+    country: string;
     currency: string;
+    paymentMethod: PaymentMethod;
+    settlementCurrency?: string;
     autoDebit?: boolean;
   };
 
   return createNewPayment({
-    ...body,
+    subscriptionId: body.subscriptionId,
+    country: body.country,
+    currency: body.currency,
+    paymentMethod: body.paymentMethod,
+    settlementCurrency: body.settlementCurrency,
+    autoDebit: body.autoDebit,
     userId: getUserId(request),
   });
 }
