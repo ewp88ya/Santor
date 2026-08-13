@@ -120,7 +120,5 @@ export async function xenditWebhookController(request: FastifyRequest) {
 }
 
 export async function plategaWebhookController(request: FastifyRequest) {
-  return processPlategaWebhook(
-    request.body as Parameters<typeof processPlategaWebhook>[0],
-  );
+  return processPlategaWebhook(request.body as Parameters<typeof processPlategaWebhook>[0]);
 }

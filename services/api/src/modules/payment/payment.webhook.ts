@@ -126,10 +126,7 @@ function extractWebhookPayload(body: XenditWebhookBody) {
   };
 }
 
-function getWebhookEventId(
-  body: XenditWebhookBody,
-  data: XenditWebhookData,
-): string | undefined {
+function getWebhookEventId(body: XenditWebhookBody, data: XenditWebhookData): string | undefined {
   const providerPaymentId = clean(data.payment_id);
   const paymentRequestId = clean(data.payment_request_id);
 
@@ -141,9 +138,7 @@ function getWebhookEventId(
     return undefined;
   }
 
-  return [event ?? 'payment.webhook', providerId, created ?? '']
-    .filter(Boolean)
-    .join(':');
+  return [event ?? 'payment.webhook', providerId, created ?? ''].filter(Boolean).join(':');
 }
 
 function verifyXenditWebhook(token: string | undefined) {
@@ -158,17 +153,12 @@ function verifyXenditWebhook(token: string | undefined) {
   }
 }
 
-function normalizeWebhookEvent(
-  body: XenditWebhookBody,
-): PaymentWebhookEvent | null {
+function normalizeWebhookEvent(body: XenditWebhookBody): PaymentWebhookEvent | null {
   const { event, data } = extractWebhookPayload(body);
 
   const referenceId = clean(data.reference_id);
 
-  const paymentId =
-    referenceId ??
-    clean(data.payment_id) ??
-    clean(data.payment_request_id);
+  const paymentId = referenceId ?? clean(data.payment_id) ?? clean(data.payment_request_id);
 
   if (!paymentId) {
     return null;
@@ -176,18 +166,11 @@ function normalizeWebhookEvent(
 
   const normalizedEvent = event?.trim().toLowerCase() ?? '';
 
-  const eventId =
-    getWebhookEventId(body, data) ??
-    `payment.webhook:${paymentId}`;
+  const eventId = getWebhookEventId(body, data) ?? `payment.webhook:${paymentId}`;
 
-  const transactionId =
-    clean(data.transaction_id) ??
-    clean(data.payment_id);
+  const transactionId = clean(data.transaction_id) ?? clean(data.payment_id);
 
-  if (
-    normalizedEvent.includes('failed') ||
-    normalizedEvent.includes('failure')
-  ) {
+  if (normalizedEvent.includes('failed') || normalizedEvent.includes('failure')) {
     return {
       eventId,
       type: 'payment.failed',
@@ -196,10 +179,7 @@ function normalizeWebhookEvent(
     };
   }
 
-  if (
-    normalizedEvent.includes('expired') ||
-    normalizedEvent.includes('expiry')
-  ) {
+  if (normalizedEvent.includes('expired') || normalizedEvent.includes('expiry')) {
     return {
       eventId,
       type: 'payment.failed',
@@ -234,21 +214,13 @@ function getPlategaData(body: PlategaWebhookBody) {
   return body.data ?? body;
 }
 
-function getPlategaTransactionId(
-  body: PlategaWebhookBody,
-): string | undefined {
+function getPlategaTransactionId(body: PlategaWebhookBody): string | undefined {
   const data = getPlategaData(body);
 
-  return (
-    clean(data.transactionId) ??
-    clean(data.transaction_id) ??
-    clean(data.id)
-  );
+  return clean(data.transactionId) ?? clean(data.transaction_id) ?? clean(data.id);
 }
 
-function getPlategaReferenceId(
-  body: PlategaWebhookBody,
-): string | undefined {
+function getPlategaReferenceId(body: PlategaWebhookBody): string | undefined {
   const data = getPlategaData(body);
 
   return (
@@ -276,18 +248,12 @@ function getPlategaEventId(body: PlategaWebhookBody): string | undefined {
     return undefined;
   }
 
-  return [
-    'platega',
-    identifier,
-    status?.trim().toLowerCase() ?? 'webhook',
-  ]
+  return ['platega', identifier, status?.trim().toLowerCase() ?? 'webhook']
     .filter(Boolean)
     .join(':');
 }
 
-function normalizePlategaWebhook(
-  body: PlategaWebhookBody,
-): PaymentWebhookEvent | null {
+function normalizePlategaWebhook(body: PlategaWebhookBody): PaymentWebhookEvent | null {
   const transactionId = getPlategaTransactionId(body);
   const referenceId = getPlategaReferenceId(body);
   const status = getPlategaStatus(body)?.trim().toLowerCase();
@@ -298,15 +264,9 @@ function normalizePlategaWebhook(
     return null;
   }
 
-  const eventId =
-    getPlategaEventId(body) ??
-    `platega:webhook:${paymentId}`;
+  const eventId = getPlategaEventId(body) ?? `platega:webhook:${paymentId}`;
 
-  if (
-    status?.includes('failed') ||
-    status?.includes('cancel') ||
-    status?.includes('expired')
-  ) {
+  if (status?.includes('failed') || status?.includes('cancel') || status?.includes('expired')) {
     return {
       eventId,
       type: 'payment.failed',
@@ -368,42 +328,28 @@ async function reconcileXenditPayment(
     return {
       payment,
       reconciled: false,
-      status:
-        expectedWebhookType === 'payment.success'
-          ? 'success'
-          : 'failed',
+      status: expectedWebhookType === 'payment.success' ? 'success' : 'failed',
       transactionId: payment.transactionId ?? undefined,
     } as const;
   }
 
   if (!payment.providerPaymentId) {
-    throw createError(
-      409,
-      'Payment does not have a provider payment request ID',
-    );
+    throw createError(409, 'Payment does not have a provider payment request ID');
   }
 
   const adapter = new XenditAdapter();
 
-  const verification = await adapter.verifyPayment(
-    payment.providerPaymentId,
-  );
+  const verification = await adapter.verifyPayment(payment.providerPaymentId);
 
   if (verification.status === 'unknown') {
-    throw createError(
-      502,
-      verification.error ?? 'Unable to verify payment with Xendit',
-    );
+    throw createError(502, verification.error ?? 'Unable to verify payment with Xendit');
   }
 
   const expectedReferenceId = payment.id.trim();
   const providerReferenceId = clean(verification.referenceId);
 
   if (!providerReferenceId) {
-    throw createError(
-      502,
-      'Xendit verification response does not contain reference ID',
-    );
+    throw createError(502, 'Xendit verification response does not contain reference ID');
   }
 
   if (providerReferenceId !== expectedReferenceId) {
@@ -421,20 +367,11 @@ async function reconcileXenditPayment(
       },
     });
 
-    throw createError(
-      409,
-      'Xendit payment reference ID does not match payment',
-    );
+    throw createError(409, 'Xendit payment reference ID does not match payment');
   }
 
-  if (
-    verification.amount === undefined ||
-    !Number.isFinite(verification.amount)
-  ) {
-    throw createError(
-      502,
-      'Xendit verification response does not contain a valid amount',
-    );
+  if (verification.amount === undefined || !Number.isFinite(verification.amount)) {
+    throw createError(502, 'Xendit verification response does not contain a valid amount');
   }
 
   if (verification.amount !== payment.amount) {
@@ -452,20 +389,14 @@ async function reconcileXenditPayment(
       },
     });
 
-    throw createError(
-      409,
-      'Xendit payment amount does not match payment',
-    );
+    throw createError(409, 'Xendit payment amount does not match payment');
   }
 
   const expectedCurrency = normalizeCurrency(payment.currency);
   const providerCurrency = normalizeCurrency(verification.currency);
 
   if (!expectedCurrency || !providerCurrency) {
-    throw createError(
-      502,
-      'Xendit verification response does not contain a valid currency',
-    );
+    throw createError(502, 'Xendit verification response does not contain a valid currency');
   }
 
   if (providerCurrency !== expectedCurrency) {
@@ -483,20 +414,14 @@ async function reconcileXenditPayment(
       },
     });
 
-    throw createError(
-      409,
-      'Xendit payment currency does not match payment',
-    );
+    throw createError(409, 'Xendit payment currency does not match payment');
   }
 
   return {
     payment,
     reconciled: true,
     status: verification.status,
-    transactionId:
-      verification.transactionId ??
-      payment.transactionId ??
-      undefined,
+    transactionId: verification.transactionId ?? payment.transactionId ?? undefined,
     referenceId: providerReferenceId,
     amount: verification.amount,
     currency: providerCurrency,
@@ -524,42 +449,28 @@ async function reconcilePlategaPayment(
     return {
       payment,
       reconciled: false,
-      status:
-        expectedWebhookType === 'payment.success'
-          ? 'success'
-          : 'failed',
+      status: expectedWebhookType === 'payment.success' ? 'success' : 'failed',
       transactionId: payment.transactionId ?? undefined,
     } as const;
   }
 
   if (!payment.providerPaymentId) {
-    throw createError(
-      409,
-      'Payment does not have a Platega transaction ID',
-    );
+    throw createError(409, 'Payment does not have a Platega transaction ID');
   }
 
   const adapter = new PlategaAdapter();
 
-  const verification = await adapter.verifyPayment(
-    payment.providerPaymentId,
-  );
+  const verification = await adapter.verifyPayment(payment.providerPaymentId);
 
   if (verification.status === 'unknown') {
-    throw createError(
-      502,
-      verification.error ?? 'Unable to verify payment with Platega',
-    );
+    throw createError(502, verification.error ?? 'Unable to verify payment with Platega');
   }
 
   const expectedReferenceId = payment.id.trim();
   const providerReferenceId = clean(verification.referenceId);
 
   if (!providerReferenceId) {
-    throw createError(
-      502,
-      'Platega verification response does not contain reference ID',
-    );
+    throw createError(502, 'Platega verification response does not contain reference ID');
   }
 
   if (providerReferenceId !== expectedReferenceId) {
@@ -577,20 +488,11 @@ async function reconcilePlategaPayment(
       },
     });
 
-    throw createError(
-      409,
-      'Platega payment reference ID does not match payment',
-    );
+    throw createError(409, 'Platega payment reference ID does not match payment');
   }
 
-  if (
-    verification.amount === undefined ||
-    !Number.isFinite(verification.amount)
-  ) {
-    throw createError(
-      502,
-      'Platega verification response does not contain a valid amount',
-    );
+  if (verification.amount === undefined || !Number.isFinite(verification.amount)) {
+    throw createError(502, 'Platega verification response does not contain a valid amount');
   }
 
   if (verification.amount !== payment.amount) {
@@ -608,20 +510,14 @@ async function reconcilePlategaPayment(
       },
     });
 
-    throw createError(
-      409,
-      'Platega payment amount does not match payment',
-    );
+    throw createError(409, 'Platega payment amount does not match payment');
   }
 
   const expectedCurrency = normalizeCurrency(payment.currency);
   const providerCurrency = normalizeCurrency(verification.currency);
 
   if (!expectedCurrency || !providerCurrency) {
-    throw createError(
-      502,
-      'Platega verification response does not contain a valid currency',
-    );
+    throw createError(502, 'Platega verification response does not contain a valid currency');
   }
 
   if (providerCurrency !== expectedCurrency) {
@@ -639,20 +535,14 @@ async function reconcilePlategaPayment(
       },
     });
 
-    throw createError(
-      409,
-      'Platega payment currency does not match payment',
-    );
+    throw createError(409, 'Platega payment currency does not match payment');
   }
 
   return {
     payment,
     reconciled: true,
     status: verification.status,
-    transactionId:
-      verification.transactionId ??
-      payment.transactionId ??
-      undefined,
+    transactionId: verification.transactionId ?? payment.transactionId ?? undefined,
     referenceId: providerReferenceId,
     amount: verification.amount,
     currency: providerCurrency,
@@ -667,13 +557,7 @@ async function reconcilePlategaPayment(
 
 function resolveWebhookStatus(
   reconciledStatus:
-    | 'pending'
-    | 'requires_action'
-    | 'success'
-    | 'failed'
-    | 'expired'
-    | 'canceled'
-    | 'unknown',
+    'pending' | 'requires_action' | 'success' | 'failed' | 'expired' | 'canceled' | 'unknown',
 ): 'success' | 'failed' | null {
   if (reconciledStatus === 'success') {
     return 'success';
@@ -690,9 +574,7 @@ function resolveWebhookStatus(
   return null;
 }
 
-async function reconcilePayment(
-  event: PaymentWebhookEvent,
-) {
+async function reconcilePayment(event: PaymentWebhookEvent) {
   const payment = await prisma.payment.findUnique({
     where: {
       id: event.paymentId,
@@ -708,36 +590,22 @@ async function reconcilePayment(
 
   switch (payment.provider) {
     case 'XenditAdapter':
-      return reconcileXenditPayment(
-        event.paymentId,
-        event.type,
-      );
+      return reconcileXenditPayment(event.paymentId, event.type);
 
     case 'RussiaPaymentAdapter':
-      return reconcilePlategaPayment(
-        event.paymentId,
-        event.type,
-      );
+      return reconcilePlategaPayment(event.paymentId, event.type);
 
     default:
       return {
         payment,
         reconciled: false,
-        status:
-          event.type === 'payment.success'
-            ? 'success'
-            : 'failed',
-        transactionId:
-          payment.transactionId ??
-          event.transactionId ??
-          undefined,
+        status: event.type === 'payment.success' ? 'success' : 'failed',
+        transactionId: payment.transactionId ?? event.transactionId ?? undefined,
       } as const;
   }
 }
 
-export async function processPaymentWebhook(
-  event: PaymentWebhookEvent,
-) {
+export async function processPaymentWebhook(event: PaymentWebhookEvent) {
   if (!event.eventId) {
     throw createError(400, 'Webhook event ID is required');
   }
@@ -768,9 +636,7 @@ export async function processPaymentWebhook(
 
   const reconciliation = await reconcilePayment(event);
 
-  const finalStatus = resolveWebhookStatus(
-    reconciliation.status,
-  );
+  const finalStatus = resolveWebhookStatus(reconciliation.status);
 
   if (!finalStatus) {
     await auditLog({
@@ -783,9 +649,7 @@ export async function processPaymentWebhook(
         webhookType: event.type,
         provider: reconciliation.payment.provider,
         providerStatus: reconciliation.status,
-        transactionId:
-          reconciliation.transactionId ??
-          event.transactionId,
+        transactionId: reconciliation.transactionId ?? event.transactionId,
       },
     });
 
@@ -802,9 +666,7 @@ export async function processPaymentWebhook(
   const result = await transitionPaymentFromWebhook({
     paymentId: reconciliation.payment.id,
     status: finalStatus,
-    transactionId:
-      reconciliation.transactionId ??
-      event.transactionId,
+    transactionId: reconciliation.transactionId ?? event.transactionId,
     webhookEventId: event.eventId,
   });
 
@@ -841,9 +703,7 @@ export async function processPaymentWebhook(
         webhookType: event.type,
         provider: result.payment.provider,
         providerStatus: reconciliation.status,
-        transactionId:
-          reconciliation.transactionId ??
-          event.transactionId,
+        transactionId: reconciliation.transactionId ?? event.transactionId,
       },
     });
 
@@ -869,9 +729,7 @@ export async function processPaymentWebhook(
       webhookType: event.type,
       provider: result.payment.provider,
       providerStatus: reconciliation.status,
-      transactionId:
-        reconciliation.transactionId ??
-        event.transactionId,
+      transactionId: reconciliation.transactionId ?? event.transactionId,
     },
   });
 
@@ -891,10 +749,7 @@ export async function processPaymentWebhook(
  * --------------------------------------------------------------------------
  */
 
-export async function processXenditWebhook(
-  body: XenditWebhookBody,
-  token: string | undefined,
-) {
+export async function processXenditWebhook(body: XenditWebhookBody, token: string | undefined) {
   verifyXenditWebhook(token);
 
   const event = normalizeWebhookEvent(body);
@@ -916,9 +771,7 @@ export async function processXenditWebhook(
  * --------------------------------------------------------------------------
  */
 
-export async function processPlategaWebhook(
-  body: PlategaWebhookBody,
-) {
+export async function processPlategaWebhook(body: PlategaWebhookBody) {
   const event = normalizePlategaWebhook(body);
 
   if (!event) {

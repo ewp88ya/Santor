@@ -55,9 +55,7 @@ describe('Platega payment webhook reconciliation', () => {
     };
   }
 
-  function mockPaymentLookup(
-    currentPayment: Record<string, unknown> = payment(),
-  ) {
+  function mockPaymentLookup(currentPayment: Record<string, unknown> = payment()) {
     prismaMock.payment.findUnique.mockImplementation(
       async (args: {
         where?: {
@@ -66,10 +64,7 @@ describe('Platega payment webhook reconciliation', () => {
         };
       }) => {
         if (args.where?.webhookEventId) {
-          if (
-            currentPayment.webhookEventId ===
-            args.where.webhookEventId
-          ) {
+          if (currentPayment.webhookEventId === args.where.webhookEventId) {
             return currentPayment;
           }
 
@@ -118,8 +113,7 @@ describe('Platega payment webhook reconciliation', () => {
 
     generateLicenseMock.mockResolvedValue(undefined);
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     const result = await processPaymentWebhook({
       eventId: 'platega:plt-001:completed',
@@ -144,9 +138,7 @@ describe('Platega payment webhook reconciliation', () => {
       webhookEventId: 'platega:plt-001:completed',
     });
 
-    expect(generateLicenseMock).toHaveBeenCalledWith(
-      'subscription-001',
-    );
+    expect(generateLicenseMock).toHaveBeenCalledWith('subscription-001');
   });
 
   it('does not trust webhook success when Platega is still pending', async () => {
@@ -166,8 +158,7 @@ describe('Platega payment webhook reconciliation', () => {
       ),
     );
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     const result = await processPaymentWebhook({
       eventId: 'platega:plt-001:pending',
@@ -206,8 +197,7 @@ describe('Platega payment webhook reconciliation', () => {
       ),
     );
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     await expect(
       processPaymentWebhook({
@@ -251,8 +241,7 @@ describe('Platega payment webhook reconciliation', () => {
       ),
     );
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     await expect(
       processPaymentWebhook({
@@ -296,8 +285,7 @@ describe('Platega payment webhook reconciliation', () => {
       ),
     );
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     await expect(
       processPaymentWebhook({
@@ -351,8 +339,7 @@ describe('Platega payment webhook reconciliation', () => {
       },
     });
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     const result = await processPaymentWebhook({
       eventId: 'platega:plt-001:failed',
@@ -388,8 +375,7 @@ describe('Platega payment webhook reconciliation', () => {
 
     mockPaymentLookup(duplicatePayment);
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     const result = await processPaymentWebhook({
       eventId: 'platega:plt-001:duplicate',
@@ -423,8 +409,7 @@ describe('Platega payment webhook reconciliation', () => {
       ),
     );
 
-    const { processPaymentWebhook } =
-      await import('../payment.webhook.js');
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
 
     await expect(
       processPaymentWebhook({
