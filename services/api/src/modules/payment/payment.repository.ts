@@ -140,6 +140,24 @@ export async function listPayments(userId: string) {
   });
 }
 
+export async function findLatestSuccessfulPaymentForSubscription(subscriptionId: string) {
+  return prisma.payment.findFirst({
+    where: {
+      subscriptionId,
+      status: 'success',
+      country: {
+        not: null,
+      },
+      paymentMethod: {
+        not: null,
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
+
 export async function updatePaymentProvider(
   id: string,
   data: {
