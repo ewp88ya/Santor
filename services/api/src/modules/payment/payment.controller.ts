@@ -1,6 +1,6 @@
 import type { FastifyRequest } from 'fastify';
 
-import { processPaymentWebhook } from './payment.webhook.js';
+import { processPaymentWebhook, processXenditWebhook } from './payment.webhook.js';
 
 import {
   createNewPayment,
@@ -78,7 +78,9 @@ export async function enableAutoDebitController(request: FastifyRequest) {
   };
 
   return enableAutoDebit({
-    ...body,
+    subscriptionId: body.subscriptionId,
+    customerId: body.customerId,
+    paymentMethodId: body.paymentMethodId,
     userId: getUserId(request),
   });
 }
@@ -100,4 +102,15 @@ export async function paymentWebhookController(request: FastifyRequest) {
   };
 
   return processPaymentWebhook(body);
+}
+
+export async function xenditWebhookController(request: FastifyRequest) {
+  const token = request.headers['x-callback-token'];
+
+  const normalizedToken = Array.isArray(token) ? token[0] : token;
+
+  return processXenditWebhook(
+    request.body as Parameters<typeof processXenditWebhook>[0],
+    normalizedToken,
+  );
 }

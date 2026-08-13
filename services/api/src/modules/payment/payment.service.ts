@@ -4,6 +4,7 @@ import {
   createPayment,
   findPaymentByIdForUser,
   listPayments,
+  updatePaymentProvider,
   updatePaymentStatus,
   updateSubscriptionAutoDebit,
 } from './payment.repository.js';
@@ -49,8 +50,8 @@ export async function createNewPayment(data: {
       country: normalizedCountry,
       currency: normalizedCurrency,
       paymentMethod: data.paymentMethod,
-      settlementCurrency: data.settlementCurrency,
-      autoDebit: data.autoDebit,
+      settlementCurrency: data.settlementCurrency ?? undefined,
+      autoDebit: data.autoDebit ?? false,
     });
 
     if (!payment) {
@@ -60,6 +61,51 @@ export async function createNewPayment(data: {
     if (payment.subscription.userId !== data.userId) {
       throw createError(403, 'Forbidden');
     }
+
+    const paymentMethodId = payment.paymentMethod?.trim();
+
+    if (!paymentMethodId) {
+      throw createError(400, 'Payment method ID is required');
+    }
+
+    const paymentCountry = payment.country?.trim().toUpperCase();
+
+    if (!paymentCountry) {
+      throw createError(400, 'Payment country is required');
+    }
+
+    const chargeResult = await paymentProvider.charge({
+      customerId: payment.subscription.userId,
+      paymentMethodId,
+      amount: payment.amount,
+      currency: payment.currency,
+      country: paymentCountry,
+      paymentMethod: paymentMethodId as PaymentMethod,
+      referenceId: payment.id,
+    });
+
+    if (!chargeResult.success) {
+      await updatePaymentStatus(payment.id, 'failed');
+
+      await auditLog({
+        userId: data.userId,
+        action: 'PAYMENT_PROVIDER_FAILED',
+        resource: 'payment',
+        resourceId: payment.id,
+        metadata: {
+          provider: payment.provider,
+          error: chargeResult.error,
+        },
+      });
+
+      throw createError(502, chargeResult.error ?? 'Payment provider request failed');
+    }
+
+    const updatedPayment = await updatePaymentProvider(payment.id, {
+      providerPaymentId: chargeResult.providerPaymentId ?? undefined,
+      transactionId: chargeResult.transactionId ?? undefined,
+      settlementCurrency: chargeResult.settlementCurrency ?? undefined,
+    });
 
     await auditLog({
       userId: data.userId,
@@ -72,16 +118,29 @@ export async function createNewPayment(data: {
         currency: payment.currency,
         paymentMethod: payment.paymentMethod,
         amount: payment.amount,
-        settlementCurrency: payment.settlementCurrency,
+        settlementCurrency:
+          chargeResult.settlementCurrency ?? payment.settlementCurrency ?? undefined,
         autoDebit: payment.autoDebit,
+        providerPaymentId: chargeResult.providerPaymentId ?? undefined,
+        transactionId: chargeResult.transactionId ?? undefined,
       },
     });
 
-    return payment;
+    return {
+      payment: updatedPayment,
+      provider: {
+        name: payment.provider,
+        paymentId: chargeResult.providerPaymentId ?? undefined,
+        transactionId: chargeResult.transactionId ?? undefined,
+        actions: chargeResult.actions ?? [],
+      },
+    };
   } catch (error: any) {
     if (error.message === 'Subscription already active') {
       const err = createError(409, 'Subscription already active');
+
       err.code = 'SUBSCRIPTION_ACTIVE';
+
       throw err;
     }
 

@@ -3,6 +3,7 @@ type PaymentProviderConfig = {
   apiKey?: string;
   apiSecret?: string;
   baseUrl?: string;
+  webhookToken?: string;
 };
 
 function getOptionalEnv(name: string): string | undefined {
@@ -34,6 +35,7 @@ export const paymentConfig = {
     apiKey: getOptionalEnv('XENDIT_API_KEY'),
     apiSecret: getOptionalEnv('XENDIT_API_SECRET'),
     baseUrl: getOptionalEnv('XENDIT_BASE_URL') ?? 'https://api.xendit.co',
+    webhookToken: getOptionalEnv('XENDIT_WEBHOOK_TOKEN'),
   } satisfies PaymentProviderConfig,
 
   russia: {

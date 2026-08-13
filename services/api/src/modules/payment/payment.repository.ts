@@ -140,6 +140,27 @@ export async function listPayments(userId: string) {
   });
 }
 
+export async function updatePaymentProvider(
+  id: string,
+  data: {
+    providerPaymentId?: string;
+    transactionId?: string;
+    settlementCurrency?: string;
+  },
+) {
+  return prisma.payment.update({
+    where: {
+      id,
+    },
+    data: {
+      providerPaymentId: data.providerPaymentId,
+      transactionId: data.transactionId,
+      settlementCurrency: data.settlementCurrency,
+    },
+    include: paymentInclude,
+  });
+}
+
 export async function updatePaymentStatus(id: string, status: string, transactionId?: string) {
   return prisma.payment.update({
     where: {
@@ -150,6 +171,110 @@ export async function updatePaymentStatus(id: string, status: string, transactio
       transactionId,
     },
     include: paymentInclude,
+  });
+}
+
+export async function transitionPaymentFromWebhook(data: {
+  paymentId: string;
+  status: 'success' | 'failed';
+  transactionId?: string;
+  webhookEventId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.findUnique({
+      where: {
+        id: data.paymentId,
+      },
+      include: {
+        subscription: true,
+      },
+    });
+
+    if (!payment) {
+      throw new Error('Payment not found');
+    }
+
+    if (payment.webhookEventId === data.webhookEventId) {
+      return {
+        processed: false,
+        duplicate: true,
+        transitioned: false,
+        payment,
+      };
+    }
+
+    if (payment.status !== 'pending') {
+      return {
+        processed: true,
+        duplicate: false,
+        transitioned: false,
+        payment,
+      };
+    }
+
+    const updated = await tx.payment.updateMany({
+      where: {
+        id: data.paymentId,
+        status: 'pending',
+        OR: [
+          {
+            webhookEventId: null,
+          },
+          {
+            webhookEventId: {
+              not: data.webhookEventId,
+            },
+          },
+        ],
+      },
+      data: {
+        status: data.status,
+        transactionId: data.transactionId,
+        webhookEventId: data.webhookEventId,
+      },
+    });
+
+    if (updated.count === 0) {
+      const current = await tx.payment.findUnique({
+        where: {
+          id: data.paymentId,
+        },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!current) {
+        throw new Error('Payment not found');
+      }
+
+      return {
+        processed: true,
+        duplicate: current.webhookEventId === data.webhookEventId,
+        transitioned: false,
+        payment: current,
+      };
+    }
+
+    const refreshed = await tx.payment.findUnique({
+      where: {
+        id: data.paymentId,
+      },
+      include: {
+        subscription: true,
+      },
+    });
+
+    if (!refreshed) {
+      throw new Error('Payment not found after webhook transition');
+    }
+
+    return {
+      processed: true,
+      duplicate: false,
+      transitioned: true,
+      payment: refreshed,
+    };
   });
 }
 
