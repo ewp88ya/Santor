@@ -4,6 +4,9 @@ type PaymentProviderConfig = {
   apiSecret?: string;
   baseUrl?: string;
   webhookToken?: string;
+  plategaMerchantId?: string;
+  plategaSecret?: string;
+  plategaBaseUrl?: string;
 };
 
 function getOptionalEnv(name: string): string | undefined {
@@ -43,5 +46,8 @@ export const paymentConfig = {
     apiKey: getOptionalEnv('RUSSIA_PAYMENT_API_KEY'),
     apiSecret: getOptionalEnv('RUSSIA_PAYMENT_API_SECRET'),
     baseUrl: getOptionalEnv('RUSSIA_PAYMENT_BASE_URL'),
+    plategaMerchantId: getOptionalEnv('PLATEGA_MERCHANT_ID'),
+    plategaSecret: getOptionalEnv('PLATEGA_SECRET'),
+    plategaBaseUrl: getOptionalEnv('PLATEGA_BASE_URL') ?? 'https://app.platega.io',
   } satisfies PaymentProviderConfig,
 } as const;

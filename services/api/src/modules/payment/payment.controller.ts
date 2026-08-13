@@ -1,6 +1,10 @@
 import type { FastifyRequest } from 'fastify';
 
-import { processPaymentWebhook, processXenditWebhook } from './payment.webhook.js';
+import {
+  processPaymentWebhook,
+  processPlategaWebhook,
+  processXenditWebhook,
+} from './payment.webhook.js';
 
 import {
   createNewPayment,
@@ -112,5 +116,11 @@ export async function xenditWebhookController(request: FastifyRequest) {
   return processXenditWebhook(
     request.body as Parameters<typeof processXenditWebhook>[0],
     normalizedToken,
+  );
+}
+
+export async function plategaWebhookController(request: FastifyRequest) {
+  return processPlategaWebhook(
+    request.body as Parameters<typeof processPlategaWebhook>[0],
   );
 }

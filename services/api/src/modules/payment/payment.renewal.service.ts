@@ -31,7 +31,8 @@ function normalizePaymentMethod(value: string | null | undefined): PaymentMethod
     normalized === 'ALIPAY' ||
     normalized === 'WECHAT_PAY' ||
     normalized === 'SBP' ||
-    normalized === 'MIR'
+    normalized === 'MIR' ||
+    normalized === 'CRYPTO'
   ) {
     return normalized;
   }

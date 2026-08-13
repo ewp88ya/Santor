@@ -9,7 +9,7 @@ function isChinaMethod(method: PaymentMethod) {
 }
 
 function isRussiaMethod(method: PaymentMethod) {
-  return method === 'SBP' || method === 'MIR';
+  return method === 'SBP' || method === 'MIR' || method === 'CRYPTO';
 }
 
 export function routePaymentProvider(

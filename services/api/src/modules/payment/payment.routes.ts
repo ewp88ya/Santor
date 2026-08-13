@@ -8,6 +8,7 @@ import {
   listPaymentController,
   paymentSuccessController,
   paymentWebhookController,
+  plategaWebhookController,
   xenditWebhookController,
 } from './payment.controller.js';
 
@@ -66,6 +67,15 @@ export default async function paymentRoutes(app: FastifyInstance) {
    * Xendit's Payment Request API.
    */
   app.post('/payments/webhook/xendit', xenditWebhookController);
+
+  /*
+   * Platega webhook.
+   *
+   * The webhook is only a trigger.
+   * Payment state is reconciled against Platega
+   * transaction status through PlategaAdapter.
+   */
+  app.post('/payments/webhook/platega', plategaWebhookController);
 
   app.post(
     '/payments/autodebit/enable',

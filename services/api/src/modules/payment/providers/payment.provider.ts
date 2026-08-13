@@ -1,5 +1,5 @@
 export type PaymentMethod =
-  'VISA' | 'MASTERCARD' | 'QRIS' | 'ALIPAY' | 'WECHAT_PAY' | 'SBP' | 'MIR';
+  'VISA' | 'MASTERCARD' | 'QRIS' | 'ALIPAY' | 'WECHAT_PAY' | 'SBP' | 'MIR' | 'CRYPTO';
 
 export type ChargeRequest = {
   customerId?: string;

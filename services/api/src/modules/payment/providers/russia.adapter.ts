@@ -5,37 +5,16 @@ import type {
   PaymentVerificationResult,
 } from './payment.provider.js';
 
-import { paymentConfig } from './payment.config.js';
+import { PlategaAdapter } from './platega.adapter.js';
 
 export class RussiaPaymentAdapter implements PaymentProvider {
-  async charge(request: ChargeRequest): Promise<ChargeResult> {
-    const config = paymentConfig.russia;
+  private readonly platega = new PlategaAdapter();
 
-    if (!config.enabled) {
-      return {
-        success: false,
-        error: 'Russia payment provider is disabled',
-      };
-    }
-
-    if (!config.apiKey) {
-      return {
-        success: false,
-        error: 'Russia payment provider API key is not configured',
-      };
-    }
-
-    return {
-      success: false,
-      error: `Russia payment integration is not implemented yet for ${request.paymentMethod}`,
-    };
+  charge(request: ChargeRequest): Promise<ChargeResult> {
+    return this.platega.charge(request);
   }
 
-  async verifyPayment(paymentId: string): Promise<PaymentVerificationResult> {
-    return {
-      status: 'unknown',
-      providerPaymentId: paymentId.trim() || undefined,
-      error: 'Russia payment verification is not implemented yet',
-    };
+  verifyPayment(paymentId: string): Promise<PaymentVerificationResult> {
+    return this.platega.verifyPayment(paymentId);
   }
 }
