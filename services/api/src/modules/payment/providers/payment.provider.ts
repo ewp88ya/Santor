@@ -1,11 +1,5 @@
 export type PaymentMethod =
-  | 'VISA'
-  | 'MASTERCARD'
-  | 'QRIS'
-  | 'ALIPAY'
-  | 'WECHAT_PAY'
-  | 'SBP'
-  | 'MIR';
+  'VISA' | 'MASTERCARD' | 'QRIS' | 'ALIPAY' | 'WECHAT_PAY' | 'SBP' | 'MIR';
 
 export type ChargeRequest = {
   customerId?: string;
@@ -32,12 +26,7 @@ export type ChargeResult = {
   error?: string;
 };
 
-export type PaymentVerificationStatus =
-  | 'pending'
-  | 'success'
-  | 'failed'
-  | 'expired'
-  | 'unknown';
+export type PaymentVerificationStatus = 'pending' | 'success' | 'failed' | 'expired' | 'unknown';
 
 export type PaymentVerificationResult = {
   status: PaymentVerificationStatus;

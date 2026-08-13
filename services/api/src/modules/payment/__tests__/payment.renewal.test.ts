@@ -45,8 +45,7 @@ vi.mock('../../audit/audit.service.js', () => ({
 }));
 
 vi.mock('../payment.repository.js', () => ({
-  findLatestSuccessfulPaymentForSubscription:
-    mocks.mockFindLatestSuccessfulPaymentForSubscription,
+  findLatestSuccessfulPaymentForSubscription: mocks.mockFindLatestSuccessfulPaymentForSubscription,
 }));
 
 vi.mock('../payment.router.js', () => ({
@@ -108,11 +107,9 @@ function resetSubscription(overrides: Record<string, unknown> = {}) {
 }
 
 function setupSuccessfulTransaction() {
-  mocks.mockPrisma.$transaction.mockImplementation(
-    async (operations: Promise<unknown>[]) => {
-      return Promise.all(operations);
-    },
-  );
+  mocks.mockPrisma.$transaction.mockImplementation(async (operations: Promise<unknown>[]) => {
+    return Promise.all(operations);
+  });
 
   mocks.mockPrisma.payment.update.mockResolvedValue({
     ...mockPayment,
@@ -133,17 +130,13 @@ function setupSuccessfulTransaction() {
 beforeEach(() => {
   vi.clearAllMocks();
 
-  mocks.mockPrisma.subscription.findUnique.mockResolvedValue(
-    resetSubscription(),
-  );
+  mocks.mockPrisma.subscription.findUnique.mockResolvedValue(resetSubscription());
 
   mocks.mockPrisma.subscription.updateMany.mockResolvedValue({
     count: 1,
   });
 
-  mocks.mockPrisma.subscription.update.mockResolvedValue(
-    resetSubscription(),
-  );
+  mocks.mockPrisma.subscription.update.mockResolvedValue(resetSubscription());
 
   mocks.mockPrisma.payment.create.mockResolvedValue(mockPayment);
 
@@ -156,9 +149,7 @@ beforeEach(() => {
 
   mocks.mockAuditLog.mockResolvedValue(undefined);
 
-  mocks.mockFindLatestSuccessfulPaymentForSubscription.mockResolvedValue(
-    mockPreviousPayment,
-  );
+  mocks.mockFindLatestSuccessfulPaymentForSubscription.mockResolvedValue(mockPreviousPayment);
 
   mocks.mockRoutePaymentProvider.mockReturnValue(mocks.mockProvider);
 
@@ -179,9 +170,7 @@ describe('Payment Auto-Debit / Renewal', () => {
   it('routes renewal through the provider registry using the previous successful payment context', async () => {
     await renewSubscription('sub_123');
 
-    expect(
-      mocks.mockFindLatestSuccessfulPaymentForSubscription,
-    ).toHaveBeenCalledWith('sub_123');
+    expect(mocks.mockFindLatestSuccessfulPaymentForSubscription).toHaveBeenCalledWith('sub_123');
 
     expect(mocks.mockRoutePaymentProvider).toHaveBeenCalledWith(
       'RU',
@@ -402,9 +391,7 @@ describe('Payment Auto-Debit / Renewal', () => {
   });
 
   it('enters grace period when successful payment routing context is missing', async () => {
-    mocks.mockFindLatestSuccessfulPaymentForSubscription.mockResolvedValue(
-      null,
-    );
+    mocks.mockFindLatestSuccessfulPaymentForSubscription.mockResolvedValue(null);
 
     const result = await renewSubscription('sub_123');
 
@@ -425,9 +412,7 @@ describe('Payment Auto-Debit / Renewal', () => {
     expect(result.renewed).toBe(false);
     expect(result.reason).toBe('RENEWAL_ALREADY_CLAIMED');
 
-    expect(
-      mocks.mockFindLatestSuccessfulPaymentForSubscription,
-    ).not.toHaveBeenCalled();
+    expect(mocks.mockFindLatestSuccessfulPaymentForSubscription).not.toHaveBeenCalled();
 
     expect(mocks.mockProvider.charge).not.toHaveBeenCalled();
     expect(mocks.mockPrisma.payment.create).not.toHaveBeenCalled();
@@ -453,4 +438,3 @@ describe('Payment Auto-Debit / Renewal', () => {
     expect(mocks.mockProvider.charge).toHaveBeenCalled();
   });
 });
-

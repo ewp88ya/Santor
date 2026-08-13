@@ -284,13 +284,7 @@ async function reconcileXenditPayment(
 
 function resolveWebhookStatus(
   reconciledStatus:
-    | 'pending'
-    | 'requires_action'
-    | 'success'
-    | 'failed'
-    | 'expired'
-    | 'canceled'
-    | 'unknown',
+    'pending' | 'requires_action' | 'success' | 'failed' | 'expired' | 'canceled' | 'unknown',
 ): 'success' | 'failed' | null {
   /*
    * The provider's reconciled status is authoritative.
@@ -487,10 +481,7 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
   };
 }
 
-export async function processXenditWebhook(
-  body: XenditWebhookBody,
-  token: string | undefined,
-) {
+export async function processXenditWebhook(body: XenditWebhookBody, token: string | undefined) {
   verifyXenditWebhook(token);
 
   const event = normalizeWebhookEvent(body);
