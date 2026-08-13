@@ -2,7 +2,7 @@ import type {
   ChargeRequest,
   ChargeResult,
   PaymentProvider,
-  PaymentReconciliationResult,
+  PaymentVerificationResult,
 } from './payment.provider.js';
 
 import { paymentConfig } from './payment.config.js';
@@ -12,8 +12,6 @@ type XenditPaymentRequestResponse = {
   latest_payment_id?: string;
   reference_id?: string;
   status?: string;
-  request_amount?: number;
-  currency?: string;
   actions?: Array<{
     type?: string;
     descriptor?: string;
@@ -58,15 +56,9 @@ function getChannelCode(
 }
 
 function getChannelProperties(request: ChargeRequest): Record<string, unknown> {
-  const paymentMethod = request.paymentMethod;
-
-  switch (paymentMethod) {
+  switch (request.paymentMethod) {
     case 'QRIS':
-      return {};
-
     case 'ALIPAY':
-      return {};
-
     case 'WECHAT_PAY':
       return {};
 
@@ -85,7 +77,7 @@ function getChannelProperties(request: ChargeRequest): Record<string, unknown> {
   }
 }
 
-function normalizeXenditStatus(status: string | undefined): PaymentReconciliationResult['status'] {
+function mapXenditStatus(status?: string): PaymentVerificationResult['status'] {
   switch (status?.trim().toUpperCase()) {
     case 'SUCCEEDED':
       return 'success';
@@ -97,14 +89,12 @@ function normalizeXenditStatus(status: string | undefined): PaymentReconciliatio
       return 'expired';
 
     case 'CANCELED':
-    case 'CANCELLED':
-      return 'canceled';
+      return 'failed';
 
-    case 'PENDING':
-      return 'pending';
-
+    case 'ACCEPTING_PAYMENTS':
     case 'REQUIRES_ACTION':
-      return 'requires_action';
+    case 'AUTHORIZED':
+      return 'pending';
 
     default:
       return 'unknown';
@@ -248,7 +238,6 @@ export class XenditAdapter implements PaymentProvider {
     }
 
     const paymentResponse = body as XenditPaymentRequestResponse | undefined;
-
     const paymentRequestId = paymentResponse?.payment_request_id;
 
     if (!paymentRequestId) {
@@ -267,12 +256,11 @@ export class XenditAdapter implements PaymentProvider {
     };
   }
 
-  async reconcilePayment(providerPaymentId: string): Promise<PaymentReconciliationResult> {
+  async verifyPayment(paymentId: string): Promise<PaymentVerificationResult> {
     const config = paymentConfig.xendit;
 
     if (!config.enabled) {
       return {
-        success: false,
         status: 'unknown',
         error: 'Xendit provider is disabled',
       };
@@ -280,7 +268,6 @@ export class XenditAdapter implements PaymentProvider {
 
     if (!config.apiKey) {
       return {
-        success: false,
         status: 'unknown',
         error: 'Xendit API key is not configured',
       };
@@ -288,24 +275,22 @@ export class XenditAdapter implements PaymentProvider {
 
     if (!config.baseUrl) {
       return {
-        success: false,
         status: 'unknown',
         error: 'Xendit base URL is not configured',
       };
     }
 
-    const normalizedProviderPaymentId = providerPaymentId.trim();
+    const normalizedPaymentId = paymentId.trim();
 
-    if (!normalizedProviderPaymentId) {
+    if (!normalizedPaymentId) {
       return {
-        success: false,
         status: 'unknown',
         error: 'Xendit payment request ID is required',
       };
     }
 
     const url = new URL(
-      `/v3/payment_requests/${encodeURIComponent(normalizedProviderPaymentId)}`,
+      `/v3/payment_requests/${encodeURIComponent(normalizedPaymentId)}`,
       config.baseUrl,
     );
 
@@ -322,12 +307,11 @@ export class XenditAdapter implements PaymentProvider {
       });
     } catch (error) {
       return {
-        success: false,
         status: 'unknown',
         error:
           error instanceof Error
-            ? `Xendit reconciliation request failed: ${error.message}`
-            : 'Xendit reconciliation request failed',
+            ? `Xendit verification request failed: ${error.message}`
+            : 'Xendit verification request failed',
       };
     }
 
@@ -347,27 +331,18 @@ export class XenditAdapter implements PaymentProvider {
       const errorBody = body as XenditErrorResponse | undefined;
 
       return {
-        success: false,
         status: 'unknown',
         error:
-          errorBody?.message ??
-          errorBody?.error_code ??
-          `Xendit reconciliation returned HTTP ${response.status}`,
+          errorBody?.message ?? errorBody?.error_code ?? `Xendit returned HTTP ${response.status}`,
       };
     }
 
     const paymentResponse = body as XenditPaymentRequestResponse | undefined;
 
-    const normalizedStatus = normalizeXenditStatus(paymentResponse?.status);
-
     return {
-      success: true,
-      status: normalizedStatus,
-      providerPaymentId: paymentResponse?.payment_request_id ?? normalizedProviderPaymentId,
+      status: mapXenditStatus(paymentResponse?.status),
+      providerPaymentId: paymentResponse?.payment_request_id ?? normalizedPaymentId,
       transactionId: paymentResponse?.latest_payment_id,
-      referenceId: paymentResponse?.reference_id,
-      amount: paymentResponse?.request_amount,
-      currency: paymentResponse?.currency,
     };
   }
 }

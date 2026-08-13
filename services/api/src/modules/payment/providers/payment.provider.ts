@@ -1,5 +1,11 @@
 export type PaymentMethod =
-  'VISA' | 'MASTERCARD' | 'QRIS' | 'ALIPAY' | 'WECHAT_PAY' | 'SBP' | 'MIR';
+  | 'VISA'
+  | 'MASTERCARD'
+  | 'QRIS'
+  | 'ALIPAY'
+  | 'WECHAT_PAY'
+  | 'SBP'
+  | 'MIR';
 
 export type ChargeRequest = {
   customerId?: string;
@@ -26,19 +32,22 @@ export type ChargeResult = {
   error?: string;
 };
 
-export type PaymentReconciliationResult = {
-  success: boolean;
-  status: 'pending' | 'requires_action' | 'success' | 'failed' | 'expired' | 'canceled' | 'unknown';
+export type PaymentVerificationStatus =
+  | 'pending'
+  | 'success'
+  | 'failed'
+  | 'expired'
+  | 'unknown';
+
+export type PaymentVerificationResult = {
+  status: PaymentVerificationStatus;
   providerPaymentId?: string;
   transactionId?: string;
-  referenceId?: string;
-  amount?: number;
-  currency?: string;
   error?: string;
 };
 
 export interface PaymentProvider {
   charge(request: ChargeRequest): Promise<ChargeResult>;
 
-  reconcilePayment?(providerPaymentId: string): Promise<PaymentReconciliationResult>;
+  verifyPayment(paymentId: string): Promise<PaymentVerificationResult>;
 }

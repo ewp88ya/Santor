@@ -1,4 +1,9 @@
-import type { ChargeRequest, ChargeResult, PaymentProvider } from './payment.provider.js';
+import type {
+  ChargeRequest,
+  ChargeResult,
+  PaymentProvider,
+  PaymentVerificationResult,
+} from './payment.provider.js';
 
 import { paymentConfig } from './payment.config.js';
 
@@ -23,6 +28,14 @@ export class RussiaPaymentAdapter implements PaymentProvider {
     return {
       success: false,
       error: `Russia payment integration is not implemented yet for ${request.paymentMethod}`,
+    };
+  }
+
+  async verifyPayment(paymentId: string): Promise<PaymentVerificationResult> {
+    return {
+      status: 'unknown',
+      providerPaymentId: paymentId.trim() || undefined,
+      error: 'Russia payment verification is not implemented yet',
     };
   }
 }

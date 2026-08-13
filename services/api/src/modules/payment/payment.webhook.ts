@@ -53,6 +53,12 @@ export type PaymentWebhookEvent = {
   transactionId?: string;
 };
 
+function clean(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+
+  return normalized || undefined;
+}
+
 function extractWebhookPayload(body: XenditWebhookBody) {
   const capture = body.paymentCapture?.value;
   const failure = body.paymentFailure?.value;
@@ -60,9 +66,8 @@ function extractWebhookPayload(body: XenditWebhookBody) {
 
   const value = capture ?? failure ?? expiry;
 
-  const event = value?.event ?? body.event;
-
-  const created = value?.created;
+  const event = clean(value?.event) ?? clean(body.event);
+  const created = clean(value?.created);
 
   const data = value?.data ?? body.data ?? {};
 
@@ -74,12 +79,12 @@ function extractWebhookPayload(body: XenditWebhookBody) {
 }
 
 function getWebhookEventId(body: XenditWebhookBody, data: XenditWebhookData): string | undefined {
-  const paymentId = data.payment_id?.trim();
-  const paymentRequestId = data.payment_request_id?.trim();
+  const providerPaymentId = clean(data.payment_id);
+  const paymentRequestId = clean(data.payment_request_id);
 
   const { event, created } = extractWebhookPayload(body);
 
-  const providerId = paymentId ?? paymentRequestId;
+  const providerId = providerPaymentId ?? paymentRequestId;
 
   if (!providerId) {
     return undefined;
@@ -89,7 +94,7 @@ function getWebhookEventId(body: XenditWebhookBody, data: XenditWebhookData): st
 }
 
 function verifyXenditWebhook(token: string | undefined) {
-  const configuredToken = paymentConfig.xendit.webhookToken;
+  const configuredToken = clean(paymentConfig.xendit.webhookToken);
 
   if (!configuredToken) {
     throw createError(503, 'Xendit webhook token is not configured');
@@ -103,8 +108,8 @@ function verifyXenditWebhook(token: string | undefined) {
 function normalizeWebhookEvent(body: XenditWebhookBody): PaymentWebhookEvent | null {
   const { event, data } = extractWebhookPayload(body);
 
-  const paymentId =
-    data.reference_id?.trim() ?? data.payment_id?.trim() ?? data.payment_request_id?.trim();
+  const referenceId = clean(data.reference_id);
+  const paymentId = referenceId ?? clean(data.payment_id) ?? clean(data.payment_request_id);
 
   if (!paymentId) {
     return null;
@@ -114,12 +119,14 @@ function normalizeWebhookEvent(body: XenditWebhookBody): PaymentWebhookEvent | n
 
   const eventId = getWebhookEventId(body, data) ?? `payment.webhook:${paymentId}`;
 
+  const transactionId = clean(data.transaction_id) ?? clean(data.payment_id);
+
   if (normalizedEvent.includes('failed') || normalizedEvent.includes('failure')) {
     return {
       eventId,
       type: 'payment.failed',
       paymentId,
-      transactionId: data.payment_id ?? data.transaction_id,
+      transactionId,
     };
   }
 
@@ -128,7 +135,7 @@ function normalizeWebhookEvent(body: XenditWebhookBody): PaymentWebhookEvent | n
       eventId,
       type: 'payment.failed',
       paymentId,
-      transactionId: data.payment_id ?? data.transaction_id,
+      transactionId,
     };
   }
 
@@ -141,7 +148,7 @@ function normalizeWebhookEvent(body: XenditWebhookBody): PaymentWebhookEvent | n
       eventId,
       type: 'payment.success',
       paymentId,
-      transactionId: data.payment_id ?? data.transaction_id,
+      transactionId,
     };
   }
 
@@ -170,6 +177,7 @@ async function reconcileXenditPayment(
       payment,
       reconciled: false,
       status: expectedWebhookType === 'payment.success' ? 'success' : 'failed',
+      transactionId: payment.transactionId ?? undefined,
     } as const;
   }
 
@@ -179,43 +187,35 @@ async function reconcileXenditPayment(
 
   const adapter = new XenditAdapter();
 
-  const reconciliation = await adapter.reconcilePayment(payment.providerPaymentId);
+  const verification = await adapter.verifyPayment(payment.providerPaymentId);
 
-  if (!reconciliation.success) {
-    throw createError(502, reconciliation.error ?? 'Unable to reconcile payment with Xendit');
-  }
-
-  if (reconciliation.referenceId && reconciliation.referenceId !== payment.id) {
-    throw createError(409, 'Xendit payment reference does not match Santor payment');
-  }
-
-  if (reconciliation.amount !== undefined && reconciliation.amount !== payment.amount) {
-    throw createError(409, 'Xendit payment amount does not match Santor payment');
-  }
-
-  if (
-    reconciliation.currency &&
-    reconciliation.currency.toUpperCase() !== payment.currency.toUpperCase()
-  ) {
-    throw createError(409, 'Xendit payment currency does not match Santor payment');
+  if (verification.status === 'unknown') {
+    throw createError(502, verification.error ?? 'Unable to verify payment with Xendit');
   }
 
   return {
     payment,
     reconciled: true,
-    status: reconciliation.status,
-    transactionId: reconciliation.transactionId ?? payment.transactionId ?? undefined,
+    status: verification.status,
+    transactionId: verification.transactionId ?? payment.transactionId ?? undefined,
   } as const;
 }
 
 function resolveWebhookStatus(
-  expectedWebhookType: PaymentWebhookEvent['type'],
   reconciledStatus:
-    'pending' | 'requires_action' | 'success' | 'failed' | 'expired' | 'canceled' | 'unknown',
+    | 'pending'
+    | 'requires_action'
+    | 'success'
+    | 'failed'
+    | 'expired'
+    | 'canceled'
+    | 'unknown',
 ): 'success' | 'failed' | null {
   /*
-   * The webhook is only a trigger.
    * The provider's reconciled status is authoritative.
+   *
+   * A webhook only triggers reconciliation.
+   * We never trust the webhook event type by itself.
    */
 
   if (reconciledStatus === 'success') {
@@ -230,14 +230,6 @@ function resolveWebhookStatus(
     return 'failed';
   }
 
-  /*
-   * Never mark a payment successful merely because
-   * a success-looking webhook arrived.
-   */
-  if (expectedWebhookType === 'payment.success') {
-    return null;
-  }
-
   return null;
 }
 
@@ -250,9 +242,16 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     throw createError(400, 'Payment ID is required');
   }
 
+  /*
+   * Idempotency:
+   * Xendit may retry the same webhook.
+   */
   const existing = await prisma.payment.findUnique({
     where: {
       webhookEventId: event.eventId,
+    },
+    include: {
+      subscription: true,
     },
   });
 
@@ -260,20 +259,26 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     return {
       processed: true,
       duplicate: true,
+      reconciled: false,
+      transitioned: false,
       paymentId: existing.id,
       status: existing.status,
     };
   }
 
+  /*
+   * Reconcile directly against Xendit.
+   *
+   * The webhook itself is never considered authoritative.
+   */
   const reconciliation = await reconcileXenditPayment(event.paymentId, event.type);
 
-  const finalStatus = resolveWebhookStatus(event.type, reconciliation.status);
+  const finalStatus = resolveWebhookStatus(reconciliation.status);
 
   /*
-   * Provider says the payment is not terminal yet.
+   * Provider has not reached a terminal state.
    *
-   * We acknowledge the webhook without mutating the payment
-   * into success/failed.
+   * Do not mark payment success/failed.
    */
   if (!finalStatus) {
     await auditLog({
@@ -285,7 +290,7 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
         eventId: event.eventId,
         webhookType: event.type,
         providerStatus: reconciliation.status,
-        transactionId: reconciliation.transactionId,
+        transactionId: reconciliation.transactionId ?? event.transactionId,
       },
     });
 
@@ -299,6 +304,15 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     };
   }
 
+  /*
+   * Atomic payment state transition.
+   *
+   * Repository layer is responsible for:
+   * - valid state transition
+   * - webhook idempotency
+   * - preventing duplicate terminal transitions
+   * - persisting webhookEventId
+   */
   const result = await transitionPaymentFromWebhook({
     paymentId: reconciliation.payment.id,
     status: finalStatus,
@@ -352,6 +366,16 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     };
   }
 
+  /*
+   * Successful payment:
+   *
+   * 1. Payment state -> success
+   * 2. License generation
+   * 3. Audit log
+   *
+   * VPN access/subscription activation remains
+   * downstream lifecycle responsibility.
+   */
   await generateLicense(result.payment.subscriptionId);
 
   await auditLog({
@@ -377,7 +401,10 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
   };
 }
 
-export async function processXenditWebhook(body: XenditWebhookBody, token: string | undefined) {
+export async function processXenditWebhook(
+  body: XenditWebhookBody,
+  token: string | undefined,
+) {
   verifyXenditWebhook(token);
 
   const event = normalizeWebhookEvent(body);
