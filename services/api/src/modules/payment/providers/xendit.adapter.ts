@@ -12,6 +12,8 @@ type XenditPaymentRequestResponse = {
   latest_payment_id?: string;
   reference_id?: string;
   status?: string;
+  request_amount?: number;
+  currency?: string;
   actions?: Array<{
     type?: string;
     descriptor?: string;
@@ -343,6 +345,9 @@ export class XenditAdapter implements PaymentProvider {
       status: mapXenditStatus(paymentResponse?.status),
       providerPaymentId: paymentResponse?.payment_request_id ?? normalizedPaymentId,
       transactionId: paymentResponse?.latest_payment_id,
+      referenceId: paymentResponse?.reference_id,
+      amount: paymentResponse?.request_amount,
+      currency: paymentResponse?.currency,
     };
   }
 }

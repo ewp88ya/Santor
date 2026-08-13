@@ -43,6 +43,9 @@ export type PaymentVerificationResult = {
   status: PaymentVerificationStatus;
   providerPaymentId?: string;
   transactionId?: string;
+  referenceId?: string;
+  amount?: number;
+  currency?: string;
   error?: string;
 };
 

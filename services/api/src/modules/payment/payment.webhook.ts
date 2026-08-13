@@ -59,6 +59,12 @@ function clean(value: string | undefined): string | undefined {
   return normalized || undefined;
 }
 
+function normalizeCurrency(value: string | undefined): string | undefined {
+  const normalized = clean(value)?.toUpperCase();
+
+  return normalized || undefined;
+}
+
 function extractWebhookPayload(body: XenditWebhookBody) {
   const capture = body.paymentCapture?.value;
   const failure = body.paymentFailure?.value;
@@ -193,11 +199,86 @@ async function reconcileXenditPayment(
     throw createError(502, verification.error ?? 'Unable to verify payment with Xendit');
   }
 
+  const expectedReferenceId = payment.id.trim();
+  const providerReferenceId = clean(verification.referenceId);
+
+  if (!providerReferenceId) {
+    throw createError(502, 'Xendit verification response does not contain reference ID');
+  }
+
+  if (providerReferenceId !== expectedReferenceId) {
+    await auditLog({
+      userId: payment.subscription.userId,
+      action: 'PAYMENT_WEBHOOK_RECONCILIATION_MISMATCH',
+      resource: 'payment',
+      resourceId: payment.id,
+      metadata: {
+        reason: 'REFERENCE_ID_MISMATCH',
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        expectedReferenceId,
+        providerReferenceId,
+      },
+    });
+
+    throw createError(409, 'Xendit payment reference ID does not match payment');
+  }
+
+  if (verification.amount === undefined || !Number.isFinite(verification.amount)) {
+    throw createError(502, 'Xendit verification response does not contain a valid amount');
+  }
+
+  if (verification.amount !== payment.amount) {
+    await auditLog({
+      userId: payment.subscription.userId,
+      action: 'PAYMENT_WEBHOOK_RECONCILIATION_MISMATCH',
+      resource: 'payment',
+      resourceId: payment.id,
+      metadata: {
+        reason: 'AMOUNT_MISMATCH',
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        expectedAmount: payment.amount,
+        providerAmount: verification.amount,
+      },
+    });
+
+    throw createError(409, 'Xendit payment amount does not match payment');
+  }
+
+  const expectedCurrency = normalizeCurrency(payment.currency);
+  const providerCurrency = normalizeCurrency(verification.currency);
+
+  if (!expectedCurrency || !providerCurrency) {
+    throw createError(502, 'Xendit verification response does not contain a valid currency');
+  }
+
+  if (providerCurrency !== expectedCurrency) {
+    await auditLog({
+      userId: payment.subscription.userId,
+      action: 'PAYMENT_WEBHOOK_RECONCILIATION_MISMATCH',
+      resource: 'payment',
+      resourceId: payment.id,
+      metadata: {
+        reason: 'CURRENCY_MISMATCH',
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        expectedCurrency,
+        providerCurrency,
+      },
+    });
+
+    throw createError(409, 'Xendit payment currency does not match payment');
+  }
+
   return {
     payment,
     reconciled: true,
     status: verification.status,
     transactionId: verification.transactionId ?? payment.transactionId ?? undefined,
+    referenceId: providerReferenceId,
+    amount: verification.amount,
+    currency: providerCurrency,
   } as const;
 }
 
@@ -270,6 +351,11 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
    * Reconcile directly against Xendit.
    *
    * The webhook itself is never considered authoritative.
+   *
+   * Reconciliation also validates:
+   * - reference ID
+   * - amount
+   * - currency
    */
   const reconciliation = await reconcileXenditPayment(event.paymentId, event.type);
 
