@@ -27,7 +27,7 @@ const paypalAdapter = new PayPalAdapter();
 const xenditAdapter = new XenditAdapter();
 const russiaPaymentAdapter = new RussiaPaymentAdapter();
 
-function getPaymentProvider(country: string, paymentMethod: PaymentMethod) {
+function getPaymentProvider(country: string, paymentMethod: PaymentMethod, currency: string) {
   return routePaymentProvider(country, paymentMethod, {
     globalCard: globalCardAdapter,
     paypal: paypalAdapter,
@@ -49,7 +49,7 @@ export async function createNewPayment(data: {
     const normalizedCountry = data.country.trim().toUpperCase();
     const normalizedCurrency = data.currency.trim().toUpperCase();
 
-    const paymentProvider = getPaymentProvider(normalizedCountry, data.paymentMethod);
+    const paymentProvider = getPaymentProvider(normalizedCountry, data.paymentMethod, normalizedCurrency);
 
     const payment = await createPayment({
       subscriptionId: data.subscriptionId,

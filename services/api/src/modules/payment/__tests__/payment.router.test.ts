@@ -77,6 +77,54 @@ describe('routePaymentProvider', () => {
     );
   });
 
+  it('routes Indonesia IDR QRIS to Xendit', () => {
+    expect(
+      routePaymentProvider('ID', 'QRIS', providers, 'IDR'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Malaysia MYR to Xendit', () => {
+    expect(
+      routePaymentProvider('MY', 'QRIS', providers, 'MYR'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Thailand THB to Xendit', () => {
+    expect(
+      routePaymentProvider('TH', 'QRIS', providers, 'THB'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Philippines PHP to Xendit', () => {
+    expect(
+      routePaymentProvider('PH', 'QRIS', providers, 'PHP'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Vietnam VND to Xendit', () => {
+    expect(
+      routePaymentProvider('VN', 'QRIS', providers, 'VND'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Singapore SGD to Xendit', () => {
+    expect(
+      routePaymentProvider('SG', 'QRIS', providers, 'SGD'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Laos LAK to Xendit', () => {
+    expect(
+      routePaymentProvider('LA', 'QRIS', providers, 'LAK'),
+    ).toBe(providers.xendit);
+  });
+
+  it('routes Cambodia KHR to Xendit', () => {
+    expect(
+      routePaymentProvider('KH', 'QRIS', providers, 'KHR'),
+    ).toBe(providers.xendit);
+  });
+
   it('uses Xendit as the default provider', () => {
     expect(routePaymentProvider('ID', 'QRIS', providers)).toBe(
       providers.xendit,

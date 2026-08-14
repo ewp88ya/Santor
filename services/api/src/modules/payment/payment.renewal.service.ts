@@ -251,7 +251,12 @@ export async function renewSubscription(subscriptionId: string) {
     };
   }
 
-  const paymentProvider = routePaymentProvider(country, paymentMethod, paymentProviders);
+  const paymentProvider = routePaymentProvider(
+    country,
+    paymentMethod,
+    paymentProviders,
+    previousPayment.currency,
+  );
   const providerName = getProviderName(paymentProvider);
 
   const payment = await prisma.payment.create({

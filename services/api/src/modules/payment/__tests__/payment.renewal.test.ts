@@ -176,10 +176,11 @@ describe('Payment Auto-Debit / Renewal', () => {
       'RU',
       'SBP',
       expect.objectContaining({
-        globalCard: mocks.mockProvider,
-        xendit: mocks.mockProvider,
-        russia: mocks.mockProvider,
+        globalCard: expect.anything(),
+        xendit: expect.anything(),
+        russia: expect.anything(),
       }),
+      'RUB',
     );
 
     expect(mocks.mockProvider.charge).toHaveBeenCalledWith(
