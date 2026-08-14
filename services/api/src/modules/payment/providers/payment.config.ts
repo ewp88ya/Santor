@@ -13,6 +13,10 @@ type PaymentProviderConfig = {
   yookassaSecret?: string;
   yookassaBaseUrl?: string;
   yookassaReturnUrl?: string;
+
+  cloudPaymentsPublicId?: string;
+  cloudPaymentsApiSecret?: string;
+  cloudPaymentsBaseUrl?: string;
 };
 
 function getOptionalEnv(name: string): string | undefined {
@@ -62,5 +66,10 @@ export const paymentConfig = {
     yookassaSecret: getOptionalEnv('YOOKASSA_SECRET'),
     yookassaBaseUrl: getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
     yookassaReturnUrl: getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
+
+    cloudPaymentsPublicId: getOptionalEnv('CLOUDPAYMENTS_PUBLIC_ID'),
+    cloudPaymentsApiSecret: getOptionalEnv('CLOUDPAYMENTS_API_SECRET'),
+    cloudPaymentsBaseUrl:
+      getOptionalEnv('CLOUDPAYMENTS_BASE_URL') ?? 'https://api.cloudpayments.ru',
   } satisfies PaymentProviderConfig,
 } as const;
