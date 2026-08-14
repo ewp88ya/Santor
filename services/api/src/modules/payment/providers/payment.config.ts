@@ -5,6 +5,15 @@ type PaymentProviderConfig = {
   baseUrl?: string;
   webhookToken?: string;
 
+  stripeSecretKey?: string;
+  stripeBaseUrl?: string;
+
+  paypalClientId?: string;
+  paypalClientSecret?: string;
+  paypalBaseUrl?: string;
+  paypalReturnUrl?: string;
+  paypalCancelUrl?: string;
+
   plategaMerchantId?: string;
   plategaSecret?: string;
   plategaBaseUrl?: string;
@@ -43,6 +52,23 @@ export const paymentConfig = {
     baseUrl: getOptionalEnv('GLOBAL_CARD_BASE_URL'),
   } satisfies PaymentProviderConfig,
 
+  stripe: {
+    enabled: getBooleanEnv('STRIPE_ENABLED'),
+    stripeSecretKey: getOptionalEnv('STRIPE_SECRET_KEY'),
+    stripeBaseUrl: getOptionalEnv('STRIPE_BASE_URL') ?? 'https://api.stripe.com',
+  } satisfies PaymentProviderConfig,
+
+  paypal: {
+    enabled: getBooleanEnv('PAYPAL_ENABLED'),
+    paypalClientId: getOptionalEnv('PAYPAL_CLIENT_ID'),
+    paypalClientSecret: getOptionalEnv('PAYPAL_CLIENT_SECRET'),
+    paypalBaseUrl: getOptionalEnv('PAYPAL_BASE_URL') ?? 'https://api-m.paypal.com',
+    paypalReturnUrl:
+      getOptionalEnv('PAYPAL_RETURN_URL') ?? 'https://santor.app/payment/paypal/return',
+    paypalCancelUrl:
+      getOptionalEnv('PAYPAL_CANCEL_URL') ?? 'https://santor.app/payment/paypal/cancel',
+  } satisfies PaymentProviderConfig,
+
   xendit: {
     enabled: getBooleanEnv('XENDIT_ENABLED'),
     apiKey: getOptionalEnv('XENDIT_API_KEY'),
@@ -64,8 +90,10 @@ export const paymentConfig = {
 
     yookassaShopId: getOptionalEnv('YOOKASSA_SHOP_ID'),
     yookassaSecret: getOptionalEnv('YOOKASSA_SECRET'),
-    yookassaBaseUrl: getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
-    yookassaReturnUrl: getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
+    yookassaBaseUrl:
+      getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
+    yookassaReturnUrl:
+      getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
 
     cloudPaymentsPublicId: getOptionalEnv('CLOUDPAYMENTS_PUBLIC_ID'),
     cloudPaymentsApiSecret: getOptionalEnv('CLOUDPAYMENTS_API_SECRET'),

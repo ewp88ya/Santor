@@ -4,6 +4,10 @@ function isGlobalCard(method: PaymentMethod) {
   return method === 'VISA' || method === 'MASTERCARD';
 }
 
+function isPayPal(method: PaymentMethod) {
+  return method === 'PAYPAL';
+}
+
 function isChinaMethod(method: PaymentMethod) {
   return method === 'ALIPAY' || method === 'WECHAT_PAY';
 }
@@ -17,14 +21,19 @@ export function routePaymentProvider(
   paymentMethod: PaymentMethod,
   providers: {
     globalCard: PaymentProvider;
+    paypal: PaymentProvider;
     xendit: PaymentProvider;
     russia: PaymentProvider;
   },
 ): PaymentProvider {
-  const normalizedCountry = country.toUpperCase();
+  const normalizedCountry = country.trim().toUpperCase();
 
   if (isGlobalCard(paymentMethod)) {
     return providers.globalCard;
+  }
+
+  if (paymentMethod === 'PAYPAL') {
+    return providers.paypal;
   }
 
   if (normalizedCountry === 'CN' && isChinaMethod(paymentMethod)) {

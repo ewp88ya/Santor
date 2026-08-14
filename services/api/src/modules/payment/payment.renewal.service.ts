@@ -27,6 +27,7 @@ function normalizePaymentMethod(value: string | null | undefined): PaymentMethod
   if (
     normalized === 'VISA' ||
     normalized === 'MASTERCARD' ||
+    normalized === 'PAYPAL' ||
     normalized === 'QRIS' ||
     normalized === 'ALIPAY' ||
     normalized === 'WECHAT_PAY' ||

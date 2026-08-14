@@ -15,15 +15,22 @@ import { auditLog } from '../audit/audit.service.js';
 import { routePaymentProvider } from './payment.router.js';
 import type { PaymentMethod } from './providers/payment.provider.js';
 
-import { GlobalCardAdapter, XenditAdapter, RussiaPaymentAdapter } from './providers/index.js';
+import {
+  GlobalCardAdapter,
+  PayPalAdapter,
+  XenditAdapter,
+  RussiaPaymentAdapter,
+} from './providers/index.js';
 
 const globalCardAdapter = new GlobalCardAdapter();
+const paypalAdapter = new PayPalAdapter();
 const xenditAdapter = new XenditAdapter();
 const russiaPaymentAdapter = new RussiaPaymentAdapter();
 
 function getPaymentProvider(country: string, paymentMethod: PaymentMethod) {
   return routePaymentProvider(country, paymentMethod, {
     globalCard: globalCardAdapter,
+    paypal: paypalAdapter,
     xendit: xenditAdapter,
     russia: russiaPaymentAdapter,
   });
