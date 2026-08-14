@@ -4,9 +4,15 @@ type PaymentProviderConfig = {
   apiSecret?: string;
   baseUrl?: string;
   webhookToken?: string;
+
   plategaMerchantId?: string;
   plategaSecret?: string;
   plategaBaseUrl?: string;
+
+  yookassaShopId?: string;
+  yookassaSecret?: string;
+  yookassaBaseUrl?: string;
+  yookassaReturnUrl?: string;
 };
 
 function getOptionalEnv(name: string): string | undefined {
@@ -43,11 +49,18 @@ export const paymentConfig = {
 
   russia: {
     enabled: getBooleanEnv('RUSSIA_PAYMENT_ENABLED'),
+
     apiKey: getOptionalEnv('RUSSIA_PAYMENT_API_KEY'),
     apiSecret: getOptionalEnv('RUSSIA_PAYMENT_API_SECRET'),
     baseUrl: getOptionalEnv('RUSSIA_PAYMENT_BASE_URL'),
+
     plategaMerchantId: getOptionalEnv('PLATEGA_MERCHANT_ID'),
     plategaSecret: getOptionalEnv('PLATEGA_SECRET'),
     plategaBaseUrl: getOptionalEnv('PLATEGA_BASE_URL') ?? 'https://app.platega.io',
+
+    yookassaShopId: getOptionalEnv('YOOKASSA_SHOP_ID'),
+    yookassaSecret: getOptionalEnv('YOOKASSA_SECRET'),
+    yookassaBaseUrl: getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
+    yookassaReturnUrl: getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
   } satisfies PaymentProviderConfig,
 } as const;
