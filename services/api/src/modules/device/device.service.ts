@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import createError from 'http-errors';
 
 import { prisma } from '../../config/database.js';
+import { getDeviceLimit } from '../../config/vpn-policy.js';
 
 import {
   createDevice,
@@ -19,8 +20,6 @@ import {
 } from '../wireguard/wireguard.service.js';
 
 import { auditLog } from '../audit/audit.service.js';
-
-const DEVICE_LIMIT = 3;
 
 function devicePublicKey() {
   return randomUUID().replaceAll('-', '');
@@ -147,19 +146,27 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
 
   const activeDevices = await countActiveDevices(vpnAccessId);
 
-  if (activeDevices >= DEVICE_LIMIT) {
+  const product = vpnAccess.license?.subscription?.product;
+
+  if (!product) {
+    throw createError(503, 'Subscription product not configured');
+  }
+
+  const deviceLimit = getDeviceLimit(product.code, product.deviceLimit);
+
+  if (activeDevices >= deviceLimit) {
     await auditLog({
       userId,
       action: 'DEVICE_LIMIT_REACHED',
       resource: 'DEVICE',
       resourceId: vpnAccessId,
       metadata: {
-        limit: DEVICE_LIMIT,
+        limit: deviceLimit,
         activeDevices,
       },
     });
 
-    throw createError(403, `Device limit reached (${DEVICE_LIMIT})`);
+    throw createError(403, `Device limit reached (${deviceLimit})`);
   }
 
   const device = await createDevice({

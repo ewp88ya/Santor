@@ -11,15 +11,31 @@ export async function seedProducts(prisma: PrismaClient) {
       code: 'GENERAL-FREE',
       price: 0,
       currency: 'USD',
-      durationDays: 30,
+      durationDays: 3,
       deviceLimit: 1,
     },
     {
-      name: 'General Pro',
-      code: 'GENERAL-PRO',
-      price: 999,
+      name: 'General Pro 1 Month',
+      code: 'GENERAL-PRO-1M',
+      price: 199,
       currency: 'USD',
       durationDays: 30,
+      deviceLimit: 3,
+    },
+    {
+      name: 'General Pro 6 Months',
+      code: 'GENERAL-PRO-6M',
+      price: 999,
+      currency: 'USD',
+      durationDays: 180,
+      deviceLimit: 3,
+    },
+    {
+      name: 'General Pro 12 Months',
+      code: 'GENERAL-PRO-12M',
+      price: 1499,
+      currency: 'USD',
+      durationDays: 365,
       deviceLimit: 3,
     },
     {
@@ -28,7 +44,7 @@ export async function seedProducts(prisma: PrismaClient) {
       price: 499,
       currency: 'USD',
       durationDays: 30,
-      deviceLimit: 3,
+      deviceLimit: 5,
     },
     {
       name: 'WireGuard 3 Months',
@@ -36,7 +52,7 @@ export async function seedProducts(prisma: PrismaClient) {
       price: 1299,
       currency: 'USD',
       durationDays: 90,
-      deviceLimit: 3,
+      deviceLimit: 5,
     },
     {
       name: 'WireGuard 6 Months',
@@ -44,7 +60,7 @@ export async function seedProducts(prisma: PrismaClient) {
       price: 2299,
       currency: 'USD',
       durationDays: 180,
-      deviceLimit: 3,
+      deviceLimit: 5,
     },
     {
       name: 'WireGuard 12 Months',
@@ -52,7 +68,7 @@ export async function seedProducts(prisma: PrismaClient) {
       price: 3999,
       currency: 'USD',
       durationDays: 365,
-      deviceLimit: 3,
+      deviceLimit: 5,
     },
   ];
 
