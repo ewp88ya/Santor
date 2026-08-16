@@ -33,17 +33,9 @@ type StripeErrorResponse = {
   };
 };
 
-const SUPPORTED_CURRENCIES = new Set([
-  'USD',
-  'EUR',
-  'SGD',
-  'AUD',
-  'JPY',
-]);
+const SUPPORTED_CURRENCIES = new Set(['USD', 'EUR', 'SGD', 'AUD', 'JPY']);
 
-const ZERO_DECIMAL_CURRENCIES = new Set([
-  'JPY',
-]);
+const ZERO_DECIMAL_CURRENCIES = new Set(['JPY']);
 
 function getBaseUrl(): string {
   return paymentConfig.stripe.stripeBaseUrl ?? 'https://api.stripe.com';
@@ -57,9 +49,7 @@ function toMinorUnits(amount: number, currency: string): number {
   return Math.round(amount * 100);
 }
 
-function mapStripeStatus(
-  status?: string,
-): PaymentVerificationResult['status'] {
+function mapStripeStatus(status?: string): PaymentVerificationResult['status'] {
   switch (status) {
     case 'succeeded':
       return 'success';
@@ -85,11 +75,7 @@ function stripeAuthHeader(secretKey: string): string {
   return `Basic ${Buffer.from(`${secretKey}:`).toString('base64')}`;
 }
 
-async function stripeRequest<T>(
-  path: string,
-  init: RequestInit,
-  secretKey: string,
-): Promise<T> {
+async function stripeRequest<T>(path: string, init: RequestInit, secretKey: string): Promise<T> {
   const response = await fetch(`${getBaseUrl()}${path}`, {
     ...init,
     headers: {

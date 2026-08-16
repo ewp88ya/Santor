@@ -50,14 +50,12 @@ function getBaseUrl(): string {
 function getBasicAuth(): string {
   const config = paymentConfig.paypal;
 
-  return `Basic ${Buffer.from(
-    `${config.paypalClientId}:${config.paypalClientSecret}`,
-  ).toString('base64')}`;
+  return `Basic ${Buffer.from(`${config.paypalClientId}:${config.paypalClientSecret}`).toString(
+    'base64',
+  )}`;
 }
 
-function mapOrderStatus(
-  status?: string,
-): PaymentVerificationResult['status'] {
+function mapOrderStatus(status?: string): PaymentVerificationResult['status'] {
   switch (status?.toUpperCase()) {
     case 'COMPLETED':
       return 'success';
@@ -75,10 +73,7 @@ function mapOrderStatus(
   }
 }
 
-function getLink(
-  links: PayPalLink[] | undefined,
-  rel: string,
-): string | undefined {
+function getLink(links: PayPalLink[] | undefined, rel: string): string | undefined {
   return links?.find((link) => link.rel === rel)?.href;
 }
 
@@ -112,9 +107,7 @@ async function getAccessToken(): Promise<string> {
     const errorBody = body as PayPalErrorResponse | undefined;
 
     throw new Error(
-      errorBody?.message ??
-        errorBody?.name ??
-        `PayPal OAuth returned HTTP ${response.status}`,
+      errorBody?.message ?? errorBody?.name ?? `PayPal OAuth returned HTTP ${response.status}`,
     );
   }
 
@@ -127,11 +120,7 @@ async function getAccessToken(): Promise<string> {
   return token;
 }
 
-async function paypalRequest<T>(
-  path: string,
-  init: RequestInit,
-  accessToken: string,
-): Promise<T> {
+async function paypalRequest<T>(path: string, init: RequestInit, accessToken: string): Promise<T> {
   const response = await fetch(`${getBaseUrl()}${path}`, {
     ...init,
     headers: {
@@ -261,8 +250,7 @@ export class PayPalAdapter implements PaymentProvider {
       }
 
       const approvalUrl =
-        getLink(response.links, 'payer-action') ??
-        getLink(response.links, 'approve');
+        getLink(response.links, 'payer-action') ?? getLink(response.links, 'approve');
 
       return {
         success: true,
@@ -329,17 +317,13 @@ export class PayPalAdapter implements PaymentProvider {
 
       const capture = response.purchase_units?.[0]?.payments?.captures?.[0];
 
-      const status = capture?.status === 'COMPLETED'
-        ? 'success'
-        : mapOrderStatus(response.status);
+      const status = capture?.status === 'COMPLETED' ? 'success' : mapOrderStatus(response.status);
 
       return {
         status,
         providerPaymentId: response.id ?? normalizedId,
         transactionId: capture?.id ?? response.id ?? normalizedId,
-        amount: capture?.amount?.value
-          ? Number(capture.amount.value)
-          : undefined,
+        amount: capture?.amount?.value ? Number(capture.amount.value) : undefined,
         currency: capture?.amount?.currency_code,
       };
     } catch (error) {

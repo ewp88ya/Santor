@@ -49,7 +49,11 @@ export async function createNewPayment(data: {
     const normalizedCountry = data.country.trim().toUpperCase();
     const normalizedCurrency = data.currency.trim().toUpperCase();
 
-    const paymentProvider = getPaymentProvider(normalizedCountry, data.paymentMethod, normalizedCurrency);
+    const paymentProvider = getPaymentProvider(
+      normalizedCountry,
+      data.paymentMethod,
+      normalizedCurrency,
+    );
 
     const payment = await createPayment({
       subscriptionId: data.subscriptionId,

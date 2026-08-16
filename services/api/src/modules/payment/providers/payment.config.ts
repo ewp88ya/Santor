@@ -90,10 +90,8 @@ export const paymentConfig = {
 
     yookassaShopId: getOptionalEnv('YOOKASSA_SHOP_ID'),
     yookassaSecret: getOptionalEnv('YOOKASSA_SECRET'),
-    yookassaBaseUrl:
-      getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
-    yookassaReturnUrl:
-      getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
+    yookassaBaseUrl: getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
+    yookassaReturnUrl: getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
 
     cloudPaymentsPublicId: getOptionalEnv('CLOUDPAYMENTS_PUBLIC_ID'),
     cloudPaymentsApiSecret: getOptionalEnv('CLOUDPAYMENTS_API_SECRET'),

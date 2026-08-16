@@ -7,27 +7,9 @@ type PaymentProviders = {
   russia: PaymentProvider;
 };
 
-const ASEAN_CURRENCIES = new Set([
-  'IDR',
-  'MYR',
-  'THB',
-  'PHP',
-  'VND',
-  'SGD',
-  'LAK',
-  'KHR',
-]);
+const ASEAN_CURRENCIES = new Set(['IDR', 'MYR', 'THB', 'PHP', 'VND', 'SGD', 'LAK', 'KHR']);
 
-const ASEAN_COUNTRIES = new Set([
-  'ID',
-  'MY',
-  'TH',
-  'PH',
-  'VN',
-  'SG',
-  'LA',
-  'KH',
-]);
+const ASEAN_COUNTRIES = new Set(['ID', 'MY', 'TH', 'PH', 'VN', 'SG', 'LA', 'KH']);
 
 function isGlobalCard(method: PaymentMethod) {
   return method === 'VISA' || method === 'MASTERCARD';
@@ -53,11 +35,7 @@ function isAseanCurrency(currency: string) {
   return ASEAN_CURRENCIES.has(currency);
 }
 
-function isAseanPayment(
-  country: string,
-  currency: string,
-  paymentMethod: PaymentMethod,
-) {
+function isAseanPayment(country: string, currency: string, paymentMethod: PaymentMethod) {
   if (!isAseanCountry(country)) {
     return false;
   }
@@ -66,11 +44,7 @@ function isAseanPayment(
     return false;
   }
 
-  return (
-    paymentMethod === 'QRIS' ||
-    paymentMethod === 'VISA' ||
-    paymentMethod === 'MASTERCARD'
-  );
+  return paymentMethod === 'QRIS' || paymentMethod === 'VISA' || paymentMethod === 'MASTERCARD';
 }
 
 export function routePaymentProvider(
@@ -98,13 +72,7 @@ export function routePaymentProvider(
     return providers.russia;
   }
 
-  if (
-    isAseanPayment(
-      normalizedCountry,
-      normalizedCurrency,
-      paymentMethod,
-    )
-  ) {
+  if (isAseanPayment(normalizedCountry, normalizedCurrency, paymentMethod)) {
     return providers.xendit;
   }
 
