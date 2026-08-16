@@ -77,10 +77,29 @@ export async function seedProducts(prisma: PrismaClient) {
       where: {
         code: product.code,
       },
-      update: product,
-      create: product,
+      update: {
+        name: product.name,
+        price: product.price,
+        currency: product.currency,
+        durationDays: product.durationDays,
+        deviceLimit: product.deviceLimit,
+        active: true,
+      },
+      create: {
+        ...product,
+        active: true,
+      },
     });
   }
+
+  await prisma.product.updateMany({
+    where: {
+      code: 'GENERAL-PRO',
+    },
+    data: {
+      active: false,
+    },
+  });
 
   console.log('✓ Products seed completed');
 }
