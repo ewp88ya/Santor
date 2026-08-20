@@ -21,10 +21,7 @@ export async function generateVPNAccess(licenseId: string) {
   const mode = getVPNMode(ownership.subscription.product.code);
 
   if (mode !== 'wireguard') {
-    throw createError(
-      409,
-      `VPN access provisioning is not supported for ${mode} mode`,
-    );
+    throw createError(409, `VPN access provisioning is not supported for ${mode} mode`);
   }
 
   const existing = await findVPNAccessByLicense(licenseId);

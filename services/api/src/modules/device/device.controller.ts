@@ -38,11 +38,7 @@ export async function createDeviceController(request: FastifyRequest) {
     throw createError(400, 'Device name is required');
   }
 
-  return addDevice(
-    userId,
-    body.vpnAccessId,
-    body.name.trim(),
-  );
+  return addDevice(userId, body.vpnAccessId, body.name.trim());
 }
 
 export async function listDeviceController(request: FastifyRequest) {
@@ -56,10 +52,7 @@ export async function listDeviceController(request: FastifyRequest) {
     throw createError(400, 'vpnAccessId is required');
   }
 
-  return getDevices(
-    userId,
-    params.vpnAccessId,
-  );
+  return getDevices(userId, params.vpnAccessId);
 }
 
 export async function detailDeviceController(request: FastifyRequest) {
@@ -73,10 +66,7 @@ export async function detailDeviceController(request: FastifyRequest) {
     throw createError(400, 'Device id is required');
   }
 
-  return getDevice(
-    userId,
-    params.id,
-  );
+  return getDevice(userId, params.id);
 }
 
 export async function revokeDeviceController(request: FastifyRequest) {
@@ -90,15 +80,10 @@ export async function revokeDeviceController(request: FastifyRequest) {
     throw createError(400, 'Device id is required');
   }
 
-  return disableDevice(
-    userId,
-    params.id,
-  );
+  return disableDevice(userId, params.id);
 }
 
-export async function regenerateDeviceController(
-  request: FastifyRequest,
-) {
+export async function regenerateDeviceController(request: FastifyRequest) {
   const userId = getUserId(request);
 
   const params = request.params as {
@@ -109,8 +94,5 @@ export async function regenerateDeviceController(
     throw createError(400, 'Device id is required');
   }
 
-  return regenerateDeviceConfig(
-    userId,
-    params.id,
-  );
+  return regenerateDeviceConfig(userId, params.id);
 }

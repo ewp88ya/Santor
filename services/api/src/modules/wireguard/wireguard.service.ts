@@ -68,10 +68,7 @@ function validateNode(node: {
   }
 
   if (!node.provisioningKey) {
-    throw createError(
-      503,
-      'VPN node provisioning key is not configured',
-    );
+    throw createError(503, 'VPN node provisioning key is not configured');
   }
 }
 
@@ -91,14 +88,10 @@ export async function generateWireGuardPeer(deviceId: string) {
   const publicKey = generateKey();
   const address = generateAddress();
 
-  const provisioning = await provisionWireGuardPeer(
-    node.provisioningUrl!,
-    node.provisioningKey!,
-    {
-      publicKey,
-      address,
-    },
-  );
+  const provisioning = await provisionWireGuardPeer(node.provisioningUrl!, node.provisioningKey!, {
+    publicKey,
+    address,
+  });
 
   return createWireGuardPeer({
     deviceId,
@@ -130,10 +123,7 @@ export async function revokeWireGuardPeer(deviceId: string) {
   return peer;
 }
 
-export async function regenerateWireGuardConfig(
-  userId: string,
-  deviceId: string,
-) {
+export async function regenerateWireGuardConfig(userId: string, deviceId: string) {
   const peer = await prisma.wireGuardPeer.findUnique({
     where: {
       deviceId,
@@ -160,8 +150,7 @@ export async function regenerateWireGuardConfig(
     throw createError(404, 'WireGuard peer not found');
   }
 
-  const subscription =
-    peer.device.vpnAccess.license?.subscription;
+  const subscription = peer.device.vpnAccess.license?.subscription;
 
   if (!subscription) {
     throw createError(404, 'Subscription not found');
@@ -185,14 +174,10 @@ export async function regenerateWireGuardConfig(
   const publicKey = generateKey();
   const address = generateAddress();
 
-  const provisioning = await provisionWireGuardPeer(
-    node.provisioningUrl!,
-    node.provisioningKey!,
-    {
-      publicKey,
-      address,
-    },
-  );
+  const provisioning = await provisionWireGuardPeer(node.provisioningUrl!, node.provisioningKey!, {
+    publicKey,
+    address,
+  });
 
   return updateWireGuardPeer(peer.id, {
     privateKey,
@@ -202,9 +187,7 @@ export async function regenerateWireGuardConfig(
   });
 }
 
-export async function createWireGuardConfig(
-  vpnAccessId: string,
-) {
+export async function createWireGuardConfig(vpnAccessId: string) {
   const vpnAccess = await prisma.vPNAccess.findUnique({
     where: {
       id: vpnAccessId,
@@ -225,10 +208,7 @@ export async function createWireGuardConfig(
   }
 
   if (!node.publicKey) {
-    throw createError(
-      503,
-      'VPN node public key is not configured',
-    );
+    throw createError(503, 'VPN node public key is not configured');
   }
 
   return updateVPNAccessConfig(
@@ -248,10 +228,7 @@ PersistentKeepalive = 25`,
   );
 }
 
-export async function getWireGuardConfig(
-  userId: string,
-  deviceId: string,
-) {
+export async function getWireGuardConfig(userId: string, deviceId: string) {
   const peer = await prisma.wireGuardPeer.findUnique({
     where: {
       deviceId,
@@ -278,8 +255,7 @@ export async function getWireGuardConfig(
     throw createError(404, 'WireGuard peer not found');
   }
 
-  const subscription =
-    peer.device.vpnAccess.license?.subscription;
+  const subscription = peer.device.vpnAccess.license?.subscription;
 
   if (!subscription) {
     throw createError(404, 'Subscription not found');
@@ -296,14 +272,10 @@ export async function getWireGuardConfig(
   }
 
   if (!node.publicKey) {
-    throw createError(
-      503,
-      'VPN node public key is not configured',
-    );
+    throw createError(503, 'VPN node public key is not configured');
   }
 
-  const endpoint =
-    peer.endpoint ?? `${node.hostname}:${node.port}`;
+  const endpoint = peer.endpoint ?? `${node.hostname}:${node.port}`;
 
   return `[Interface]
 PrivateKey = ${peer.privateKey}

@@ -36,10 +36,7 @@ export async function activateEntitlement(subscriptionId: string) {
   const endDate =
     subscription.status === 'active' && subscription.endDate
       ? subscription.endDate
-      : new Date(
-          startDate.getTime() +
-            subscription.product.durationDays * 24 * 60 * 60 * 1000,
-        );
+      : new Date(startDate.getTime() + subscription.product.durationDays * 24 * 60 * 60 * 1000);
 
   const updatedSubscription = await prisma.subscription.update({
     where: {
@@ -66,10 +63,7 @@ export async function activateEntitlement(subscriptionId: string) {
   });
 
   if (!updatedSubscription.license) {
-    throw createError(
-      409,
-      'Cannot activate entitlement without license',
-    );
+    throw createError(409, 'Cannot activate entitlement without license');
   }
 
   await prisma.license.update({
@@ -100,9 +94,7 @@ export async function activateEntitlement(subscriptionId: string) {
    * Only WG products create VPNAccess + WireGuard
    * configuration/provisioning.
    */
-  const vpnAccess = await generateVPNAccess(
-    updatedSubscription.license.id,
-  );
+  const vpnAccess = await generateVPNAccess(updatedSubscription.license.id);
 
   return {
     ...updatedSubscription,

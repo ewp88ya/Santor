@@ -14,11 +14,7 @@ console.log();
 console.log('===== REGISTER TEST USER =====');
 console.log(`Email: ${email}`);
 
-const result = await register(
-  email,
-  password,
-  'Free Boundary Audit',
-);
+const result = await register(email, password, 'Free Boundary Audit');
 
 console.log('Registration result:', {
   id: result.id,

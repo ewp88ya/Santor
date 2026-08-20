@@ -50,10 +50,7 @@ export async function regenerateWireGuard(request: any) {
   return regenerateWireGuardConfig(userId, params.deviceId);
 }
 
-export async function downloadWireGuardConfig(
-  request: any,
-  reply: any,
-) {
+export async function downloadWireGuardConfig(request: any, reply: any) {
   const userId = getUserId(request);
 
   const params = request.params as {
@@ -64,15 +61,9 @@ export async function downloadWireGuardConfig(
     throw createError(400, 'deviceId is required');
   }
 
-  const config = await getWireGuardConfig(
-    userId,
-    params.deviceId,
-  );
+  const config = await getWireGuardConfig(userId, params.deviceId);
 
-  reply.header(
-    'Content-Disposition',
-    'attachment; filename=wireguard.conf',
-  );
+  reply.header('Content-Disposition', 'attachment; filename=wireguard.conf');
 
   reply.type('text/plain');
 

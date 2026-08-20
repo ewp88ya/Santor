@@ -12,11 +12,7 @@ export default async function wireguardRoutes(app: any) {
   app.post(
     '/generate',
     {
-      preHandler: [
-        authMiddleware,
-        requirePermission('device:regenerate'),
-        deviceRateLimit,
-      ],
+      preHandler: [authMiddleware, requirePermission('device:regenerate'), deviceRateLimit],
     },
     async (request: any) => {
       return generateWireGuard(request);
@@ -26,11 +22,7 @@ export default async function wireguardRoutes(app: any) {
   app.post(
     '/regenerate/:deviceId',
     {
-      preHandler: [
-        authMiddleware,
-        requirePermission('device:regenerate'),
-        deviceRateLimit,
-      ],
+      preHandler: [authMiddleware, requirePermission('device:regenerate'), deviceRateLimit],
     },
     async (request: any) => {
       return regenerateWireGuard(request);
@@ -40,11 +32,7 @@ export default async function wireguardRoutes(app: any) {
   app.get(
     '/config/:deviceId',
     {
-      preHandler: [
-        authMiddleware,
-        requirePermission('device:read'),
-        deviceRateLimit,
-      ],
+      preHandler: [authMiddleware, requirePermission('device:read'), deviceRateLimit],
     },
     async (request: any, reply: any) => {
       return downloadWireGuardConfig(request, reply);

@@ -21,9 +21,7 @@ describe('getVPNMode', () => {
   });
 
   it('rejects unsupported product codes', () => {
-    expect(() => getVPNMode('UNKNOWN')).toThrow(
-      'Unsupported VPN product mode: UNKNOWN',
-    );
+    expect(() => getVPNMode('UNKNOWN')).toThrow('Unsupported VPN product mode: UNKNOWN');
   });
 
   it('does not treat GENERAL-PRO as WireGuard', () => {

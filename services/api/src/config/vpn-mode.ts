@@ -15,8 +15,5 @@ export function getVPNMode(productCode: string): VPNMode {
     return 'wireguard';
   }
 
-  throw createError(
-    400,
-    `Unsupported VPN product mode: ${productCode}`,
-  );
+  throw createError(400, `Unsupported VPN product mode: ${productCode}`);
 }
