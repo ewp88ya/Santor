@@ -8,7 +8,6 @@ import {
   createUserSubscription,
   getSubscription,
   listUserSubscriptions,
-  activateUserSubscription,
   cancelUserSubscription,
 } from './subscription.service.js';
 
@@ -58,16 +57,6 @@ export async function detailSubscriptionController(request: FastifyRequest) {
   }
 
   return subscription;
-}
-
-export async function activateSubscriptionController(request: FastifyRequest) {
-  const userId = getUserId(request);
-
-  const params = request.params as {
-    id: string;
-  };
-
-  return activateUserSubscription(userId, params.id);
 }
 
 export async function cancelSubscriptionController(request: FastifyRequest) {

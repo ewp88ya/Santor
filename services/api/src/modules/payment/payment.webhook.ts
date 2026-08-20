@@ -2,7 +2,7 @@ import createError from 'http-errors';
 
 import { prisma } from '../../config/database.js';
 import { auditLog } from '../audit/audit.service.js';
-import { generateLicense } from '../license/license.service.js';
+import { activateEntitlement } from '../entitlement/entitlement.service.js';
 
 import { paymentConfig } from './providers/payment.config.js';
 import { PlategaAdapter } from './providers/platega.adapter.js';
@@ -717,7 +717,7 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     };
   }
 
-  await generateLicense(result.payment.subscriptionId);
+  await activateEntitlement(result.payment.subscriptionId);
 
   await auditLog({
     userId: result.payment.subscription.userId,

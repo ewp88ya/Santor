@@ -40,6 +40,11 @@ export async function findVPNAccessOwnership(licenseId: string) {
       subscription: {
         select: {
           userId: true,
+          product: {
+            select: {
+              code: true,
+            },
+          },
         },
       },
     },

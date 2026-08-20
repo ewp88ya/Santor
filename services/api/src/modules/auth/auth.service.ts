@@ -7,6 +7,7 @@ import { findUserByEmail, createUser } from './auth.repository.js';
 import { signToken } from './jwt.js';
 
 import { generateLicense } from '../license/license.service.js';
+import { activateEntitlement } from '../entitlement/entitlement.service.js';
 
 export async function register(email: string, password: string, name?: string) {
   const existing = await findUserByEmail(email);
@@ -46,6 +47,9 @@ export async function register(email: string, password: string, name?: string) {
 
   // Auto create License + VPN Access
   await generateLicense(subscription.id);
+
+  // Activate GENERAL-FREE entitlement
+  await activateEntitlement(subscription.id);
 
   return {
     id: user.id,

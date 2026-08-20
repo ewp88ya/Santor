@@ -7,7 +7,6 @@ import {
   createSubscriptionController,
   listSubscriptionController,
   detailSubscriptionController,
-  activateSubscriptionController,
   cancelSubscriptionController,
   expireSubscriptionJob,
 } from './subscription.controller.js';
@@ -35,14 +34,6 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       preHandler: [authMiddleware, requirePermission('subscription:read')],
     },
     detailSubscriptionController,
-  );
-
-  app.post(
-    '/subscriptions/:id/activate',
-    {
-      preHandler: [authMiddleware, requirePermission('subscription:create')],
-    },
-    activateSubscriptionController,
   );
 
   app.post(

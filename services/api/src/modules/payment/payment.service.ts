@@ -1,4 +1,5 @@
 import createError from 'http-errors';
+import { activateEntitlement } from '../entitlement/entitlement.service.js';
 
 import {
   createPayment,
@@ -9,7 +10,6 @@ import {
   updateSubscriptionAutoDebit,
 } from './payment.repository.js';
 
-import { generateLicense } from '../license/license.service.js';
 import { auditLog } from '../audit/audit.service.js';
 
 import { routePaymentProvider } from './payment.router.js';
@@ -190,7 +190,7 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
 
   const updated = await updatePaymentStatus(id, 'success', transactionId);
 
-  await generateLicense(payment.subscriptionId);
+  await activateEntitlement(payment.subscriptionId);
 
   await auditLog({
     userId,

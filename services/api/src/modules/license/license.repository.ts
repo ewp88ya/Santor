@@ -5,7 +5,6 @@ export async function createLicense(subscriptionId: string, licenseKey: string) 
     data: {
       subscriptionId,
       licenseKey,
-      status: 'active',
     },
 
     include: {

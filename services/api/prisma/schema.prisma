@@ -143,7 +143,7 @@ model License {
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   licenseKey String @unique
-  status     String @default("active")
+  status     String @default("inactive")
 
   vpnAccess VPNAccess?
 
@@ -183,7 +183,7 @@ model VPNAccess {
 
   configUrl String?
 
-  active Boolean @default(true)
+  active Boolean @default(false)
 
   devices Device[]
 
