@@ -10,7 +10,7 @@ import {
   regenerateDeviceConfig,
 } from './device.service.js';
 
-function getUserId(request: FastifyRequest) {
+function getUserId(request: FastifyRequest): string {
   const user = request.user as {
     id?: string;
   };
@@ -26,49 +26,91 @@ export async function createDeviceController(request: FastifyRequest) {
   const userId = getUserId(request);
 
   const body = request.body as {
-    vpnAccessId: string;
-    name: string;
+    vpnAccessId?: string;
+    name?: string;
   };
 
-  return addDevice(userId, body.vpnAccessId, body.name);
+  if (!body?.vpnAccessId) {
+    throw createError(400, 'vpnAccessId is required');
+  }
+
+  if (!body?.name?.trim()) {
+    throw createError(400, 'Device name is required');
+  }
+
+  return addDevice(
+    userId,
+    body.vpnAccessId,
+    body.name.trim(),
+  );
 }
 
 export async function listDeviceController(request: FastifyRequest) {
   const userId = getUserId(request);
 
   const params = request.params as {
-    vpnAccessId: string;
+    vpnAccessId?: string;
   };
 
-  return getDevices(userId, params.vpnAccessId);
+  if (!params?.vpnAccessId) {
+    throw createError(400, 'vpnAccessId is required');
+  }
+
+  return getDevices(
+    userId,
+    params.vpnAccessId,
+  );
 }
 
 export async function detailDeviceController(request: FastifyRequest) {
   const userId = getUserId(request);
 
   const params = request.params as {
-    id: string;
+    id?: string;
   };
 
-  return getDevice(userId, params.id);
+  if (!params?.id) {
+    throw createError(400, 'Device id is required');
+  }
+
+  return getDevice(
+    userId,
+    params.id,
+  );
 }
 
 export async function revokeDeviceController(request: FastifyRequest) {
   const userId = getUserId(request);
 
   const params = request.params as {
-    id: string;
+    id?: string;
   };
 
-  return disableDevice(userId, params.id);
+  if (!params?.id) {
+    throw createError(400, 'Device id is required');
+  }
+
+  return disableDevice(
+    userId,
+    params.id,
+  );
 }
 
-export async function regenerateDeviceController(request: FastifyRequest) {
+export async function regenerateDeviceController(
+  request: FastifyRequest,
+) {
   const userId = getUserId(request);
 
   const params = request.params as {
-    id: string;
+    id?: string;
   };
 
-  return regenerateDeviceConfig(userId, params.id);
+  if (!params?.id) {
+    throw createError(400, 'Device id is required');
+  }
+
+  return regenerateDeviceConfig(
+    userId,
+    params.id,
+  );
 }
