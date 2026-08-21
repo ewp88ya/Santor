@@ -24,7 +24,7 @@ prismaMock.$transaction.mockImplementation(
 );
 
 const transitionPaymentFromWebhookMock = vi.fn();
-const generateLicenseMock = vi.fn();
+const activateEntitlementMock = vi.fn();
 const auditLogMock = vi.fn();
 
 vi.mock('../../../config/database.js', () => ({
@@ -35,8 +35,8 @@ vi.mock('../payment.repository.js', () => ({
   transitionPaymentFromWebhook: transitionPaymentFromWebhookMock,
 }));
 
-vi.mock('../../license/license.service.js', () => ({
-  generateLicense: generateLicenseMock,
+vi.mock('../../entitlement/entitlement.service.js', () => ({
+  activateEntitlement: activateEntitlementMock,
 }));
 
 vi.mock('../../audit/audit.service.js', () => ({
@@ -46,6 +46,10 @@ vi.mock('../../audit/audit.service.js', () => ({
 describe('Platega payment webhook reconciliation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    activateEntitlementMock.mockResolvedValue({
+      subscriptionId: 'subscription-001',
+      status: 'active',
+    });
   });
 
   function payment(overrides: Record<string, unknown> = {}) {
@@ -96,51 +100,8 @@ describe('Platega payment webhook reconciliation', () => {
     );
   }
 
-  function mockEntitlementLookup() {
-    prismaMock.subscription.findUnique.mockResolvedValue({
-      id: 'subscription-001',
-      status: 'pending',
-      startDate: null,
-      endDate: null,
-      product: {
-        code: 'GENERAL-PRO',
-        durationDays: 30,
-      },
-      license: {
-        id: 'license-001',
-        vpnAccess: null,
-      },
-    });
-
-    prismaMock.subscription.update.mockResolvedValue({
-      id: 'subscription-001',
-      status: 'active',
-      startDate: new Date(),
-      endDate: new Date(),
-      product: {
-        code: 'GENERAL-PRO',
-        durationDays: 30,
-      },
-      user: {
-        id: 'user-001',
-      },
-      license: {
-        id: 'license-001',
-        vpnAccess: {
-          devices: [],
-        },
-      },
-    });
-
-    prismaMock.license.update.mockResolvedValue({
-      id: 'license-001',
-      status: 'active',
-    });
-  }
-
-  it('reconciles successful Platega payment', async () => {
+  it('reconciles successful Platega payment and activates entitlement', async () => {
     mockPaymentLookup();
-    mockEntitlementLookup();
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
@@ -164,12 +125,6 @@ describe('Platega payment webhook reconciliation', () => {
         status: 'success',
         transactionId: 'plt-001',
       },
-    });
-
-    generateLicenseMock.mockResolvedValue({
-      id: 'license-001',
-      subscriptionId: 'subscription-001',
-      status: 'active',
     });
 
     const { processPaymentWebhook } = await import('../payment.webhook.js');
@@ -197,30 +152,23 @@ describe('Platega payment webhook reconciliation', () => {
       webhookEventId: 'platega:plt-001:completed',
     });
 
-    expect(prismaMock.subscription.findUnique).toHaveBeenCalledWith({
-      where: {
-        id: 'subscription-001',
-      },
-      include: {
-        product: true,
-        license: {
-          include: {
-            vpnAccess: true,
-          },
-        },
-      },
-    });
+    expect(activateEntitlementMock).toHaveBeenCalledTimes(1);
+    expect(activateEntitlementMock).toHaveBeenCalledWith('subscription-001');
 
-    expect(prismaMock.subscription.update).toHaveBeenCalled();
-
-    expect(prismaMock.license.update).toHaveBeenCalledWith({
-      where: {
-        id: 'license-001',
-      },
-      data: {
-        status: 'active',
-      },
-    });
+    expect(auditLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'payment.webhook.success',
+        resource: 'payment',
+        resourceId: 'payment-001',
+        metadata: expect.objectContaining({
+          eventId: 'platega:plt-001:completed',
+          webhookType: 'payment.success',
+          provider: 'RussiaPaymentAdapter',
+          providerStatus: 'success',
+          transactionId: 'plt-001',
+        }),
+      }),
+    );
   });
 
   it('does not trust webhook success when Platega is still pending', async () => {
@@ -259,7 +207,14 @@ describe('Platega payment webhook reconciliation', () => {
     });
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
-    expect(generateLicenseMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+    expect(auditLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'PAYMENT_WEBHOOK_RECONCILIATION_PENDING',
+        resource: 'payment',
+        resourceId: 'payment-001',
+      }),
+    );
   });
 
   it('rejects Platega reference ID mismatch', async () => {
@@ -304,6 +259,7 @@ describe('Platega payment webhook reconciliation', () => {
     );
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
   });
 
   it('rejects Platega amount mismatch', async () => {
@@ -348,6 +304,7 @@ describe('Platega payment webhook reconciliation', () => {
     );
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
   });
 
   it('rejects Platega currency mismatch', async () => {
@@ -392,9 +349,10 @@ describe('Platega payment webhook reconciliation', () => {
     );
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
   });
 
-  it('processes failed Platega payment as failed', async () => {
+  it('processes failed Platega payment as failed without activating entitlement', async () => {
     mockPaymentLookup();
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -446,7 +404,22 @@ describe('Platega payment webhook reconciliation', () => {
       webhookEventId: 'platega:plt-001:failed',
     });
 
-    expect(generateLicenseMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+
+    expect(auditLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'payment.webhook.failed',
+        resource: 'payment',
+        resourceId: 'payment-001',
+        metadata: expect.objectContaining({
+          eventId: 'platega:plt-001:failed',
+          webhookType: 'payment.failed',
+          provider: 'RussiaPaymentAdapter',
+          providerStatus: 'failed',
+          transactionId: 'plt-001',
+        }),
+      }),
+    );
   });
 
   it('handles duplicate Platega webhook idempotently', async () => {
@@ -477,6 +450,110 @@ describe('Platega payment webhook reconciliation', () => {
 
     expect(globalThis.fetch).not.toHaveBeenCalled();
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+  });
+
+  it('does not activate entitlement when webhook transition is not performed', async () => {
+    mockPaymentLookup();
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'plt-001',
+          transactionId: 'plt-001',
+          merchantTransactionId: 'payment-001',
+          status: 'COMPLETED',
+          amount: 100,
+          currency: 'RUB',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    transitionPaymentFromWebhookMock.mockResolvedValue({
+      duplicate: false,
+      transitioned: false,
+      payment: {
+        ...payment(),
+        status: 'success',
+        transactionId: 'plt-001',
+      },
+    });
+
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
+
+    const result = await processPaymentWebhook({
+      eventId: 'platega:plt-001:already-success',
+      type: 'payment.success',
+      paymentId: 'payment-001',
+      transactionId: 'plt-001',
+    });
+
+    expect(result).toMatchObject({
+      processed: true,
+      duplicate: false,
+      reconciled: true,
+      transitioned: false,
+      paymentId: 'payment-001',
+      status: 'success',
+    });
+
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+    expect(auditLogMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'payment.webhook.success',
+      }),
+    );
+  });
+
+  it('does not write success audit when entitlement activation fails', async () => {
+    mockPaymentLookup();
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'plt-001',
+          transactionId: 'plt-001',
+          merchantTransactionId: 'payment-001',
+          status: 'COMPLETED',
+          amount: 100,
+          currency: 'RUB',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    transitionPaymentFromWebhookMock.mockResolvedValue({
+      duplicate: false,
+      transitioned: true,
+      payment: {
+        ...payment(),
+        status: 'success',
+        transactionId: 'plt-001',
+      },
+    });
+
+    const activationError = new Error('Entitlement activation failed');
+    activateEntitlementMock.mockRejectedValueOnce(activationError);
+
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
+
+    await expect(
+      processPaymentWebhook({
+        eventId: 'platega:plt-001:activation-failed',
+        type: 'payment.success',
+        paymentId: 'payment-001',
+        transactionId: 'plt-001',
+      }),
+    ).rejects.toThrow('Entitlement activation failed');
+
+    expect(activateEntitlementMock).toHaveBeenCalledWith('subscription-001');
+
+    expect(auditLogMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'payment.webhook.success',
+      }),
+    );
   });
 
   it('fails safely when Platega verification fails', async () => {
@@ -505,6 +582,6 @@ describe('Platega payment webhook reconciliation', () => {
     });
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
-    expect(generateLicenseMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
   });
 });

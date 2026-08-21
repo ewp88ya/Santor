@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { prisma } from '../../config/database.js';
 
@@ -13,6 +13,40 @@ import {
 import { getVPNMode } from '../../config/vpn-mode.js';
 
 type PrismaClientOrTransaction = typeof prisma | Prisma.TransactionClient;
+
+function isVPNAccessUniqueConstraintError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002' &&
+    Array.isArray(error.meta?.target) &&
+    error.meta.target.includes('licenseId')
+  );
+}
+
+async function findExistingVPNAccessAfterRace(licenseId: string, db: PrismaClientOrTransaction) {
+  const existing = await findVPNAccessByLicense(licenseId, db);
+
+  if (!existing) {
+    throw createError(409, 'VPN access provisioning conflict');
+  }
+
+  if (!existing.active) {
+    return db.vPNAccess.update({
+      where: {
+        id: existing.id,
+      },
+      data: {
+        active: true,
+      },
+      include: {
+        license: true,
+        vpnNode: true,
+      },
+    });
+  }
+
+  return existing;
+}
 
 export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTransaction = prisma) {
   const ownership = await findVPNAccessOwnership(licenseId, db);
@@ -54,14 +88,24 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
     throw createError(503, 'No active VPN node available');
   }
 
-  const vpnAccess = await createVPNAccess(
-    {
-      licenseId,
-      protocol: 'wireguard',
-      vpnNodeId: vpnNode.id,
-    },
-    db,
-  );
+  let vpnAccess;
+
+  try {
+    vpnAccess = await createVPNAccess(
+      {
+        licenseId,
+        protocol: 'wireguard',
+        vpnNodeId: vpnNode.id,
+      },
+      db,
+    );
+  } catch (error) {
+    if (isVPNAccessUniqueConstraintError(error)) {
+      return findExistingVPNAccessAfterRace(licenseId, db);
+    }
+
+    throw error;
+  }
 
   return db.vPNAccess.update({
     where: {

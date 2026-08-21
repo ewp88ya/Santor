@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import {
@@ -16,7 +17,19 @@ export async function generateLicense(subscriptionId: string) {
 
   const licenseKey = `SANTOR-${randomUUID().replaceAll('-', '').toUpperCase()}`;
 
-  return createLicense(subscriptionId, licenseKey);
+  try {
+    return await createLicense(subscriptionId, licenseKey);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const concurrentLicense = await findLicenseBySubscription(subscriptionId);
+
+      if (concurrentLicense) {
+        return concurrentLicense;
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function getLicense(id: string) {

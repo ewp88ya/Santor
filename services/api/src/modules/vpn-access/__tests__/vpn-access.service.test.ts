@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -199,6 +200,62 @@ describe('VPN Access Service', () => {
       });
 
       expect(result).toEqual(created);
+    });
+
+    it('handles concurrent provisioning requests without creating duplicate VPN access', async () => {
+      const existing = buildVPNAccess(true);
+
+      let lookupCount = 0;
+
+      findVPNAccessByLicenseMock.mockImplementation(async () => {
+        lookupCount += 1;
+
+        if (lookupCount <= 2) {
+          return null;
+        }
+
+        return existing;
+      });
+
+      let createCount = 0;
+
+      createVPNAccessMock.mockImplementation(async () => {
+        createCount += 1;
+
+        if (createCount === 1) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          return existing;
+        }
+
+        throw new Prisma.PrismaClientKnownRequestError(
+          'Unique constraint failed on the fields: (`licenseId`)',
+          {
+            code: 'P2002',
+            clientVersion: '7.8.0',
+            meta: {
+              target: ['licenseId'],
+            },
+          },
+        );
+      });
+
+      const results = await Promise.all([
+        generateVPNAccess('license-1'),
+        generateVPNAccess('license-1'),
+      ]);
+
+      expect(results).toHaveLength(2);
+
+      expect(results[0]).toEqual(existing);
+
+      expect(results[1]).toEqual(existing);
+
+      expect(createVPNAccessMock).toHaveBeenCalledTimes(2);
+
+      expect(findActiveVPNNodeMock).toHaveBeenCalledTimes(2);
+
+      expect(findVPNAccessByLicenseMock).toHaveBeenCalledTimes(3);
     });
 
     it('passes the transaction client through the repository layer', async () => {
