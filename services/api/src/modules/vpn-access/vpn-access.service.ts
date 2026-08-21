@@ -1,4 +1,7 @@
 import createError from 'http-errors';
+import type { Prisma } from '@prisma/client';
+
+import { prisma } from '../../config/database.js';
 
 import {
   createVPNAccess,
@@ -7,12 +10,12 @@ import {
   findActiveVPNNode,
 } from './vpn-access.repository.js';
 
-import { createWireGuardConfig } from '../wireguard/wireguard.service.js';
-
 import { getVPNMode } from '../../config/vpn-mode.js';
 
-export async function generateVPNAccess(licenseId: string) {
-  const ownership = await findVPNAccessOwnership(licenseId);
+type PrismaClientOrTransaction = typeof prisma | Prisma.TransactionClient;
+
+export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTransaction = prisma) {
+  const ownership = await findVPNAccessOwnership(licenseId, db);
 
   if (!ownership) {
     throw createError(404, 'License not found');
@@ -24,33 +27,54 @@ export async function generateVPNAccess(licenseId: string) {
     throw createError(409, `VPN access provisioning is not supported for ${mode} mode`);
   }
 
-  const existing = await findVPNAccessByLicense(licenseId);
+  const existing = await findVPNAccessByLicense(licenseId, db);
 
   if (existing) {
-    if (!existing.configUrl) {
-      await createWireGuardConfig(existing.id);
-
-      return findVPNAccessByLicense(licenseId);
+    if (!existing.active) {
+      return db.vPNAccess.update({
+        where: {
+          id: existing.id,
+        },
+        data: {
+          active: true,
+        },
+        include: {
+          license: true,
+          vpnNode: true,
+        },
+      });
     }
 
     return existing;
   }
 
-  const vpnNode = await findActiveVPNNode();
+  const vpnNode = await findActiveVPNNode(db);
 
   if (!vpnNode) {
     throw createError(503, 'No active VPN node available');
   }
 
-  const vpnAccess = await createVPNAccess({
-    licenseId,
-    protocol: 'wireguard',
-    vpnNodeId: vpnNode.id,
+  const vpnAccess = await createVPNAccess(
+    {
+      licenseId,
+      protocol: 'wireguard',
+      vpnNodeId: vpnNode.id,
+    },
+    db,
+  );
+
+  return db.vPNAccess.update({
+    where: {
+      id: vpnAccess.id,
+    },
+    data: {
+      active: true,
+    },
+    include: {
+      license: true,
+      vpnNode: true,
+    },
   });
-
-  await createWireGuardConfig(vpnAccess.id);
-
-  return findVPNAccessByLicense(licenseId);
 }
 
 export async function generateOwnedVPNAccess(licenseId: string, userId: string) {

@@ -1,11 +1,18 @@
+import type { Prisma } from '@prisma/client';
+
 import { prisma } from '../../config/database.js';
 
-export async function createVPNAccess(data: {
-  licenseId: string;
-  protocol: string;
-  vpnNodeId: string;
-}) {
-  return prisma.vPNAccess.create({
+type PrismaClientOrTransaction = typeof prisma | Prisma.TransactionClient;
+
+export async function createVPNAccess(
+  data: {
+    licenseId: string;
+    protocol: string;
+    vpnNodeId: string;
+  },
+  db: PrismaClientOrTransaction = prisma,
+) {
+  return db.vPNAccess.create({
     data: {
       licenseId: data.licenseId,
       protocol: data.protocol,
@@ -18,8 +25,11 @@ export async function createVPNAccess(data: {
   });
 }
 
-export async function findVPNAccessByLicense(licenseId: string) {
-  return prisma.vPNAccess.findUnique({
+export async function findVPNAccessByLicense(
+  licenseId: string,
+  db: PrismaClientOrTransaction = prisma,
+) {
+  return db.vPNAccess.findUnique({
     where: {
       licenseId,
     },
@@ -30,8 +40,11 @@ export async function findVPNAccessByLicense(licenseId: string) {
   });
 }
 
-export async function findVPNAccessOwnership(licenseId: string) {
-  return prisma.license.findUnique({
+export async function findVPNAccessOwnership(
+  licenseId: string,
+  db: PrismaClientOrTransaction = prisma,
+) {
+  return db.license.findUnique({
     where: {
       id: licenseId,
     },
@@ -51,19 +64,8 @@ export async function findVPNAccessOwnership(licenseId: string) {
   });
 }
 
-export async function updateVPNAccessConfig(id: string, configUrl: string) {
-  return prisma.vPNAccess.update({
-    where: {
-      id,
-    },
-    data: {
-      configUrl,
-    },
-  });
-}
-
-export async function findActiveVPNNode() {
-  return prisma.vPNNode.findFirst({
+export async function findActiveVPNNode(db: PrismaClientOrTransaction = prisma) {
+  return db.vPNNode.findFirst({
     where: {
       active: true,
       protocol: 'wireguard',

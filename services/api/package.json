@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
+    "@noble/curves": "^2.3.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "argon2": "^0.44.0",

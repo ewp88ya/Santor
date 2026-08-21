@@ -9,7 +9,19 @@ const prismaMock = {
   payment: {
     findUnique: vi.fn(),
   },
+  subscription: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  license: {
+    update: vi.fn(),
+  },
+  $transaction: vi.fn(),
 };
+
+prismaMock.$transaction.mockImplementation(
+  async (callback: (tx: typeof prismaMock) => Promise<unknown>) => callback(prismaMock),
+);
 
 const transitionPaymentFromWebhookMock = vi.fn();
 const generateLicenseMock = vi.fn();
@@ -84,8 +96,51 @@ describe('Platega payment webhook reconciliation', () => {
     );
   }
 
+  function mockEntitlementLookup() {
+    prismaMock.subscription.findUnique.mockResolvedValue({
+      id: 'subscription-001',
+      status: 'pending',
+      startDate: null,
+      endDate: null,
+      product: {
+        code: 'GENERAL-PRO',
+        durationDays: 30,
+      },
+      license: {
+        id: 'license-001',
+        vpnAccess: null,
+      },
+    });
+
+    prismaMock.subscription.update.mockResolvedValue({
+      id: 'subscription-001',
+      status: 'active',
+      startDate: new Date(),
+      endDate: new Date(),
+      product: {
+        code: 'GENERAL-PRO',
+        durationDays: 30,
+      },
+      user: {
+        id: 'user-001',
+      },
+      license: {
+        id: 'license-001',
+        vpnAccess: {
+          devices: [],
+        },
+      },
+    });
+
+    prismaMock.license.update.mockResolvedValue({
+      id: 'license-001',
+      status: 'active',
+    });
+  }
+
   it('reconciles successful Platega payment', async () => {
     mockPaymentLookup();
+    mockEntitlementLookup();
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
@@ -111,7 +166,11 @@ describe('Platega payment webhook reconciliation', () => {
       },
     });
 
-    generateLicenseMock.mockResolvedValue(undefined);
+    generateLicenseMock.mockResolvedValue({
+      id: 'license-001',
+      subscriptionId: 'subscription-001',
+      status: 'active',
+    });
 
     const { processPaymentWebhook } = await import('../payment.webhook.js');
 
@@ -138,7 +197,30 @@ describe('Platega payment webhook reconciliation', () => {
       webhookEventId: 'platega:plt-001:completed',
     });
 
-    expect(generateLicenseMock).toHaveBeenCalledWith('subscription-001');
+    expect(prismaMock.subscription.findUnique).toHaveBeenCalledWith({
+      where: {
+        id: 'subscription-001',
+      },
+      include: {
+        product: true,
+        license: {
+          include: {
+            vpnAccess: true,
+          },
+        },
+      },
+    });
+
+    expect(prismaMock.subscription.update).toHaveBeenCalled();
+
+    expect(prismaMock.license.update).toHaveBeenCalledWith({
+      where: {
+        id: 'license-001',
+      },
+      data: {
+        status: 'active',
+      },
+    });
   });
 
   it('does not trust webhook success when Platega is still pending', async () => {
