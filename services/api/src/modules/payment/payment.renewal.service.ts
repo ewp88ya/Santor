@@ -375,9 +375,7 @@ export async function renewSubscription(subscriptionId: string) {
       const attempts = subscription.renewalAttempts + 1;
       const maxAttemptsReached = attempts >= MAX_RENEWAL_ATTEMPTS;
 
-      const nextAttemptAt = maxAttemptsReached
-        ? null
-        : addDays(new Date(), RETRY_DELAY_DAYS);
+      const nextAttemptAt = maxAttemptsReached ? null : addDays(new Date(), RETRY_DELAY_DAYS);
 
       const gracePeriodEnd = maxAttemptsReached
         ? addDays(new Date(), GRACE_PERIOD_DAYS)
@@ -583,10 +581,7 @@ export async function renewSubscription(subscriptionId: string) {
       try {
         await clearRenewalClaim(subscriptionId);
       } catch (error) {
-        console.error(
-          `[RENEWAL] Failed to release renewal claim for ${subscriptionId}`,
-          error,
-        );
+        console.error(`[RENEWAL] Failed to release renewal claim for ${subscriptionId}`, error);
       }
     }
   }

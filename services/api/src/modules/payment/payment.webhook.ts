@@ -550,13 +550,7 @@ async function reconcilePlategaPayment(paymentId: string) {
 
 function resolveWebhookStatus(
   reconciledStatus:
-    | 'pending'
-    | 'requires_action'
-    | 'success'
-    | 'failed'
-    | 'expired'
-    | 'canceled'
-    | 'unknown',
+    'pending' | 'requires_action' | 'success' | 'failed' | 'expired' | 'canceled' | 'unknown',
 ): 'success' | 'failed' | null {
   if (reconciledStatus === 'success') {
     return 'success';
@@ -738,10 +732,7 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
         return transition;
       }
 
-      await activateEntitlementInTransaction(
-        transition.payment.subscriptionId,
-        tx,
-      );
+      await activateEntitlementInTransaction(transition.payment.subscriptionId, tx);
 
       return transition;
     },

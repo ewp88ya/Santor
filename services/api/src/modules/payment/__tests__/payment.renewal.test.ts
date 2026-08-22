@@ -116,11 +116,7 @@ function resetSubscription(overrides: Record<string, unknown> = {}) {
 
 function setupSuccessfulTransaction() {
   mocks.mockPrisma.$transaction.mockImplementation(
-    async (
-      input:
-        | Promise<unknown>[]
-        | ((tx: typeof mocks.mockPrisma) => Promise<unknown>),
-    ) => {
+    async (input: Promise<unknown>[] | ((tx: typeof mocks.mockPrisma) => Promise<unknown>)) => {
       if (typeof input === 'function') {
         return input(mocks.mockPrisma);
       }
