@@ -187,7 +187,7 @@ describe('Platega payment webhook reconciliation', () => {
     );
   });
 
-  it('rejects webhook success when Platega is still pending', async () => {
+  it('keeps webhook pending state without transitioning payment', async () => {
     mockPaymentLookup();
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -206,25 +206,25 @@ describe('Platega payment webhook reconciliation', () => {
 
     const { processPaymentWebhook } = await import('../payment.webhook.js');
 
-    await expect(
-      processPaymentWebhook({
-        eventId: 'platega:plt-001:pending',
-        type: 'payment.success',
-        paymentId: 'payment-001',
-        transactionId: 'plt-001',
-      }),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-      message: 'Payment provider status is pending',
+    const result = await processPaymentWebhook({
+      eventId: 'platega:plt-001:pending',
+      type: 'payment.success',
+      paymentId: 'payment-001',
+      transactionId: 'plt-001',
+    });
+
+    expect(result).toMatchObject({
+      processed: true,
+      duplicate: false,
+      reconciled: true,
+      transitioned: false,
+      paymentId: 'payment-001',
+      status: 'pending',
     });
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
     expect(activateEntitlementMock).not.toHaveBeenCalled();
-    expect(auditLogMock).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'payment.webhook.success',
-      }),
-    );
+    expect(activateEntitlementInTransactionMock).not.toHaveBeenCalled();
   });
 
   it('ignores native Platega pending webhook without reconciling or transitioning', async () => {
@@ -626,7 +626,7 @@ describe('Platega payment webhook reconciliation', () => {
     expect(activateEntitlementMock).not.toHaveBeenCalled();
   });
 
-  it('rejects a forged success webhook when the provider remains pending', async () => {
+  it('ignores forged success webhook while provider remains pending', async () => {
     mockPaymentLookup();
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -645,25 +645,25 @@ describe('Platega payment webhook reconciliation', () => {
 
     const { processPaymentWebhook } = await import('../payment.webhook.js');
 
-    await expect(
-      processPaymentWebhook({
-        eventId: 'forged-success-event',
-        type: 'payment.success',
-        paymentId: 'payment-001',
-        transactionId: 'attacker-tx',
-      }),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-      message: 'Payment provider status is pending',
+    const result = await processPaymentWebhook({
+      eventId: 'forged-success-event',
+      type: 'payment.success',
+      paymentId: 'payment-001',
+      transactionId: 'attacker-tx',
+    });
+
+    expect(result).toMatchObject({
+      processed: true,
+      duplicate: false,
+      reconciled: true,
+      transitioned: false,
+      paymentId: 'payment-001',
+      status: 'pending',
     });
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
     expect(activateEntitlementMock).not.toHaveBeenCalled();
-    expect(auditLogMock).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'payment.webhook.success',
-      }),
-    );
+    expect(activateEntitlementInTransactionMock).not.toHaveBeenCalled();
   });
 
   it('rejects a success webhook when provider verification returns a non-success status', async () => {
@@ -694,7 +694,7 @@ describe('Platega payment webhook reconciliation', () => {
       }),
     ).rejects.toMatchObject({
       statusCode: 409,
-      message: 'Payment provider status is failed',
+      message: 'Payment webhook type does not match provider status: expected payment.failed',
     });
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();

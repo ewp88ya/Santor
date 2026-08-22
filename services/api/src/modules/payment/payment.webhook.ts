@@ -647,12 +647,48 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
 
   /*
    * ------------------------------------------------------------------------
-   * SUCCESS WEBHOOK MUST MATCH VERIFIED PROVIDER STATUS
+   * WEBHOOK TYPE MUST MATCH VERIFIED PROVIDER STATUS
    * ------------------------------------------------------------------------
+   *
+   * The webhook is only a trigger.
+   *
+   * A malicious or stale webhook must never be allowed to invert the
+   * provider's authoritative state:
+   *
+   *   payment.success + provider.failed  -> reject
+   *   payment.failed  + provider.success -> reject
+   *
+   * Terminal provider states are mapped to the only valid webhook type.
+   * Pending / requires_action / unknown remain non-terminal.
    */
 
-  if (event.type === 'payment.success' && reconciliation.status !== 'success') {
-    throw createError(409, `Payment provider status is ${reconciliation.status}`);
+  const expectedWebhookType =
+    reconciliation.status === 'success'
+      ? 'payment.success'
+      : reconciliation.status === 'failed' || reconciliation.status === 'expired'
+        ? 'payment.failed'
+        : null;
+
+  if (expectedWebhookType && event.type !== expectedWebhookType) {
+    await auditLog({
+      userId: reconciliation.payment.subscription.userId,
+      action: 'PAYMENT_WEBHOOK_TYPE_MISMATCH',
+      resource: 'payment',
+      resourceId: reconciliation.payment.id,
+      metadata: {
+        eventId: event.eventId,
+        webhookType: event.type,
+        expectedWebhookType,
+        provider: reconciliation.payment.provider,
+        providerStatus: reconciliation.status,
+        transactionId: reconciliation.transactionId ?? event.transactionId,
+      },
+    });
+
+    throw createError(
+      409,
+      `Payment webhook type does not match provider status: expected ${expectedWebhookType}`,
+    );
   }
 
   /*
