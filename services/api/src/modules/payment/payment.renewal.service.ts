@@ -257,8 +257,15 @@ export async function renewSubscription(subscriptionId: string) {
     paymentProviders,
     previousPayment.currency,
   );
+
   const providerName = getProviderName(paymentProvider);
 
+  /*
+   * Create the renewal payment before charging the provider.
+   *
+   * The payment ID becomes the provider reference ID, which gives
+   * the provider-side transaction a Santor-owned idempotency reference.
+   */
   const payment = await prisma.payment.create({
     data: {
       subscriptionId,
@@ -292,6 +299,14 @@ export async function renewSubscription(subscriptionId: string) {
     };
   }
 
+  /*
+   * Provider failure.
+   *
+   * Use payment.update rather than updateMany. The payment ID is already
+   * known and the renewal payment is uniquely identified by that ID.
+   *
+   * Keep payment + subscription state mutation in one transaction.
+   */
   if (!result.success) {
     const attempts = subscription.renewalAttempts + 1;
     const maxAttemptsReached = attempts >= MAX_RENEWAL_ATTEMPTS;
@@ -304,8 +319,10 @@ export async function renewSubscription(subscriptionId: string) {
         data: {
           status: 'failed',
           providerPaymentId: result.providerPaymentId,
+          transactionId: result.transactionId,
         },
       }),
+
       prisma.subscription.update({
         where: {
           id: subscriptionId,
@@ -344,12 +361,24 @@ export async function renewSubscription(subscriptionId: string) {
     };
   }
 
+  /*
+   * Successful provider charge.
+   *
+   * Extend from the existing end date when possible. This preserves
+   * remaining subscription time instead of shortening it.
+   */
   const currentTime = new Date();
   const currentEndDate = subscription.endDate ?? currentTime;
   const baseDate = currentEndDate > currentTime ? currentEndDate : currentTime;
   const newEndDate = addDays(baseDate, subscription.product.durationDays);
 
-  await prisma.$transaction([
+  /*
+   * Payment success + subscription activation + VPN activation must
+   * commit together.
+   *
+   * If any operation fails, Prisma rolls the transaction back.
+   */
+  const transactionOperations = [
     prisma.payment.update({
       where: {
         id: payment.id,
@@ -360,6 +389,7 @@ export async function renewSubscription(subscriptionId: string) {
         providerPaymentId: result.providerPaymentId,
       },
     }),
+
     prisma.subscription.update({
       where: {
         id: subscriptionId,
@@ -372,6 +402,7 @@ export async function renewSubscription(subscriptionId: string) {
         nextRenewalAttemptAt: null,
       },
     }),
+
     ...(subscription.license?.vpnAccess
       ? [
           prisma.vPNAccess.update({
@@ -384,7 +415,9 @@ export async function renewSubscription(subscriptionId: string) {
           }),
         ]
       : []),
-  ]);
+  ];
+
+  await prisma.$transaction(transactionOperations);
 
   await auditLog({
     userId: auditUserId,

@@ -46,6 +46,7 @@ vi.mock('../../audit/audit.service.js', () => ({
 describe('Platega payment webhook reconciliation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
     activateEntitlementMock.mockResolvedValue({
       subscriptionId: 'subscription-001',
       status: 'active',
@@ -171,7 +172,7 @@ describe('Platega payment webhook reconciliation', () => {
     );
   });
 
-  it('does not trust webhook success when Platega is still pending', async () => {
+  it('rejects webhook success when Platega is still pending', async () => {
     mockPaymentLookup();
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -190,29 +191,23 @@ describe('Platega payment webhook reconciliation', () => {
 
     const { processPaymentWebhook } = await import('../payment.webhook.js');
 
-    const result = await processPaymentWebhook({
-      eventId: 'platega:plt-001:pending',
-      type: 'payment.success',
-      paymentId: 'payment-001',
-      transactionId: 'plt-001',
-    });
-
-    expect(result).toMatchObject({
-      processed: true,
-      duplicate: false,
-      reconciled: true,
-      transitioned: false,
-      paymentId: 'payment-001',
-      status: 'pending',
+    await expect(
+      processPaymentWebhook({
+        eventId: 'platega:plt-001:pending',
+        type: 'payment.success',
+        paymentId: 'payment-001',
+        transactionId: 'plt-001',
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: 'Payment provider status is pending',
     });
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
     expect(activateEntitlementMock).not.toHaveBeenCalled();
-    expect(auditLogMock).toHaveBeenCalledWith(
+    expect(auditLogMock).not.toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'PAYMENT_WEBHOOK_RECONCILIATION_PENDING',
-        resource: 'payment',
-        resourceId: 'payment-001',
+        action: 'payment.webhook.success',
       }),
     );
   });
@@ -583,5 +578,85 @@ describe('Platega payment webhook reconciliation', () => {
 
     expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
     expect(activateEntitlementMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a forged success webhook when the provider remains pending', async () => {
+    mockPaymentLookup();
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'plt-001',
+          transactionId: 'plt-001',
+          merchantTransactionId: 'payment-001',
+          status: 'PENDING',
+          amount: 100,
+          currency: 'RUB',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
+
+    await expect(
+      processPaymentWebhook({
+        eventId: 'forged-success-event',
+        type: 'payment.success',
+        paymentId: 'payment-001',
+        transactionId: 'attacker-tx',
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: 'Payment provider status is pending',
+    });
+
+    expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+    expect(auditLogMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'payment.webhook.success',
+      }),
+    );
+  });
+
+  it('rejects a success webhook when provider verification returns a non-success status', async () => {
+    mockPaymentLookup();
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'plt-001',
+          transactionId: 'plt-001',
+          merchantTransactionId: 'payment-001',
+          status: 'CANCELLED',
+          amount: 100,
+          currency: 'RUB',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const { processPaymentWebhook } = await import('../payment.webhook.js');
+
+    await expect(
+      processPaymentWebhook({
+        eventId: 'forged-success-cancelled-event',
+        type: 'payment.success',
+        paymentId: 'payment-001',
+        transactionId: 'attacker-tx',
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: 'Payment provider status is failed',
+    });
+
+    expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+    expect(auditLogMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'payment.webhook.success',
+      }),
+    );
   });
 });

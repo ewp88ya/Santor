@@ -1,5 +1,11 @@
 import createError from 'http-errors';
-import { activateEntitlement } from '../entitlement/entitlement.service.js';
+
+import { prisma } from '../../config/database.js';
+import {
+  activateEntitlement,
+  activateEntitlementInTransaction,
+} from '../entitlement/entitlement.service.js';
+import { auditLog } from '../audit/audit.service.js';
 
 import {
   createPayment,
@@ -9,8 +15,6 @@ import {
   updatePaymentStatus,
   updateSubscriptionAutoDebit,
 } from './payment.repository.js';
-
-import { auditLog } from '../audit/audit.service.js';
 
 import { routePaymentProvider } from './payment.router.js';
 import type { PaymentMethod } from './providers/payment.provider.js';
@@ -181,6 +185,28 @@ export async function getPayments(userId: string) {
   return listPayments(userId);
 }
 
+/**
+ * Mark a payment as successful only after independent provider verification.
+ *
+ * IMPORTANT:
+ *
+ * The final payment lifecycle is executed inside ONE Serializable
+ * Prisma transaction:
+ *
+ *   payment -> success
+ *        ↓
+ *   subscription -> active
+ *        ↓
+ *   license -> active
+ *        ↓
+ *   VPN access
+ *
+ * If any database operation in the entitlement lifecycle fails,
+ * the payment success mutation is rolled back as well.
+ *
+ * Provider verification itself remains OUTSIDE the transaction because
+ * external network calls must never be held inside a database transaction.
+ */
 export async function markPaymentSuccess(id: string, transactionId: string, userId: string) {
   const payment = await findPaymentByIdForUser(id, userId);
 
@@ -188,17 +214,244 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
     throw createError(404, 'Payment not found');
   }
 
-  const updated = await updatePaymentStatus(id, 'success', transactionId);
+  if (payment.status !== 'pending') {
+    throw createError(409, 'Payment is not pending');
+  }
 
-  await activateEntitlement(payment.subscriptionId);
+  if (!payment.providerPaymentId) {
+    throw createError(409, 'Payment does not have a provider payment ID');
+  }
 
+  if (!payment.country) {
+    throw createError(409, 'Payment does not have a country');
+  }
+
+  const paymentProvider = getPaymentProvider(
+    payment.country,
+    payment.paymentMethod as PaymentMethod,
+    payment.currency,
+  );
+
+  /*
+   * External provider verification MUST happen before opening the
+   * database transaction.
+   */
+  const verification = await paymentProvider.verifyPayment(payment.providerPaymentId);
+
+  if (verification.status === 'unknown') {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_FAILED',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        reason: verification.error ?? 'UNKNOWN_PROVIDER_STATUS',
+      },
+    });
+
+    throw createError(502, verification.error ?? 'Unable to verify payment with provider');
+  }
+
+  if (verification.status !== 'success') {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_REJECTED',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        providerStatus: verification.status,
+      },
+    });
+
+    throw createError(409, `Payment provider status is ${verification.status}`);
+  }
+
+  if (
+    verification.providerPaymentId &&
+    verification.providerPaymentId !== payment.providerPaymentId
+  ) {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_MISMATCH',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        reason: 'PROVIDER_PAYMENT_ID_MISMATCH',
+        expectedProviderPaymentId: payment.providerPaymentId,
+        providerPaymentId: verification.providerPaymentId,
+      },
+    });
+
+    throw createError(409, 'Provider payment ID mismatch');
+  }
+
+  if (verification.referenceId && verification.referenceId !== payment.id) {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_MISMATCH',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        reason: 'REFERENCE_ID_MISMATCH',
+        expectedReferenceId: payment.id,
+        providerReferenceId: verification.referenceId,
+      },
+    });
+
+    throw createError(409, 'Payment reference ID mismatch');
+  }
+
+  if (verification.amount !== undefined && verification.amount !== payment.amount) {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_MISMATCH',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        reason: 'AMOUNT_MISMATCH',
+        expectedAmount: payment.amount,
+        providerAmount: verification.amount,
+      },
+    });
+
+    throw createError(409, 'Payment amount mismatch');
+  }
+
+  if (
+    verification.currency &&
+    verification.currency.toUpperCase() !== payment.currency.toUpperCase()
+  ) {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_MISMATCH',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        reason: 'CURRENCY_MISMATCH',
+        expectedCurrency: payment.currency,
+        providerCurrency: verification.currency,
+      },
+    });
+
+    throw createError(409, 'Payment currency mismatch');
+  }
+
+  const verifiedTransactionId = verification.transactionId ?? transactionId;
+
+  if (transactionId && verification.transactionId && transactionId !== verification.transactionId) {
+    await auditLog({
+      userId,
+      action: 'PAYMENT_SUCCESS_VERIFICATION_MISMATCH',
+      resource: 'payment',
+      resourceId: id,
+      metadata: {
+        reason: 'TRANSACTION_ID_MISMATCH',
+        callerTransactionId: transactionId,
+        providerTransactionId: verification.transactionId,
+      },
+    });
+
+    throw createError(409, 'Payment transaction ID mismatch');
+  }
+
+  /*
+   * ATOMIC PAYMENT LIFECYCLE
+   *
+   * Everything below is one database transaction.
+   *
+   * If entitlement activation throws:
+   *
+   * payment status success
+   * subscription active
+   * license active
+   * VPN access
+   *
+   * are ALL rolled back.
+   */
+  const updated = await prisma.$transaction(
+    async (tx) => {
+      /*
+       * Re-read and lock the payment inside the transaction.
+       *
+       * This protects against concurrent webhook/renewal processing
+       * that started after the initial read above.
+       */
+      const currentPayment = await tx.payment.findUnique({
+        where: {
+          id,
+        },
+        select: {
+          id: true,
+          status: true,
+          subscriptionId: true,
+          providerPaymentId: true,
+          transactionId: true,
+        },
+      });
+
+      if (!currentPayment) {
+        throw createError(404, 'Payment not found');
+      }
+
+      if (currentPayment.status !== 'pending') {
+        throw createError(409, 'Payment is not pending');
+      }
+
+      if (
+        currentPayment.providerPaymentId &&
+        currentPayment.providerPaymentId !== payment.providerPaymentId
+      ) {
+        throw createError(409, 'Provider payment ID mismatch');
+      }
+
+      /*
+       * Payment state mutation.
+       */
+      const updatedPayment = await tx.payment.update({
+        where: {
+          id,
+        },
+        data: {
+          status: 'success',
+          transactionId: verifiedTransactionId,
+        },
+      });
+
+      /*
+       * Entitlement activation uses the SAME transaction client.
+       */
+      await activateEntitlementInTransaction(currentPayment.subscriptionId, tx);
+
+      return updatedPayment;
+    },
+    {
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000,
+    },
+  );
+
+  /*
+   * Success audit is written only after the atomic database lifecycle
+   * has successfully committed.
+   *
+   * Therefore PAYMENT_SUCCESS can never be emitted when entitlement
+   * activation failed and the transaction rolled back.
+   */
   await auditLog({
     userId,
     action: 'PAYMENT_SUCCESS',
     resource: 'payment',
     resourceId: id,
     metadata: {
-      transactionId,
+      transactionId: verifiedTransactionId,
+      providerPaymentId: payment.providerPaymentId,
+      verified: true,
+      providerStatus: verification.status,
     },
   });
 

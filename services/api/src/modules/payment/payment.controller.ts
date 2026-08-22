@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import type { FastifyRequest } from 'fastify';
 
 import {
@@ -27,6 +28,23 @@ function getUserId(request: FastifyRequest) {
   }
 
   return user.id;
+}
+
+function getInternalWebhookSecret(request: FastifyRequest) {
+  const configuredSecret = process.env.SANTOR_INTERNAL_WEBHOOK_SECRET?.trim();
+
+  if (!configuredSecret) {
+    throw createError(500, 'Internal webhook secret is not configured');
+  }
+
+  const header = request.headers['x-santor-webhook-secret'];
+  const providedSecret = Array.isArray(header) ? header[0] : header;
+
+  if (!providedSecret || providedSecret !== configuredSecret) {
+    throw createError(401, 'Invalid internal webhook secret');
+  }
+
+  return providedSecret;
 }
 
 export async function createPaymentController(request: FastifyRequest) {
@@ -98,6 +116,8 @@ export async function disableAutoDebitController(request: FastifyRequest) {
 }
 
 export async function paymentWebhookController(request: FastifyRequest) {
+  getInternalWebhookSecret(request);
+
   const body = request.body as {
     eventId: string;
     type: 'payment.success' | 'payment.failed';

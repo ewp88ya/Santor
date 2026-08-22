@@ -328,7 +328,6 @@ async function reconcileXenditPayment(
     return {
       payment,
       reconciled: false,
-      status: expectedWebhookType === 'payment.success' ? 'success' : 'failed',
       transactionId: payment.transactionId ?? undefined,
     } as const;
   }
@@ -393,6 +392,7 @@ async function reconcileXenditPayment(
   }
 
   const expectedCurrency = normalizeCurrency(payment.currency);
+
   const providerCurrency = normalizeCurrency(verification.currency);
 
   if (!expectedCurrency || !providerCurrency) {
@@ -514,6 +514,7 @@ async function reconcilePlategaPayment(
   }
 
   const expectedCurrency = normalizeCurrency(payment.currency);
+
   const providerCurrency = normalizeCurrency(verification.currency);
 
   if (!expectedCurrency || !providerCurrency) {
@@ -614,6 +615,12 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     throw createError(400, 'Payment ID is required');
   }
 
+  /*
+   * ------------------------------------------------------------------------
+   * IDEMPOTENCY CHECK
+   * ------------------------------------------------------------------------
+   */
+
   const existing = await prisma.payment.findUnique({
     where: {
       webhookEventId: event.eventId,
@@ -634,9 +641,47 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     };
   }
 
+  /*
+   * ------------------------------------------------------------------------
+   * PROVIDER RECONCILIATION
+   * ------------------------------------------------------------------------
+   *
+   * IMPORTANT:
+   * Use `event` here.
+   *
+   * The previous version incorrectly referenced `result.payment`
+   * before `result` had been declared.
+   */
+
   const reconciliation = await reconcilePayment(event);
 
+  if (!reconciliation.reconciled) {
+    throw createError(409, 'Payment provider verification was not completed');
+  }
+
+  /*
+   * ------------------------------------------------------------------------
+   * SUCCESS WEBHOOK MUST MATCH VERIFIED PROVIDER STATUS
+   * ------------------------------------------------------------------------
+   */
+
+  if (event.type === 'payment.success' && reconciliation.status !== 'success') {
+    throw createError(409, `Payment provider status is ${reconciliation.status}`);
+  }
+
+  /*
+   * ------------------------------------------------------------------------
+   * RESOLVE FINAL PAYMENT STATUS
+   * ------------------------------------------------------------------------
+   */
+
   const finalStatus = resolveWebhookStatus(reconciliation.status);
+
+  /*
+   * Provider is still pending / requires action / unknown.
+   *
+   * Do not transition the payment yet.
+   */
 
   if (!finalStatus) {
     await auditLog({
@@ -663,12 +708,24 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     };
   }
 
+  /*
+   * ------------------------------------------------------------------------
+   * PAYMENT STATE TRANSITION
+   * ------------------------------------------------------------------------
+   */
+
   const result = await transitionPaymentFromWebhook({
     paymentId: reconciliation.payment.id,
     status: finalStatus,
     transactionId: reconciliation.transactionId ?? event.transactionId,
     webhookEventId: event.eventId,
   });
+
+  /*
+   * ------------------------------------------------------------------------
+   * SECONDARY IDEMPOTENCY PROTECTION
+   * ------------------------------------------------------------------------
+   */
 
   if (result.duplicate) {
     return {
@@ -681,6 +738,11 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
     };
   }
 
+  /*
+   * Payment already has the desired state or
+   * transition was not performed.
+   */
+
   if (!result.transitioned) {
     return {
       processed: true,
@@ -691,6 +753,12 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
       status: result.payment.status,
     };
   }
+
+  /*
+   * ------------------------------------------------------------------------
+   * FAILED PAYMENT
+   * ------------------------------------------------------------------------
+   */
 
   if (finalStatus === 'failed') {
     await auditLog({
@@ -716,6 +784,22 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
       status: 'failed',
     };
   }
+
+  /*
+   * ------------------------------------------------------------------------
+   * SUCCESS PAYMENT
+   * ------------------------------------------------------------------------
+   *
+   * Entitlement activation happens only after:
+   *
+   * 1. Provider webhook was accepted.
+   * 2. Provider verification succeeded.
+   * 3. Reference ID matched.
+   * 4. Amount matched.
+   * 5. Currency matched.
+   * 6. Provider status was success.
+   * 7. Payment transition succeeded.
+   */
 
   await activateEntitlement(result.payment.subscriptionId);
 
