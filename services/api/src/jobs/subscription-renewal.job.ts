@@ -2,6 +2,7 @@ import { prisma } from '../config/database.js';
 import { renewSubscription } from '../modules/payment/payment.renewal.service.js';
 
 const RENEWAL_INTERVAL_MS = 15 * 60 * 1000;
+const MAX_RENEWAL_ATTEMPTS = 3;
 
 let renewalJobStarted = false;
 let renewalRunInProgress = false;
@@ -27,21 +28,49 @@ export function startSubscriptionRenewalJob() {
     try {
       const now = new Date();
 
+      /*
+       * Only select subscriptions that are genuinely eligible for
+       * another renewal attempt.
+       *
+       * Important:
+       * - active grace periods are excluded
+       * - subscriptions at maximum attempts are excluded
+       * - disabled auto-debit is excluded
+       */
       const subscriptions = await prisma.subscription.findMany({
         where: {
           autoDebitEnabled: true,
           status: 'active',
+          renewalAttempts: {
+            lt: MAX_RENEWAL_ATTEMPTS,
+          },
           endDate: {
             lte: now,
           },
-          OR: [
+          AND: [
             {
-              nextRenewalAttemptAt: null,
+              OR: [
+                {
+                  gracePeriodEnd: null,
+                },
+                {
+                  gracePeriodEnd: {
+                    lte: now,
+                  },
+                },
+              ],
             },
             {
-              nextRenewalAttemptAt: {
-                lte: now,
-              },
+              OR: [
+                {
+                  nextRenewalAttemptAt: null,
+                },
+                {
+                  nextRenewalAttemptAt: {
+                    lte: now,
+                  },
+                },
+              ],
             },
           ],
         },
@@ -62,6 +91,9 @@ export function startSubscriptionRenewalJob() {
 
           console.log(`[RENEWAL] ${subscription.id}:`, result);
         } catch (error) {
+          /*
+           * One broken subscription must never stop the entire scheduler.
+           */
           console.error(`[RENEWAL] Failed for ${subscription.id}`, error);
         }
       }

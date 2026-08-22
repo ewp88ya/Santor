@@ -2,7 +2,7 @@ import createError from 'http-errors';
 
 import { prisma } from '../../config/database.js';
 import { auditLog } from '../audit/audit.service.js';
-import { activateEntitlement } from '../entitlement/entitlement.service.js';
+import { activateEntitlementInTransaction } from '../entitlement/entitlement.service.js';
 
 import { paymentConfig } from './providers/payment.config.js';
 import { PlategaAdapter } from './providers/platega.adapter.js';
@@ -290,15 +290,15 @@ function normalizePlategaWebhook(body: PlategaWebhookBody): PaymentWebhookEvent 
   }
 
   /*
-   * Pending / waiting / unknown webhook states are still
-   * reconciled by PlategaAdapter.
+   * Pending / waiting / unknown webhook states must never be
+   * normalized into payment.success.
+   *
+   * Platega webhook payloads are untrusted input. Only explicit
+   * terminal states are allowed to enter the common payment
+   * transition pipeline. Provider verification remains the
+   * authoritative source of payment state.
    */
-  return {
-    eventId,
-    type: 'payment.success',
-    paymentId,
-    transactionId,
-  };
+  return null;
 }
 
 /*
@@ -307,10 +307,7 @@ function normalizePlategaWebhook(body: PlategaWebhookBody): PaymentWebhookEvent 
  * --------------------------------------------------------------------------
  */
 
-async function reconcileXenditPayment(
-  paymentId: string,
-  expectedWebhookType: PaymentWebhookEvent['type'],
-) {
+async function reconcileXenditPayment(paymentId: string) {
   const payment = await prisma.payment.findUnique({
     where: {
       id: paymentId,
@@ -392,7 +389,6 @@ async function reconcileXenditPayment(
   }
 
   const expectedCurrency = normalizeCurrency(payment.currency);
-
   const providerCurrency = normalizeCurrency(verification.currency);
 
   if (!expectedCurrency || !providerCurrency) {
@@ -428,10 +424,7 @@ async function reconcileXenditPayment(
   } as const;
 }
 
-async function reconcilePlategaPayment(
-  paymentId: string,
-  expectedWebhookType: PaymentWebhookEvent['type'],
-) {
+async function reconcilePlategaPayment(paymentId: string) {
   const payment = await prisma.payment.findUnique({
     where: {
       id: paymentId,
@@ -449,7 +442,7 @@ async function reconcilePlategaPayment(
     return {
       payment,
       reconciled: false,
-      status: expectedWebhookType === 'payment.success' ? 'success' : 'failed',
+      status: 'failed' as const,
       transactionId: payment.transactionId ?? undefined,
     } as const;
   }
@@ -514,7 +507,6 @@ async function reconcilePlategaPayment(
   }
 
   const expectedCurrency = normalizeCurrency(payment.currency);
-
   const providerCurrency = normalizeCurrency(verification.currency);
 
   if (!expectedCurrency || !providerCurrency) {
@@ -558,7 +550,13 @@ async function reconcilePlategaPayment(
 
 function resolveWebhookStatus(
   reconciledStatus:
-    'pending' | 'requires_action' | 'success' | 'failed' | 'expired' | 'canceled' | 'unknown',
+    | 'pending'
+    | 'requires_action'
+    | 'success'
+    | 'failed'
+    | 'expired'
+    | 'canceled'
+    | 'unknown',
 ): 'success' | 'failed' | null {
   if (reconciledStatus === 'success') {
     return 'success';
@@ -591,10 +589,10 @@ async function reconcilePayment(event: PaymentWebhookEvent) {
 
   switch (payment.provider) {
     case 'XenditAdapter':
-      return reconcileXenditPayment(event.paymentId, event.type);
+      return reconcileXenditPayment(event.paymentId);
 
     case 'RussiaPaymentAdapter':
-      return reconcilePlategaPayment(event.paymentId, event.type);
+      return reconcilePlategaPayment(event.paymentId);
 
     default:
       return {
@@ -645,12 +643,6 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
    * ------------------------------------------------------------------------
    * PROVIDER RECONCILIATION
    * ------------------------------------------------------------------------
-   *
-   * IMPORTANT:
-   * Use `event` here.
-   *
-   * The previous version incorrectly referenced `result.payment`
-   * before `result` had been declared.
    */
 
   const reconciliation = await reconcilePayment(event);
@@ -676,12 +668,6 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
    */
 
   const finalStatus = resolveWebhookStatus(reconciliation.status);
-
-  /*
-   * Provider is still pending / requires action / unknown.
-   *
-   * Do not transition the payment yet.
-   */
 
   if (!finalStatus) {
     await auditLog({
@@ -710,16 +696,61 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
 
   /*
    * ------------------------------------------------------------------------
-   * PAYMENT STATE TRANSITION
+   * ATOMIC PAYMENT + ENTITLEMENT TRANSACTION
    * ------------------------------------------------------------------------
+   *
+   * SUCCESS:
+   *
+   * payment
+   *   ↓
+   * subscription
+   *   ↓
+   * license
+   *   ↓
+   * VPN access
+   *
+   * All operations use the SAME Prisma transaction.
+   *
+   * If entitlement activation fails, the payment transition is rolled back.
+   *
+   * FAILED:
+   *
+   * Only the payment state is transitioned.
    */
 
-  const result = await transitionPaymentFromWebhook({
-    paymentId: reconciliation.payment.id,
-    status: finalStatus,
-    transactionId: reconciliation.transactionId ?? event.transactionId,
-    webhookEventId: event.eventId,
-  });
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const transition = await transitionPaymentFromWebhook(
+        {
+          paymentId: reconciliation.payment.id,
+          status: finalStatus,
+          transactionId: reconciliation.transactionId ?? event.transactionId,
+          webhookEventId: event.eventId,
+        },
+        tx,
+      );
+
+      if (!transition.transitioned) {
+        return transition;
+      }
+
+      if (finalStatus === 'failed') {
+        return transition;
+      }
+
+      await activateEntitlementInTransaction(
+        transition.payment.subscriptionId,
+        tx,
+      );
+
+      return transition;
+    },
+    {
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000,
+    },
+  );
 
   /*
    * ------------------------------------------------------------------------
@@ -790,18 +821,18 @@ export async function processPaymentWebhook(event: PaymentWebhookEvent) {
    * SUCCESS PAYMENT
    * ------------------------------------------------------------------------
    *
-   * Entitlement activation happens only after:
+   * At this point the transaction has already committed:
    *
-   * 1. Provider webhook was accepted.
-   * 2. Provider verification succeeded.
-   * 3. Reference ID matched.
-   * 4. Amount matched.
-   * 5. Currency matched.
-   * 6. Provider status was success.
-   * 7. Payment transition succeeded.
+   * 1. Provider verification succeeded.
+   * 2. Reference ID matched.
+   * 3. Amount matched.
+   * 4. Currency matched.
+   * 5. Provider status was success.
+   * 6. Payment transitioned to success.
+   * 7. Subscription activated.
+   * 8. License activated.
+   * 9. VPN access activated/provisioned when required.
    */
-
-  await activateEntitlement(result.payment.subscriptionId);
 
   await auditLog({
     userId: result.payment.subscription.userId,

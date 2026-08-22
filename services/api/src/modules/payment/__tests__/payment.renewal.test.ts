@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
     payment: {
       create: vi.fn(),
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
     vPNAccess: {
       update: vi.fn(),
@@ -42,6 +43,13 @@ vi.mock('../../../config/database.js', () => ({
 
 vi.mock('../../audit/audit.service.js', () => ({
   auditLog: mocks.mockAuditLog,
+}));
+
+vi.mock('../../entitlement/entitlement.service.js', () => ({
+  activateEntitlementInTransaction: vi.fn().mockResolvedValue({
+    subscriptionId: 'sub_123',
+    status: 'active',
+  }),
 }));
 
 vi.mock('../payment.repository.js', () => ({
@@ -107,9 +115,32 @@ function resetSubscription(overrides: Record<string, unknown> = {}) {
 }
 
 function setupSuccessfulTransaction() {
-  mocks.mockPrisma.$transaction.mockImplementation(async (operations: Promise<unknown>[]) => {
-    return Promise.all(operations);
-  });
+  mocks.mockPrisma.$transaction.mockImplementation(
+    async (
+      input:
+        | Promise<unknown>[]
+        | ((tx: typeof mocks.mockPrisma) => Promise<unknown>),
+    ) => {
+      if (typeof input === 'function') {
+        return input(mocks.mockPrisma);
+      }
+
+      return Promise.all(input);
+    },
+  );
+
+  mocks.mockPrisma.payment.findUnique.mockImplementation(
+    async (args: { where?: { id?: string } }) => {
+      if (args.where?.id === mockPayment.id) {
+        return {
+          ...mockPayment,
+          status: 'pending',
+        };
+      }
+
+      return null;
+    },
+  );
 
   mocks.mockPrisma.payment.update.mockResolvedValue({
     ...mockPayment,
@@ -140,7 +171,25 @@ beforeEach(() => {
 
   mocks.mockPrisma.payment.create.mockResolvedValue(mockPayment);
 
+  mocks.mockPrisma.payment.findUnique.mockImplementation(
+    async (args: { where?: { id?: string } }) => {
+      if (args.where?.id === mockPayment.id) {
+        return {
+          ...mockPayment,
+          status: 'pending',
+        };
+      }
+
+      return null;
+    },
+  );
+
   mocks.mockPrisma.payment.update.mockResolvedValue(mockPayment);
+
+  mocks.mockPrisma.payment.findUnique.mockResolvedValue({
+    ...mockPayment,
+    status: 'pending',
+  });
 
   mocks.mockPrisma.vPNAccess.update.mockResolvedValue({
     id: 'vpn_123',

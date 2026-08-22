@@ -25,6 +25,7 @@ prismaMock.$transaction.mockImplementation(
 
 const transitionPaymentFromWebhookMock = vi.fn();
 const activateEntitlementMock = vi.fn();
+const activateEntitlementInTransactionMock = vi.fn();
 const auditLogMock = vi.fn();
 
 vi.mock('../../../config/database.js', () => ({
@@ -37,6 +38,7 @@ vi.mock('../payment.repository.js', () => ({
 
 vi.mock('../../entitlement/entitlement.service.js', () => ({
   activateEntitlement: activateEntitlementMock,
+  activateEntitlementInTransaction: activateEntitlementInTransactionMock,
 }));
 
 vi.mock('../../audit/audit.service.js', () => ({
@@ -48,6 +50,11 @@ describe('Platega payment webhook reconciliation', () => {
     vi.clearAllMocks();
 
     activateEntitlementMock.mockResolvedValue({
+      subscriptionId: 'subscription-001',
+      status: 'active',
+    });
+
+    activateEntitlementInTransactionMock.mockResolvedValue({
       subscriptionId: 'subscription-001',
       status: 'active',
     });
@@ -146,15 +153,23 @@ describe('Platega payment webhook reconciliation', () => {
       status: 'success',
     });
 
-    expect(transitionPaymentFromWebhookMock).toHaveBeenCalledWith({
-      paymentId: 'payment-001',
-      status: 'success',
-      transactionId: 'plt-001',
-      webhookEventId: 'platega:plt-001:completed',
-    });
+    expect(transitionPaymentFromWebhookMock).toHaveBeenCalledWith(
+      {
+        paymentId: 'payment-001',
+        status: 'success',
+        transactionId: 'plt-001',
+        webhookEventId: 'platega:plt-001:completed',
+      },
+      prismaMock,
+    );
 
-    expect(activateEntitlementMock).toHaveBeenCalledTimes(1);
-    expect(activateEntitlementMock).toHaveBeenCalledWith('subscription-001');
+    expect(activateEntitlementInTransactionMock).toHaveBeenCalledTimes(1);
+    expect(activateEntitlementInTransactionMock).toHaveBeenCalledWith(
+      'subscription-001',
+      prismaMock,
+    );
+
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
 
     expect(auditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -210,6 +225,28 @@ describe('Platega payment webhook reconciliation', () => {
         action: 'payment.webhook.success',
       }),
     );
+  });
+
+  it('ignores native Platega pending webhook without reconciling or transitioning', async () => {
+    const { processPlategaWebhook } = await import('../payment.webhook.js');
+
+    const result = await processPlategaWebhook({
+      transactionId: 'plt-001',
+      merchantTransactionId: 'payment-001',
+      status: 'PENDING',
+    });
+
+    expect(result).toEqual({
+      processed: false,
+      ignored: true,
+      reason: 'UNSUPPORTED_WEBHOOK_EVENT',
+    });
+
+    expect(prismaMock.payment.findUnique).not.toHaveBeenCalled();
+    expect(transitionPaymentFromWebhookMock).not.toHaveBeenCalled();
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
+    expect(activateEntitlementInTransactionMock).not.toHaveBeenCalled();
+    expect(auditLogMock).not.toHaveBeenCalled();
   });
 
   it('rejects Platega reference ID mismatch', async () => {
@@ -392,14 +429,18 @@ describe('Platega payment webhook reconciliation', () => {
       status: 'failed',
     });
 
-    expect(transitionPaymentFromWebhookMock).toHaveBeenCalledWith({
-      paymentId: 'payment-001',
-      status: 'failed',
-      transactionId: 'plt-001',
-      webhookEventId: 'platega:plt-001:failed',
-    });
+    expect(transitionPaymentFromWebhookMock).toHaveBeenCalledWith(
+      {
+        paymentId: 'payment-001',
+        status: 'failed',
+        transactionId: 'plt-001',
+        webhookEventId: 'platega:plt-001:failed',
+      },
+      prismaMock,
+    );
 
     expect(activateEntitlementMock).not.toHaveBeenCalled();
+    expect(activateEntitlementInTransactionMock).not.toHaveBeenCalled();
 
     expect(auditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -529,7 +570,7 @@ describe('Platega payment webhook reconciliation', () => {
     });
 
     const activationError = new Error('Entitlement activation failed');
-    activateEntitlementMock.mockRejectedValueOnce(activationError);
+    activateEntitlementInTransactionMock.mockRejectedValueOnce(activationError);
 
     const { processPaymentWebhook } = await import('../payment.webhook.js');
 
@@ -542,7 +583,12 @@ describe('Platega payment webhook reconciliation', () => {
       }),
     ).rejects.toThrow('Entitlement activation failed');
 
-    expect(activateEntitlementMock).toHaveBeenCalledWith('subscription-001');
+    expect(activateEntitlementInTransactionMock).toHaveBeenCalledWith(
+      'subscription-001',
+      prismaMock,
+    );
+
+    expect(activateEntitlementMock).not.toHaveBeenCalled();
 
     expect(auditLogMock).not.toHaveBeenCalledWith(
       expect.objectContaining({
