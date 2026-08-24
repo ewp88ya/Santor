@@ -68,7 +68,9 @@ beforeEach(() => {
     paymentMethod: 'VISA',
   });
   mocks.routePaymentProvider.mockReturnValue(mocks.provider);
-  mocks.provider.charge.mockRejectedValue(Object.assign(new Error('provider request timed out'), { code: 'ETIMEDOUT' }));
+  mocks.provider.charge.mockRejectedValue(
+    Object.assign(new Error('provider request timed out'), { code: 'ETIMEDOUT' }),
+  );
   mocks.auditLog.mockResolvedValue(undefined);
   mocks.prisma.$transaction.mockImplementation(async (input: unknown) => {
     if (typeof input === 'function') return input(mocks.prisma);

@@ -1,11 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '../config/database.js';
-import { transitionPaymentFromWebhook, updatePaymentProvider } from '../modules/payment/payment.repository.js';
+import {
+  transitionPaymentFromWebhook,
+  updatePaymentProvider,
+} from '../modules/payment/payment.repository.js';
 
 async function createFixture() {
   const suffix = randomUUID();
-  const tenant = await prisma.tenant.create({ data: { name: `phase11-reconcile-tenant-${suffix}` } });
+  const tenant = await prisma.tenant.create({
+    data: { name: `phase11-reconcile-tenant-${suffix}` },
+  });
   const role = await prisma.role.create({ data: { name: `phase11-reconcile-role-${suffix}` } });
   const user = await prisma.user.create({
     data: {
