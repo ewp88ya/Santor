@@ -74,12 +74,13 @@ describe('Payment Refund Lifecycle', () => {
     auditLogMock.mockResolvedValue(undefined);
 
     prismaTransactionMock.mockImplementation(
-      async (callback: (tx: unknown) => Promise<unknown>) => callback({
-        payment: {
-          findUnique: paymentFindUniqueMock,
-          update: paymentUpdateMock,
-        },
-      }),
+      async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback({
+          payment: {
+            findUnique: paymentFindUniqueMock,
+            update: paymentUpdateMock,
+          },
+        }),
     );
   });
 
@@ -103,11 +104,16 @@ describe('Payment Refund Lifecycle', () => {
         refundReason: 'customer request',
       },
     });
-    expect(revokeEntitlementInTransactionMock).toHaveBeenCalledWith('sub-1', expect.any(Object));
-    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'PAYMENT_REFUNDED',
-      resourceId: 'payment-1',
-    }));
+    expect(revokeEntitlementInTransactionMock).toHaveBeenCalledWith(
+      'sub-1',
+      expect.any(Object),
+    );
+    expect(auditLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'PAYMENT_REFUNDED',
+        resourceId: 'payment-1',
+      }),
+    );
   });
 
   it('is idempotent when the payment is already refunded', async () => {
@@ -122,6 +128,31 @@ describe('Payment Refund Lifecycle', () => {
 
     expect(result).toEqual(refunded);
     expect(prismaTransactionMock).not.toHaveBeenCalled();
+    expect(revokeEntitlementInTransactionMock).not.toHaveBeenCalled();
+    expect(auditLogMock).not.toHaveBeenCalled();
+  });
+
+  it('does not repeat revocation or audit when another refund wins the transaction race', async () => {
+    paymentFindUniqueMock.mockResolvedValue({
+      id: 'payment-1',
+      status: 'refunded',
+      subscriptionId: 'sub-1',
+      refundId: 'refund-winner',
+    });
+
+    const result = await refundPayment({
+      paymentId: 'payment-1',
+      userId: 'user-1',
+      refundId: 'refund-loser',
+    });
+
+    expect(result).toEqual({
+      id: 'payment-1',
+      status: 'refunded',
+      subscriptionId: 'sub-1',
+      refundId: 'refund-winner',
+    });
+    expect(paymentUpdateMock).not.toHaveBeenCalled();
     expect(revokeEntitlementInTransactionMock).not.toHaveBeenCalled();
     expect(auditLogMock).not.toHaveBeenCalled();
   });
@@ -141,7 +172,9 @@ describe('Payment Refund Lifecycle', () => {
   });
 
   it('propagates entitlement failure so the refund transaction can roll back', async () => {
-    revokeEntitlementInTransactionMock.mockRejectedValue(new Error('ENTITLEMENT_REVOCATION_FAILED'));
+    revokeEntitlementInTransactionMock.mockRejectedValue(
+      new Error('ENTITLEMENT_REVOCATION_FAILED'),
+    );
 
     await expect(
       refundPayment({
