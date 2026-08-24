@@ -18,8 +18,7 @@ const { prismaMock } = vi.hoisted(() => {
   };
 
   prismaMock.$transaction.mockImplementation(
-    async (callback: (tx: typeof prismaMock) => Promise<unknown>) =>
-      callback(prismaMock),
+    async (callback: (tx: typeof prismaMock) => Promise<unknown>) => callback(prismaMock),
   );
 
   return { prismaMock };
@@ -55,9 +54,7 @@ describe('Entitlement Revocation Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    prismaMock.subscription.findUnique.mockResolvedValue(
-      buildSubscription(),
-    );
+    prismaMock.subscription.findUnique.mockResolvedValue(buildSubscription());
 
     prismaMock.license.update.mockResolvedValue({
       id: 'license-1',
@@ -129,9 +126,7 @@ describe('Entitlement Revocation Service', () => {
   it('fails when subscription does not exist', async () => {
     prismaMock.subscription.findUnique.mockResolvedValue(null);
 
-    await expect(
-      revokeEntitlement('missing-sub'),
-    ).rejects.toThrow('Subscription not found');
+    await expect(revokeEntitlement('missing-sub')).rejects.toThrow('Subscription not found');
 
     expect(prismaMock.license.update).not.toHaveBeenCalled();
   });

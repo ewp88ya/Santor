@@ -20,9 +20,7 @@ const { prismaMock } = vi.hoisted(() => {
   };
 
   prismaMock.$transaction.mockImplementation(
-    async (
-      callback: (tx: typeof prismaMock) => Promise<unknown>,
-    ) => callback(prismaMock),
+    async (callback: (tx: typeof prismaMock) => Promise<unknown>) => callback(prismaMock),
   );
 
   return { prismaMock };
@@ -62,14 +60,10 @@ describe('Entitlement Lifecycle Revocation', () => {
     vi.clearAllMocks();
 
     prismaMock.$transaction.mockImplementation(
-      async (
-        callback: (tx: typeof prismaMock) => Promise<unknown>,
-      ) => callback(prismaMock),
+      async (callback: (tx: typeof prismaMock) => Promise<unknown>) => callback(prismaMock),
     );
 
-    prismaMock.subscription.findUnique.mockResolvedValue(
-      buildSubscription(),
-    );
+    prismaMock.subscription.findUnique.mockResolvedValue(buildSubscription());
 
     prismaMock.subscription.findMany.mockResolvedValue([
       {
@@ -164,9 +158,7 @@ describe('Entitlement Lifecycle Revocation', () => {
     it('fails when subscription does not exist', async () => {
       prismaMock.subscription.findUnique.mockResolvedValue(null);
 
-      await expect(
-        revokeEntitlement('missing-sub'),
-      ).rejects.toThrow('Subscription not found');
+      await expect(revokeEntitlement('missing-sub')).rejects.toThrow('Subscription not found');
 
       expect(prismaMock.license.update).not.toHaveBeenCalled();
       expect(prismaMock.vPNAccess.update).not.toHaveBeenCalled();
@@ -305,13 +297,9 @@ describe('Entitlement Lifecycle Revocation', () => {
     });
 
     it('rolls back cancellation when entitlement revocation fails', async () => {
-      prismaMock.license.update.mockRejectedValue(
-        new Error('LICENSE_REVOCATION_FAILED'),
-      );
+      prismaMock.license.update.mockRejectedValue(new Error('LICENSE_REVOCATION_FAILED'));
 
-      await expect(
-        cancelSubscription('sub-1'),
-      ).rejects.toThrow('LICENSE_REVOCATION_FAILED');
+      await expect(cancelSubscription('sub-1')).rejects.toThrow('LICENSE_REVOCATION_FAILED');
 
       expect(prismaMock.subscription.update).toHaveBeenCalledTimes(1);
       expect(prismaMock.license.update).toHaveBeenCalledTimes(1);
@@ -322,13 +310,9 @@ describe('Entitlement Lifecycle Revocation', () => {
 
   describe('atomic rollback', () => {
     it('propagates VPN revocation failure through transaction', async () => {
-      prismaMock.vPNAccess.update.mockRejectedValue(
-        new Error('VPN_REVOCATION_FAILED'),
-      );
+      prismaMock.vPNAccess.update.mockRejectedValue(new Error('VPN_REVOCATION_FAILED'));
 
-      await expect(
-        revokeEntitlement('sub-1'),
-      ).rejects.toThrow('VPN_REVOCATION_FAILED');
+      await expect(revokeEntitlement('sub-1')).rejects.toThrow('VPN_REVOCATION_FAILED');
 
       expect(prismaMock.license.update).toHaveBeenCalledTimes(1);
       expect(prismaMock.vPNAccess.update).toHaveBeenCalledTimes(1);
@@ -336,13 +320,9 @@ describe('Entitlement Lifecycle Revocation', () => {
     });
 
     it('propagates device revocation failure through transaction', async () => {
-      prismaMock.device.updateMany.mockRejectedValue(
-        new Error('DEVICE_REVOCATION_FAILED'),
-      );
+      prismaMock.device.updateMany.mockRejectedValue(new Error('DEVICE_REVOCATION_FAILED'));
 
-      await expect(
-        revokeEntitlement('sub-1'),
-      ).rejects.toThrow('DEVICE_REVOCATION_FAILED');
+      await expect(revokeEntitlement('sub-1')).rejects.toThrow('DEVICE_REVOCATION_FAILED');
 
       expect(prismaMock.license.update).toHaveBeenCalledTimes(1);
       expect(prismaMock.vPNAccess.update).toHaveBeenCalledTimes(1);

@@ -71,12 +71,9 @@ export async function revokeEntitlementInTransaction(
 }
 
 export async function revokeEntitlement(subscriptionId: string) {
-  return prisma.$transaction(
-    async (tx) => revokeEntitlementInTransaction(subscriptionId, tx),
-    {
-      isolationLevel: 'Serializable',
-      maxWait: 5000,
-      timeout: 10000,
-    },
-  );
+  return prisma.$transaction(async (tx) => revokeEntitlementInTransaction(subscriptionId, tx), {
+    isolationLevel: 'Serializable',
+    maxWait: 5000,
+    timeout: 10000,
+  });
 }
