@@ -50,6 +50,8 @@ async function createFixture(options: {
     },
   });
 
+  const fixtureOptions = options ?? {};
+
   const user = await prisma.user.create({
     data: {
       email: `phase11-${suffix}@example.invalid`,
@@ -62,7 +64,7 @@ async function createFixture(options: {
   const product = await prisma.product.create({
     data: {
       name: `Phase 11 Product ${suffix}`,
-      code: options.productCode ?? `GENERAL-FREE-${suffix}`,
+      code: options?.productCode ?? `GENERAL-FREE-${suffix}`,
       price: 1000,
       currency: 'USD',
       durationDays: 30,
@@ -74,28 +76,28 @@ async function createFixture(options: {
     data: {
       userId: user.id,
       productId: product.id,
-      status: options.subscriptionStatus ?? 'pending',
+      status: fixtureOptions.subscriptionStatus ?? 'pending',
       startDate: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
-      endDate: options.endDate,
-      autoDebitEnabled: options.autoDebitEnabled ?? false,
-      paymentCustomerId: options.autoDebitEnabled ? 'phase11-customer' : null,
-      paymentMethodId: options.autoDebitEnabled ? 'phase11-method' : null,
-      renewalAttempts: options.renewalAttempts ?? 0,
+      endDate: fixtureOptions.endDate,
+      autoDebitEnabled: fixtureOptions.autoDebitEnabled ?? false,
+      paymentCustomerId: fixtureOptions.autoDebitEnabled ? 'phase11-customer' : null,
+      paymentMethodId: fixtureOptions.autoDebitEnabled ? 'phase11-method' : null,
+      renewalAttempts: fixtureOptions.renewalAttempts ?? 0,
     },
   });
 
   const payment = await prisma.payment.create({
     data: {
       subscriptionId: subscription.id,
-      provider: options.provider ?? 'Phase11TestProvider',
-      country: options.country ?? 'US',
+      provider: fixtureOptions.provider ?? 'Phase11TestProvider',
+      country: fixtureOptions.country ?? 'US',
       currency: 'USD',
-      paymentMethod: options.paymentMethod ?? 'VISA',
+      paymentMethod: fixtureOptions.paymentMethod ?? 'VISA',
       amount: 1000,
-      status: options.paymentStatus ?? 'pending',
+      status: fixtureOptions.paymentStatus ?? 'pending',
       type: 'one_time',
       providerPaymentId: 'phase11-provider-payment',
-      webhookEventId: options.webhookEventId ?? null,
+      webhookEventId: fixtureOptions.webhookEventId ?? null,
     },
   });
 
@@ -264,7 +266,9 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
     ).rejects.toThrow('Cannot activate entitlement without license');
 
     const payment = await prisma.payment.findUnique({ where: { id: fixture.paymentId } });
-    const subscription = await prisma.subscription.findUnique({ where: { id: fixture.subscriptionId } });
+    const subscription = await prisma.subscription.findUnique({
+      where: { id: fixture.subscriptionId },
+    });
 
     expect(payment?.status).toBe('pending');
     expect(payment?.transactionId).toBeNull();
@@ -283,7 +287,9 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
     expect(result.renewed).toBe(false);
     expect(result.reason).toBe('AUTO_DEBIT_DISABLED');
 
-    const payments = await prisma.payment.findMany({ where: { subscriptionId: fixture.subscriptionId } });
+    const payments = await prisma.payment.findMany({
+      where: { subscriptionId: fixture.subscriptionId },
+    });
     expect(payments).toHaveLength(1);
   });
 
@@ -312,7 +318,9 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
     expect(payments).toHaveLength(2);
     expect(payments[1].status).toBe('failed');
 
-    const subscription = await prisma.subscription.findUnique({ where: { id: fixture.subscriptionId } });
+    const subscription = await prisma.subscription.findUnique({
+      where: { id: fixture.subscriptionId },
+    });
     expect(subscription?.renewalAttempts).toBe(1);
     expect(subscription?.nextRenewalAttemptAt).not.toBeNull();
   });
@@ -339,7 +347,9 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
     expect(claimed).toHaveLength(1);
     expect(skipped).toHaveLength(1);
 
-    const payments = await prisma.payment.findMany({ where: { subscriptionId: fixture.subscriptionId } });
+    const payments = await prisma.payment.findMany({
+      where: { subscriptionId: fixture.subscriptionId },
+    });
     expect(payments).toHaveLength(2);
   });
 
@@ -358,7 +368,9 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
 
     expect(result.renewed).toBe(false);
 
-    const subscription = await prisma.subscription.findUnique({ where: { id: fixture.subscriptionId } });
+    const subscription = await prisma.subscription.findUnique({
+      where: { id: fixture.subscriptionId },
+    });
     expect(subscription?.status).toBe('active');
     expect(subscription?.renewalAttempts).toBe(1);
     expect(subscription?.gracePeriodEnd).toBeNull();
@@ -379,7 +391,9 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
     expect(result.reason).toBe('MAX_RENEWAL_ATTEMPTS_REACHED');
     expect(result.gracePeriodEnd).toBeInstanceOf(Date);
 
-    const subscription = await prisma.subscription.findUnique({ where: { id: fixture.subscriptionId } });
+    const subscription = await prisma.subscription.findUnique({
+      where: { id: fixture.subscriptionId },
+    });
     expect(subscription?.gracePeriodEnd).not.toBeNull();
   });
 });
