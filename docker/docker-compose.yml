@@ -4,15 +4,12 @@ services:
     container_name: santor-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: santor
-      POSTGRES_PASSWORD: santor123
-      POSTGRES_DB: santor
+      POSTGRES_USER: ${POSTGRES_USER:-santor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-santor}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
-    networks:
-      - santor-network
+    networks: [santor-network]
 
   redis:
     image: redis:7-alpine
@@ -20,8 +17,7 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
-    networks:
-      - santor-network
+    networks: [santor-network]
 
   api:
     build:
@@ -35,12 +31,31 @@ services:
     environment:
       PORT: 3000
       NODE_ENV: production
-      DATABASE_URL: postgresql://santor:santor123@postgres:5432/santor?schema=public
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES: ${JWT_EXPIRES:-7d}
+      SANTOR_INTERNAL_WEBHOOK_SECRET: ${SANTOR_INTERNAL_WEBHOOK_SECRET:?SANTOR_INTERNAL_WEBHOOK_SECRET is required}
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      STRIPE_ENABLED: ${STRIPE_ENABLED:-false}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_BASE_URL: ${STRIPE_BASE_URL:-https://api.stripe.com}
+      XENDIT_ENABLED: ${XENDIT_ENABLED:-false}
+      XENDIT_API_KEY: ${XENDIT_API_KEY:-}
+      XENDIT_WEBHOOK_TOKEN: ${XENDIT_WEBHOOK_TOKEN:-}
+      RUSSIA_PAYMENT_ENABLED: ${RUSSIA_PAYMENT_ENABLED:-false}
+      PLATEGA_MERCHANT_ID: ${PLATEGA_MERCHANT_ID:-}
+      PLATEGA_SECRET: ${PLATEGA_SECRET:-}
+      YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID:-}
+      YOOKASSA_SECRET: ${YOOKASSA_SECRET:-}
+      CLOUDPAYMENTS_PUBLIC_ID: ${CLOUDPAYMENTS_PUBLIC_ID:-}
+      CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET:-}
+      PAYPAL_ENABLED: ${PAYPAL_ENABLED:-false}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
     ports:
       - '3000:3000'
-    networks:
-      - santor-network
+    networks: [santor-network]
 
 volumes:
   postgres_data:
