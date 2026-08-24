@@ -38,6 +38,9 @@ function buildSubscription(status = 'active') {
   return {
     id: 'sub-1',
     status,
+    endDate: new Date('2026-08-20T00:00:00.000Z'),
+    autoDebitEnabled: false,
+    gracePeriodEnd: null,
     license: {
       id: 'license-1',
       status: 'active',
