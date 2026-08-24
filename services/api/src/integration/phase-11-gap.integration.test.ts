@@ -223,8 +223,11 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
 
     const results = await Promise.allSettled([run('a'), run('b')]);
     const fulfilled = results.filter(
-      (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof transitionPaymentFromWebhook>>> =>
-        result.status === 'fulfilled',
+      (
+        result,
+      ): result is PromiseFulfilledResult<
+        Awaited<ReturnType<typeof transitionPaymentFromWebhook>>
+      > => result.status === 'fulfilled',
     );
 
     expect(fulfilled.length).toBeGreaterThanOrEqual(1);
