@@ -30,16 +30,34 @@ function getInternalWebhookSecret(request: FastifyRequest) {
   if (!configuredSecret) throw createError(500, 'Internal webhook secret is not configured');
   const header = request.headers['x-santor-webhook-secret'];
   const providedSecret = Array.isArray(header) ? header[0] : header;
-  if (!providedSecret || providedSecret !== configuredSecret) throw createError(401, 'Invalid internal webhook secret');
+  if (!providedSecret || providedSecret !== configuredSecret)
+    throw createError(401, 'Invalid internal webhook secret');
   return providedSecret;
 }
 
 export async function createPaymentController(request: FastifyRequest) {
-  const body = request.body as { subscriptionId: string; country: string; currency: string; paymentMethod: PaymentMethod; settlementCurrency?: string; autoDebit?: boolean };
-  return createNewPayment({ subscriptionId: body.subscriptionId, country: body.country, currency: body.currency, paymentMethod: body.paymentMethod, settlementCurrency: body.settlementCurrency, autoDebit: body.autoDebit, userId: getUserId(request) });
+  const body = request.body as {
+    subscriptionId: string;
+    country: string;
+    currency: string;
+    paymentMethod: PaymentMethod;
+    settlementCurrency?: string;
+    autoDebit?: boolean;
+  };
+  return createNewPayment({
+    subscriptionId: body.subscriptionId,
+    country: body.country,
+    currency: body.currency,
+    paymentMethod: body.paymentMethod,
+    settlementCurrency: body.settlementCurrency,
+    autoDebit: body.autoDebit,
+    userId: getUserId(request),
+  });
 }
 
-export async function listPaymentController(request: FastifyRequest) { return getPayments(getUserId(request)); }
+export async function listPaymentController(request: FastifyRequest) {
+  return getPayments(getUserId(request));
+}
 
 export async function detailPaymentController(request: FastifyRequest) {
   const { id } = request.params as { id: string };
@@ -55,12 +73,26 @@ export async function paymentSuccessController(request: FastifyRequest) {
 export async function refundPaymentController(request: FastifyRequest) {
   const { id } = request.params as { id: string };
   const body = request.body as { reason?: string; refundId?: string };
-  return refundPayment({ paymentId: id, userId: getUserId(request), reason: body.reason, refundId: body.refundId });
+  return refundPayment({
+    paymentId: id,
+    userId: getUserId(request),
+    reason: body.reason,
+    refundId: body.refundId,
+  });
 }
 
 export async function enableAutoDebitController(request: FastifyRequest) {
-  const body = request.body as { subscriptionId: string; customerId: string; paymentMethodId: string };
-  return enableAutoDebit({ subscriptionId: body.subscriptionId, customerId: body.customerId, paymentMethodId: body.paymentMethodId, userId: getUserId(request) });
+  const body = request.body as {
+    subscriptionId: string;
+    customerId: string;
+    paymentMethodId: string;
+  };
+  return enableAutoDebit({
+    subscriptionId: body.subscriptionId,
+    customerId: body.customerId,
+    paymentMethodId: body.paymentMethodId,
+    userId: getUserId(request),
+  });
 }
 
 export async function disableAutoDebitController(request: FastifyRequest) {
@@ -70,14 +102,22 @@ export async function disableAutoDebitController(request: FastifyRequest) {
 
 export async function paymentWebhookController(request: FastifyRequest) {
   getInternalWebhookSecret(request);
-  const body = request.body as { eventId: string; type: 'payment.success' | 'payment.failed'; paymentId: string; transactionId?: string };
+  const body = request.body as {
+    eventId: string;
+    type: 'payment.success' | 'payment.failed';
+    paymentId: string;
+    transactionId?: string;
+  };
   return processPaymentWebhook(body);
 }
 
 export async function xenditWebhookController(request: FastifyRequest) {
   const token = request.headers['x-callback-token'];
   const normalizedToken = Array.isArray(token) ? token[0] : token;
-  return processXenditWebhook(request.body as Parameters<typeof processXenditWebhook>[0], normalizedToken);
+  return processXenditWebhook(
+    request.body as Parameters<typeof processXenditWebhook>[0],
+    normalizedToken,
+  );
 }
 
 export async function plategaWebhookController(request: FastifyRequest) {

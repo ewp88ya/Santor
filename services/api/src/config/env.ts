@@ -22,8 +22,8 @@ if (isProduction && (!internalWebhookSecret || internalWebhookSecret.length < 32
 export const env = {
   PORT: Number(process.env.PORT ?? 3000),
   NODE_ENV: nodeEnv,
-  DATABASE_URL: isProduction ? required('DATABASE_URL') : process.env.DATABASE_URL ?? '',
-  REDIS_URL: isProduction ? required('REDIS_URL') : process.env.REDIS_URL ?? '',
+  DATABASE_URL: isProduction ? required('DATABASE_URL') : (process.env.DATABASE_URL ?? ''),
+  REDIS_URL: isProduction ? required('REDIS_URL') : (process.env.REDIS_URL ?? ''),
   JWT_SECRET: jwtSecret ?? (isProduction ? required('JWT_SECRET') : 'development-secret'),
   JWT_EXPIRES: process.env.JWT_EXPIRES ?? '7d',
   SANTOR_INTERNAL_WEBHOOK_SECRET: internalWebhookSecret ?? '',

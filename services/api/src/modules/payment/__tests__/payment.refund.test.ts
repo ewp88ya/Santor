@@ -73,14 +73,13 @@ describe('Payment Refund Lifecycle', () => {
     });
     auditLogMock.mockResolvedValue(undefined);
 
-    prismaTransactionMock.mockImplementation(
-      async (callback: (tx: unknown) => Promise<unknown>) =>
-        callback({
-          payment: {
-            findUnique: paymentFindUniqueMock,
-            update: paymentUpdateMock,
-          },
-        }),
+    prismaTransactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        payment: {
+          findUnique: paymentFindUniqueMock,
+          update: paymentUpdateMock,
+        },
+      }),
     );
   });
 
@@ -104,10 +103,7 @@ describe('Payment Refund Lifecycle', () => {
         refundReason: 'customer request',
       },
     });
-    expect(revokeEntitlementInTransactionMock).toHaveBeenCalledWith(
-      'sub-1',
-      expect.any(Object),
-    );
+    expect(revokeEntitlementInTransactionMock).toHaveBeenCalledWith('sub-1', expect.any(Object));
     expect(auditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'PAYMENT_REFUNDED',

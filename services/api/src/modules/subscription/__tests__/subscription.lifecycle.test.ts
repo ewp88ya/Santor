@@ -45,7 +45,10 @@ describe('Subscription Lifecycle', () => {
     });
     cancelSubscriptionMock.mockResolvedValue({ id: 'sub-1', status: 'cancelled' });
     prismaFindManyMock.mockResolvedValue([]);
-    revokeEntitlementInTransactionMock.mockResolvedValue({ subscriptionId: 'sub-1', revoked: true });
+    revokeEntitlementInTransactionMock.mockResolvedValue({
+      subscriptionId: 'sub-1',
+      revoked: true,
+    });
   });
 
   it('cancels an active subscription through the atomic repository lifecycle', async () => {
@@ -56,7 +59,9 @@ describe('Subscription Lifecycle', () => {
   });
 
   it('rejects cancellation by another user', async () => {
-    await expect(cancelUserSubscription('user-2', 'sub-1')).rejects.toMatchObject({ statusCode: 403 });
+    await expect(cancelUserSubscription('user-2', 'sub-1')).rejects.toMatchObject({
+      statusCode: 403,
+    });
     expect(cancelSubscriptionMock).not.toHaveBeenCalled();
   });
 
@@ -100,14 +105,13 @@ describe('Subscription Lifecycle', () => {
       gracePeriodEnd: null,
     });
 
-    prismaTransactionMock.mockImplementation(
-      async (callback: (tx: unknown) => Promise<unknown>) =>
-        callback({
-          subscription: {
-            findUnique: findUniqueMock,
-            update: updateMock,
-          },
-        }),
+    prismaTransactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        subscription: {
+          findUnique: findUniqueMock,
+          update: updateMock,
+        },
+      }),
     );
 
     const result = await expireSubscriptions();
