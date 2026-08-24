@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '../config/database.js';
 import { renewSubscription } from '../modules/payment/payment.renewal.service.js';
@@ -124,10 +124,6 @@ describe('PHASE 11 GAP — real payment lifecycle integration', () => {
   beforeAll(async () => {
     await prisma.$connect();
     await prisma.$queryRaw`SELECT 1`;
-  });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
   });
 
   afterAll(async () => {
