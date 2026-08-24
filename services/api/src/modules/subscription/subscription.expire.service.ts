@@ -1,4 +1,5 @@
 import { prisma } from '../../config/database.js';
+import { revokeEntitlementInTransaction } from '../entitlement/entitlement.revocation.service.js';
 
 export async function expireSubscriptions() {
   const now = new Date();
@@ -10,29 +11,11 @@ export async function expireSubscriptions() {
         lt: now,
       },
     },
-    include: {
-      license: {
-        include: {
-          vpnAccess: {
-            include: {
-              devices: true,
-            },
-          },
-        },
-      },
-    },
   });
 
   let expired = 0;
 
   for (const subscription of subscriptions) {
-    /*
-     * Auto-debit subscriptions are handled by the
-     * renewal worker before permanent expiration.
-     *
-     * Keep them active while they are inside the
-     * renewal/grace lifecycle.
-     */
     if (subscription.autoDebitEnabled) {
       if (subscription.gracePeriodEnd && subscription.gracePeriodEnd > now) {
         continue;
@@ -43,38 +26,41 @@ export async function expireSubscriptions() {
       }
     }
 
-    await prisma.subscription.update({
-      where: {
-        id: subscription.id,
+    const didExpire = await prisma.$transaction(
+      async (tx) => {
+        const current = await tx.subscription.findUnique({
+          where: {
+            id: subscription.id,
+          },
+        });
+
+        if (!current || current.status !== 'active') {
+          return false;
+        }
+
+        await tx.subscription.update({
+          where: {
+            id: subscription.id,
+          },
+          data: {
+            status: 'expired',
+          },
+        });
+
+        await revokeEntitlementInTransaction(subscription.id, tx);
+
+        return true;
       },
-      data: {
-        status: 'expired',
+      {
+        isolationLevel: 'Serializable',
+        maxWait: 5000,
+        timeout: 10000,
       },
-    });
+    );
 
-    const vpnAccess = subscription.license?.vpnAccess;
-
-    if (vpnAccess) {
-      await prisma.vPNAccess.update({
-        where: {
-          id: vpnAccess.id,
-        },
-        data: {
-          active: false,
-        },
-      });
-
-      await prisma.device.updateMany({
-        where: {
-          vpnAccessId: vpnAccess.id,
-        },
-        data: {
-          active: false,
-        },
-      });
+    if (didExpire) {
+      expired += 1;
     }
-
-    expired += 1;
   }
 
   return expired;

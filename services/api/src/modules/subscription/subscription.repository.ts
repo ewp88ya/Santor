@@ -1,4 +1,5 @@
 import { prisma } from '../../config/database.js';
+import { revokeEntitlementInTransaction } from '../entitlement/entitlement.revocation.service.js';
 
 export async function createSubscription(data: { userId: string; productId: string }) {
   return prisma.subscription.create({
@@ -57,45 +58,28 @@ export async function findUserSubscriptions(userId: string) {
 }
 
 export async function cancelSubscription(id: string) {
-  return prisma.$transaction(async (tx) => {
-    const subscription = await tx.subscription.update({
-      where: {
-        id,
-      },
-      data: {
-        status: 'cancelled',
-      },
-      include: {
-        license: {
-          include: {
-            vpnAccess: true,
-          },
-        },
-      },
-    });
-
-    const vpnAccess = subscription.license?.vpnAccess;
-
-    if (vpnAccess) {
-      await tx.vPNAccess.update({
+  return prisma.$transaction(
+    async (tx) => {
+      const subscription = await tx.subscription.update({
         where: {
-          id: vpnAccess.id,
+          id,
         },
         data: {
-          active: false,
+          status: 'cancelled',
+        },
+        include: {
+          license: true,
         },
       });
 
-      await tx.device.updateMany({
-        where: {
-          vpnAccessId: vpnAccess.id,
-        },
-        data: {
-          active: false,
-        },
-      });
-    }
+      await revokeEntitlementInTransaction(id, tx);
 
-    return subscription;
-  });
+      return subscription;
+    },
+    {
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000,
+    },
+  );
 }
