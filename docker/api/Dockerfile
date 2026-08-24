@@ -14,8 +14,6 @@ RUN pnpm install --frozen-lockfile
 
 WORKDIR /app/services/api
 
-ENV DATABASE_URL="postgresql://santor:santor123@postgres:5432/santor?schema=public"
-
 RUN pnpm prisma generate
 
 RUN pnpm build
