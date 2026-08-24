@@ -52,7 +52,9 @@ function App() {
       return;
     }
 
-    fetch('http://localhost:3000/api/v1/dashboard', {
+    const apiUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
+    fetch(`${apiUrl}/api/v1/dashboard`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
