@@ -109,9 +109,7 @@ describe('Phase 12 — authorization and RBAC regression', () => {
   });
 
   it('rejects permission checks without an authenticated user', async () => {
-    await expect(
-      requirePermission('device:read')(request(), {} as never),
-    ).rejects.toMatchObject({
+    await expect(requirePermission('device:read')(request(), {} as never)).rejects.toMatchObject({
       statusCode: 401,
       message: 'Authentication required',
     });
