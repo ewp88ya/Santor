@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const repositoryMock = {
+const repositoryMock = vi.hoisted(() => ({
   findSubscriptionById: vi.fn(),
   cancelSubscription: vi.fn(),
   createSubscription: vi.fn(),
   findUserSubscriptions: vi.fn(),
-};
+}));
 
 vi.mock('../subscription.repository.js', () => repositoryMock);
 
