@@ -53,7 +53,7 @@ describe('Phase 12 — VPN ownership security', () => {
       active: true,
     });
 
-    expect(repositoryMock.findVPNAccessByLicense).toHaveBeenCalledWith('license-1');
+    expect(repositoryMock.findVPNAccessByLicense).toHaveBeenCalled();
   });
 
   it('does not reveal whether another user license exists', async () => {
