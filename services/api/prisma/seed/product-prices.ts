@@ -22,7 +22,7 @@ export async function seedProductPrices(prisma: PrismaClient) {
       where: {
         productId_country_currency: {
           productId: product.id,
-          country: null,
+          country: 'US',
           currency: product.currency.toUpperCase(),
         },
       },
@@ -32,7 +32,7 @@ export async function seedProductPrices(prisma: PrismaClient) {
       },
       create: {
         productId: product.id,
-        country: null,
+        country: 'US',
         currency: product.currency.toUpperCase(),
         amount: product.price,
         active: true,
