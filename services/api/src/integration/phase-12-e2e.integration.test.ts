@@ -78,6 +78,13 @@ describe('PHASE 12 — full end-to-end integration verification', () => {
       },
     });
 
+    if (register.statusCode !== 200) {
+      console.error('[PHASE-12 REGISTER FAILURE]', {
+        statusCode: register.statusCode,
+        body: register.body,
+      });
+    }
+
     expect(register.statusCode).toBe(200);
 
     const registered = register.json<{
