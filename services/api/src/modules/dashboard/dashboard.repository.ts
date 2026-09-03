@@ -7,6 +7,9 @@ export async function getUserDashboard(userId: string) {
     },
     include: {
       subscriptions: {
+        orderBy: {
+          createdAt: 'desc',
+        },
         include: {
           product: true,
           license: {

@@ -44,11 +44,10 @@ function App() {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const token = localStorage.getItem('santor_token');
+  const token = localStorage.getItem('santor_token');
 
+  useEffect(() => {
     if (!token) {
-      setError('Please log in to access your dashboard.');
       return;
     }
 
@@ -70,7 +69,18 @@ function App() {
       .catch((err: Error) => {
         setError(err.message);
       });
-  }, []);
+  }, [token]);
+
+  if (!token) {
+    return (
+      <main className="dashboard">
+        <Card>
+          <h1>Santor</h1>
+          <p>Please log in to access your dashboard.</p>
+        </Card>
+      </main>
+    );
+  }
 
   if (error) {
     return (

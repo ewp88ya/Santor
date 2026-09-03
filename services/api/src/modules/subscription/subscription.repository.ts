@@ -1,18 +1,43 @@
+import { randomUUID } from 'node:crypto';
+
 import { prisma } from '../../config/database.js';
 import { revokeEntitlementInTransaction } from '../entitlement/entitlement.revocation.service.js';
 
-export async function createSubscription(data: { userId: string; productId: string }) {
-  return prisma.subscription.create({
-    data: {
-      userId: data.userId,
-      productId: data.productId,
-      status: 'pending',
+export async function createSubscription(data: {
+  userId: string;
+  productId: string;
+}) {
+  const licenseKey = `SANTOR-${randomUUID().replaceAll('-', '').toUpperCase()}`;
+
+  return prisma.$transaction(
+    async (tx) => {
+      const subscription = await tx.subscription.create({
+        data: {
+          userId: data.userId,
+          productId: data.productId,
+          status: 'pending',
+          license: {
+            create: {
+              licenseKey,
+              status: 'pending',
+            },
+          },
+        },
+        include: {
+          product: true,
+          user: true,
+          license: true,
+        },
+      });
+
+      return subscription;
     },
-    include: {
-      product: true,
-      user: true,
+    {
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000,
     },
-  });
+  );
 }
 
 export async function findSubscriptionById(id: string) {
