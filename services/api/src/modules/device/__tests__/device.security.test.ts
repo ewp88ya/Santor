@@ -141,9 +141,7 @@ describe('Device Security — Ownership', () => {
   });
 
   it('rejects another user from regenerating a device config', async () => {
-    await expect(
-      regenerateDeviceConfig('user-attacker-1', 'device-1'),
-    ).rejects.toMatchObject({
+    await expect(regenerateDeviceConfig('user-attacker-1', 'device-1')).rejects.toMatchObject({
       statusCode: 403,
     });
 
@@ -151,7 +149,9 @@ describe('Device Security — Ownership', () => {
   });
 
   it('rejects another user from adding a device to a VPN access', async () => {
-    await expect(addDevice('user-attacker-1', 'vpn-access-1', 'attacker-device')).rejects.toMatchObject({
+    await expect(
+      addDevice('user-attacker-1', 'vpn-access-1', 'attacker-device'),
+    ).rejects.toMatchObject({
       statusCode: 403,
       message: 'Forbidden',
     });
