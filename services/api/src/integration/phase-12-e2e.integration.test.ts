@@ -298,9 +298,7 @@ describe('PHASE 12 — full end-to-end integration verification', () => {
       }>
     >();
 
-    const subscription = subscriptionList.find(
-      (item) => item.id === subscriptionId,
-    );
+    const subscription = subscriptionList.find((item) => item.id === subscriptionId);
 
     expect(subscription).toBeTruthy();
     expect(subscription!.product?.code).toBe('WG-1M');
@@ -390,13 +388,9 @@ describe('PHASE 12 — full end-to-end integration verification', () => {
     expect(dashboardBody.subscription?.license?.id).toBe(licenseId);
     expect(dashboardBody.subscription?.license?.status).toBe('active');
 
-    expect(
-      dashboardBody.subscription?.license?.vpnAccess?.id,
-    ).toBe(vpnAccessId);
+    expect(dashboardBody.subscription?.license?.vpnAccess?.id).toBe(vpnAccessId);
 
-    expect(
-      dashboardBody.subscription?.license?.vpnAccess?.active,
-    ).toBe(true);
+    expect(dashboardBody.subscription?.license?.vpnAccess?.active).toBe(true);
 
     /*
      * ------------------------------------------------------------------
@@ -428,16 +422,10 @@ describe('PHASE 12 — full end-to-end integration verification', () => {
     expect(databaseState?.license?.vpnAccess?.id).toBe(vpnAccessId);
     expect(databaseState?.license?.vpnAccess?.active).toBe(true);
 
-    const databasePayment = databaseState?.payments.find(
-      (item) => item.id === paymentId,
-    );
+    const databasePayment = databaseState?.payments.find((item) => item.id === paymentId);
 
     expect(databasePayment?.status).toBe('success');
-    expect(databasePayment?.providerPaymentId).toBe(
-      `mock_pi_${paymentId}`,
-    );
-    expect(databasePayment?.transactionId).toBe(
-      `mock_tx_${paymentId}`,
-    );
+    expect(databasePayment?.providerPaymentId).toBe(`mock_pi_${paymentId}`);
+    expect(databasePayment?.transactionId).toBe(`mock_tx_${paymentId}`);
   });
 });

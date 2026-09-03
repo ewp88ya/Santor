@@ -3,10 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { prisma } from '../../config/database.js';
 import { revokeEntitlementInTransaction } from '../entitlement/entitlement.revocation.service.js';
 
-export async function createSubscription(data: {
-  userId: string;
-  productId: string;
-}) {
+export async function createSubscription(data: { userId: string; productId: string }) {
   const licenseKey = `SANTOR-${randomUUID().replaceAll('-', '').toUpperCase()}`;
 
   return prisma.$transaction(
