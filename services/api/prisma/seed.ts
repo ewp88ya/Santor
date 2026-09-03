@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
 
 import { runSeed } from './seed/index.js';
+import { seedProductPrices } from './seed/product-prices.js';
 import { seedProducts } from './seed/products.js';
 
 const adapter = new PrismaPg({
@@ -16,6 +17,7 @@ const prisma = new PrismaClient({
 async function main() {
   await runSeed(prisma);
   await seedProducts(prisma);
+  await seedProductPrices(prisma);
 }
 
 main()
