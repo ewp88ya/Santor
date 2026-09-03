@@ -27,8 +27,19 @@ jobs:
           --health-timeout 5s
           --health-retries 20
 
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
     env:
       DATABASE_URL: postgresql://santor:santor@localhost:5432/santor
+      REDIS_URL: redis://localhost:6379
 
     steps:
       - name: Checkout repository
@@ -50,6 +61,9 @@ jobs:
 
       - name: Apply Prisma migrations
         run: pnpm --filter @santor/api db:deploy
+
+      - name: Seed database
+        run: pnpm --filter @santor/api db:seed
 
       - name: ESLint check
         run: pnpm exec eslint .
