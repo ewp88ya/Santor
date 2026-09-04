@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import { prisma } from '../../config/database.js';
 import { auditLog } from '../audit/audit.service.js';
 import { revokeEntitlementInTransaction } from '../entitlement/entitlement.revocation.service.js';
+import { refundExternalPayment } from './payment.refund.provider.js';
 
 export async function refundPayment(data: {
   paymentId: string;
@@ -23,7 +24,13 @@ export async function refundPayment(data: {
       subscriptionId: true,
       refundId: true,
       refundedAt: true,
+      provider: true,
       providerPaymentId: true,
+      transactionId: true,
+      amount: true,
+      currency: true,
+      paymentMethod: true,
+      country: true,
       subscription: {
         select: { userId: true },
       },
@@ -40,8 +47,59 @@ export async function refundPayment(data: {
     throw createError(409, 'Only successful payments can be refunded');
   }
 
+  if (!payment.providerPaymentId) {
+    throw createError(409, 'Payment does not have a provider payment ID');
+  }
+
   const refundId = data.refundId?.trim() || `refund_${data.paymentId}`;
   const reason = data.reason?.trim() || undefined;
+
+  const externalRefund = await refundExternalPayment({
+    provider: payment.provider,
+    providerPaymentId: payment.providerPaymentId,
+    transactionId: payment.transactionId ?? undefined,
+    amount: payment.amount,
+    currency: payment.currency,
+    referenceId: payment.id,
+    refundId,
+    reason: reason ?? payment.paymentMethod ?? undefined,
+  });
+
+  if (externalRefund.status === 'pending') {
+    await auditLog({
+      userId: data.userId,
+      action: 'PAYMENT_REFUND_PENDING',
+      resource: 'payment',
+      resourceId: data.paymentId,
+      metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        refundId,
+        providerRefundId: externalRefund.refundId,
+        reason,
+      },
+    });
+
+    throw createError(409, externalRefund.error ?? 'Payment refund is pending provider confirmation');
+  }
+
+  if (externalRefund.status !== 'succeeded') {
+    await auditLog({
+      userId: data.userId,
+      action: 'PAYMENT_REFUND_FAILED',
+      resource: 'payment',
+      resourceId: data.paymentId,
+      metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        refundId,
+        reason,
+        error: externalRefund.error,
+      },
+    });
+
+    throw createError(502, externalRefund.error ?? 'Payment provider refund failed');
+  }
 
   const { payment: updated, didRefund } = await prisma.$transaction(
     async (tx) => {
@@ -86,9 +144,11 @@ export async function refundPayment(data: {
       resource: 'payment',
       resourceId: data.paymentId,
       metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        providerRefundId: externalRefund.refundId,
         refundId,
         reason,
-        providerPaymentId: payment.providerPaymentId,
         entitlementRevoked: true,
       },
     });
