@@ -135,20 +135,14 @@ describe('PAYMENT WEBHOOK — PostgreSQL concurrency protection', () => {
     });
 
     expect(finalPayment).not.toBeNull();
-    expect(finalPayment?.status).toBe(
-      resultA.transitioned ? 'success' : 'failed',
-    );
-    expect(finalPayment?.webhookEventId).toBe(
-      resultA.transitioned ? eventA : eventB,
-    );
+    expect(finalPayment?.status).toBe(resultA.transitioned ? 'success' : 'failed');
+    expect(finalPayment?.webhookEventId).toBe(resultA.transitioned ? eventA : eventB);
     expect(finalPayment?.transactionId).toBe(
       resultA.transitioned ? 'transaction-a' : 'transaction-b',
     );
 
     expect(
-      [eventA, eventB].filter(
-        (eventId) => finalPayment?.webhookEventId === eventId,
-      ),
+      [eventA, eventB].filter((eventId) => finalPayment?.webhookEventId === eventId),
     ).toHaveLength(1);
   });
 });
