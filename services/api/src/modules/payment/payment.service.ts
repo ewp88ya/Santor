@@ -236,7 +236,10 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
    * External provider verification MUST happen before opening the
    * database transaction.
    */
-  const verification = await paymentProvider.verifyPayment(payment.providerPaymentId);
+  const verification = await paymentProvider.verifyPayment(payment.providerPaymentId, {
+    paymentMethod: payment.paymentMethod as PaymentMethod,
+    transactionId,
+  });
 
   if (verification.status === 'unknown') {
     await auditLog({
@@ -358,28 +361,8 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
     throw createError(409, 'Payment transaction ID mismatch');
   }
 
-  /*
-   * ATOMIC PAYMENT LIFECYCLE
-   *
-   * Everything below is one database transaction.
-   *
-   * If entitlement activation throws:
-   *
-   * payment status success
-   * subscription active
-   * license active
-   * VPN access
-   *
-   * are ALL rolled back.
-   */
   const updated = await prisma.$transaction(
     async (tx) => {
-      /*
-       * Re-read and lock the payment inside the transaction.
-       *
-       * This protects against concurrent webhook/renewal processing
-       * that started after the initial read above.
-       */
       const currentPayment = await tx.payment.findUnique({
         where: {
           id,
@@ -408,9 +391,6 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
         throw createError(409, 'Provider payment ID mismatch');
       }
 
-      /*
-       * Payment state mutation.
-       */
       const updatedPayment = await tx.payment.update({
         where: {
           id,
@@ -421,9 +401,6 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
         },
       });
 
-      /*
-       * Entitlement activation uses the SAME transaction client.
-       */
       await activateEntitlementInTransaction(currentPayment.subscriptionId, tx);
 
       return updatedPayment;
@@ -435,13 +412,6 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
     },
   );
 
-  /*
-   * Success audit is written only after the atomic database lifecycle
-   * has successfully committed.
-   *
-   * Therefore PAYMENT_SUCCESS can never be emitted when entitlement
-   * activation failed and the transaction rolled back.
-   */
   await auditLog({
     userId,
     action: 'PAYMENT_SUCCESS',
