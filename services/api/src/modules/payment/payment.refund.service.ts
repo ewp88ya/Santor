@@ -62,7 +62,8 @@ export async function refundPayment(data: {
     currency: payment.currency,
     referenceId: payment.id,
     refundId,
-    reason: reason ?? payment.paymentMethod ?? undefined,
+    paymentMethod: payment.paymentMethod ?? undefined,
+    reason,
   });
 
   if (externalRefund.status === 'pending') {
