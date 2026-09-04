@@ -8,6 +8,7 @@ export type ExternalRefundRequest = {
   currency: string;
   referenceId: string;
   refundId: string;
+  paymentMethod?: string;
   reason?: string;
 };
 
@@ -38,6 +39,14 @@ function reasonCode(reason?: string): string {
   return 'requested_by_customer';
 }
 
+function majorAmount(amount: number, currency: string): number {
+  const normalizedCurrency = currency.trim().toUpperCase();
+
+  if (normalizedCurrency === 'JPY') return Math.round(amount);
+
+  return Number((amount / 100).toFixed(2));
+}
+
 async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefundResult> {
   const config = paymentConfig.stripe;
   const providerPaymentId = data.providerPaymentId.trim();
@@ -50,7 +59,7 @@ async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefund
     return { status: 'failed', error: 'Stripe PaymentIntent ID is required' };
   }
 
-  const amount = Math.round(data.amount * (data.currency.toUpperCase() === 'JPY' ? 1 : 100));
+  const amount = data.amount;
   const params = new URLSearchParams({
     payment_intent: providerPaymentId,
     amount: String(amount),
@@ -72,9 +81,11 @@ async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefund
     const body = parseJson(await response.text());
 
     if (!response.ok) {
+      const providerError = body?.error as JsonRecord | undefined;
+
       return {
         status: 'failed',
-        error: String(body?.error && (body.error as JsonRecord).message ?? `Stripe returned HTTP ${response.status}`),
+        error: String(providerError?.message ?? `Stripe returned HTTP ${response.status}`),
       };
     }
 
@@ -82,15 +93,27 @@ async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefund
     const status = typeof body?.status === 'string' ? body.status.toLowerCase() : 'unknown';
 
     if (status === 'succeeded') return { status: 'succeeded', refundId: providerRefundId };
+
     if (status === 'pending' || status === 'requires_action') {
-      return { status: 'pending', refundId: providerRefundId, error: `Stripe refund status is ${status}` };
+      return {
+        status: 'pending',
+        refundId: providerRefundId,
+        error: `Stripe refund status is ${status}`,
+      };
     }
 
-    return { status: 'failed', refundId: providerRefundId, error: `Stripe refund status is ${status}` };
+    return {
+      status: 'failed',
+      refundId: providerRefundId,
+      error: `Stripe refund status is ${status}`,
+    };
   } catch (error) {
     return {
       status: 'failed',
-      error: error instanceof Error ? `Stripe refund request failed: ${error.message}` : 'Stripe refund request failed',
+      error:
+        error instanceof Error
+          ? `Stripe refund request failed: ${error.message}`
+          : 'Stripe refund request failed',
     };
   }
 }
@@ -127,7 +150,9 @@ async function paypalRefund(data: ExternalRefundRequest): Promise<ExternalRefund
   if (!config.paypalClientId || !config.paypalClientSecret) {
     return { status: 'failed', error: 'PayPal credentials are not configured' };
   }
-  if (!captureId) return { status: 'failed', error: 'PayPal capture ID is required for refund' };
+  if (!captureId) {
+    return { status: 'failed', error: 'PayPal capture ID is required for refund' };
+  }
 
   try {
     const token = await paypalAccessToken();
@@ -144,7 +169,7 @@ async function paypalRefund(data: ExternalRefundRequest): Promise<ExternalRefund
         body: JSON.stringify({
           amount: {
             currency_code: data.currency.toUpperCase(),
-            value: data.amount.toFixed(2),
+            value: majorAmount(data.amount, data.currency).toFixed(2),
           },
           note_to_payer: data.reason?.trim() || 'Santor payment refund',
         }),
@@ -164,15 +189,27 @@ async function paypalRefund(data: ExternalRefundRequest): Promise<ExternalRefund
     }
 
     if (status === 'COMPLETED') return { status: 'succeeded', refundId: providerRefundId };
+
     if (status === 'PENDING') {
-      return { status: 'pending', refundId: providerRefundId, error: 'PayPal refund is pending' };
+      return {
+        status: 'pending',
+        refundId: providerRefundId,
+        error: 'PayPal refund is pending',
+      };
     }
 
-    return { status: 'failed', refundId: providerRefundId, error: `PayPal refund status is ${status}` };
+    return {
+      status: 'failed',
+      refundId: providerRefundId,
+      error: `PayPal refund status is ${status}`,
+    };
   } catch (error) {
     return {
       status: 'failed',
-      error: error instanceof Error ? `PayPal refund request failed: ${error.message}` : 'PayPal refund request failed',
+      error:
+        error instanceof Error
+          ? `PayPal refund request failed: ${error.message}`
+          : 'PayPal refund request failed',
     };
   }
 }
@@ -183,7 +220,9 @@ async function xenditRefund(data: ExternalRefundRequest): Promise<ExternalRefund
 
   if (!config.enabled) return { status: 'failed', error: 'Xendit provider is disabled' };
   if (!config.apiKey) return { status: 'failed', error: 'Xendit API key is not configured' };
-  if (!paymentRequestId) return { status: 'failed', error: 'Xendit payment request ID is required' };
+  if (!paymentRequestId) {
+    return { status: 'failed', error: 'Xendit payment request ID is required' };
+  }
 
   try {
     const response = await fetch(new URL('/refunds', config.baseUrl), {
@@ -198,7 +237,7 @@ async function xenditRefund(data: ExternalRefundRequest): Promise<ExternalRefund
         reference_id: data.refundId,
         payment_request_id: paymentRequestId,
         currency: data.currency.toUpperCase(),
-        amount: data.amount,
+        amount: majorAmount(data.amount, data.currency),
         reason: reasonCode(data.reason).toUpperCase(),
       }),
     });
@@ -216,15 +255,27 @@ async function xenditRefund(data: ExternalRefundRequest): Promise<ExternalRefund
     }
 
     if (status === 'SUCCEEDED') return { status: 'succeeded', refundId: providerRefundId };
+
     if (status === 'PENDING') {
-      return { status: 'pending', refundId: providerRefundId, error: 'Xendit refund is pending' };
+      return {
+        status: 'pending',
+        refundId: providerRefundId,
+        error: 'Xendit refund is pending',
+      };
     }
 
-    return { status: 'failed', refundId: providerRefundId, error: `Xendit refund status is ${status}` };
+    return {
+      status: 'failed',
+      refundId: providerRefundId,
+      error: `Xendit refund status is ${status}`,
+    };
   } catch (error) {
     return {
       status: 'failed',
-      error: error instanceof Error ? `Xendit refund request failed: ${error.message}` : 'Xendit refund request failed',
+      error:
+        error instanceof Error
+          ? `Xendit refund request failed: ${error.message}`
+          : 'Xendit refund request failed',
     };
   }
 }
@@ -233,7 +284,9 @@ async function yookassaRefund(data: ExternalRefundRequest): Promise<ExternalRefu
   const config = paymentConfig.russia;
   const paymentId = data.providerPaymentId.trim();
 
-  if (!config.enabled) return { status: 'failed', error: 'Russia payment provider is disabled' };
+  if (!config.enabled) {
+    return { status: 'failed', error: 'Russia payment provider is disabled' };
+  }
   if (!config.yookassaShopId || !config.yookassaSecret) {
     return { status: 'failed', error: 'YooKassa credentials are not configured' };
   }
@@ -250,7 +303,7 @@ async function yookassaRefund(data: ExternalRefundRequest): Promise<ExternalRefu
       },
       body: JSON.stringify({
         amount: {
-          value: data.amount.toFixed(2),
+          value: majorAmount(data.amount, data.currency).toFixed(2),
           currency: data.currency.toUpperCase(),
         },
         payment_id: paymentId,
@@ -266,29 +319,47 @@ async function yookassaRefund(data: ExternalRefundRequest): Promise<ExternalRefu
       return {
         status: 'failed',
         refundId: providerRefundId,
-        error: String(body?.description ?? body?.message ?? `YooKassa returned HTTP ${response.status}`),
+        error: String(
+          body?.description ?? body?.message ?? `YooKassa returned HTTP ${response.status}`,
+        ),
       };
     }
 
     if (status === 'succeeded') return { status: 'succeeded', refundId: providerRefundId };
-    if (status === 'pending' || status === 'waiting_for_capture') {
-      return { status: 'pending', refundId: providerRefundId, error: `YooKassa refund status is ${status}` };
+
+    if (status === 'pending') {
+      return {
+        status: 'pending',
+        refundId: providerRefundId,
+        error: 'YooKassa refund is pending',
+      };
     }
 
-    return { status: 'failed', refundId: providerRefundId, error: `YooKassa refund status is ${status}` };
+    return {
+      status: 'failed',
+      refundId: providerRefundId,
+      error: `YooKassa refund status is ${status}`,
+    };
   } catch (error) {
     return {
       status: 'failed',
-      error: error instanceof Error ? `YooKassa refund request failed: ${error.message}` : 'YooKassa refund request failed',
+      error:
+        error instanceof Error
+          ? `YooKassa refund request failed: ${error.message}`
+          : 'YooKassa refund request failed',
     };
   }
 }
 
-async function cloudPaymentsRefund(data: ExternalRefundRequest): Promise<ExternalRefundResult> {
+async function cloudPaymentsRefund(
+  data: ExternalRefundRequest,
+): Promise<ExternalRefundResult> {
   const config = paymentConfig.russia;
   const transactionId = Number(data.transactionId ?? data.providerPaymentId);
 
-  if (!config.enabled) return { status: 'failed', error: 'Russia payment provider is disabled' };
+  if (!config.enabled) {
+    return { status: 'failed', error: 'Russia payment provider is disabled' };
+  }
   if (!config.cloudPaymentsPublicId || !config.cloudPaymentsApiSecret) {
     return { status: 'failed', error: 'CloudPayments credentials are not configured' };
   }
@@ -307,7 +378,7 @@ async function cloudPaymentsRefund(data: ExternalRefundRequest): Promise<Externa
       },
       body: JSON.stringify({
         TransactionId: transactionId,
-        Amount: data.amount,
+        Amount: majorAmount(data.amount, data.currency),
       }),
     });
 
@@ -321,21 +392,24 @@ async function cloudPaymentsRefund(data: ExternalRefundRequest): Promise<Externa
     }
 
     const model = body?.Model as JsonRecord | undefined;
-    const refundTransactionId = typeof model?.TransactionId === 'number' ? String(model.TransactionId) : undefined;
+    const refundTransactionId =
+      typeof model?.TransactionId === 'number' ? String(model.TransactionId) : undefined;
 
-    return {
-      status: 'succeeded',
-      refundId: refundTransactionId,
-    };
+    return { status: 'succeeded', refundId: refundTransactionId };
   } catch (error) {
     return {
       status: 'failed',
-      error: error instanceof Error ? `CloudPayments refund request failed: ${error.message}` : 'CloudPayments refund request failed',
+      error:
+        error instanceof Error
+          ? `CloudPayments refund request failed: ${error.message}`
+          : 'CloudPayments refund request failed',
     };
   }
 }
 
-export async function refundExternalPayment(data: ExternalRefundRequest): Promise<ExternalRefundResult> {
+export async function refundExternalPayment(
+  data: ExternalRefundRequest,
+): Promise<ExternalRefundResult> {
   switch (data.provider) {
     case 'GlobalCardAdapter':
       return stripeRefund(data);
@@ -343,9 +417,14 @@ export async function refundExternalPayment(data: ExternalRefundRequest): Promis
       return paypalRefund(data);
     case 'XenditAdapter':
       return xenditRefund(data);
-    case 'RussiaPaymentAdapter':
-      if (data.reason?.toUpperCase() === 'CRYPTO' || data.providerPaymentId.startsWith('crypto_')) {
-        return { status: 'failed', error: 'Platega refunds are not supported by the configured provider contract' };
+    case 'RussiaPaymentAdapter': {
+      const method = data.paymentMethod?.trim().toUpperCase();
+
+      if (method === 'CRYPTO') {
+        return {
+          status: 'failed',
+          error: 'Platega refunds are not supported by the configured provider contract',
+        };
       }
 
       if (/^\d+$/.test(data.transactionId ?? data.providerPaymentId)) {
@@ -353,7 +432,11 @@ export async function refundExternalPayment(data: ExternalRefundRequest): Promis
       }
 
       return yookassaRefund(data);
+    }
     default:
-      return { status: 'failed', error: `Refunds are not supported for provider ${data.provider}` };
+      return {
+        status: 'failed',
+        error: `Refunds are not supported for provider ${data.provider}`,
+      };
   }
 }
