@@ -135,9 +135,7 @@ describe('PAYMENT WEBHOOK — PostgreSQL concurrency protection', () => {
     });
 
     expect(finalPayment).not.toBeNull();
-    expect(finalPayment?.status).toBe(
-      resultA.transitioned ? 'success' : 'failed',
-    );
+    expect(finalPayment?.status).toBe(resultA.transitioned ? 'success' : 'failed');
     expect(finalPayment?.webhookEventId).toBe(
       resultA.transitioned ? eventA : eventB,
     );
