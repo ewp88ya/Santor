@@ -2,6 +2,7 @@ import type {
   ChargeRequest,
   ChargeResult,
   PaymentProvider,
+  PaymentVerificationContext,
   PaymentVerificationResult,
 } from './payment.provider.js';
 
@@ -17,29 +18,24 @@ export class RussiaPaymentAdapter implements PaymentProvider {
   private provider(request: ChargeRequest): PaymentProvider {
     const method = request.paymentMethod?.trim().toUpperCase();
 
-    // Default provider for Russian bank-card / instant-payment methods.
     if (method === 'SBP' || method === 'MIR') {
       return this.yooKassa;
     }
 
-    // Crypto is always handled by Platega.
     if (method === 'CRYPTO') {
       return this.platega;
     }
 
-    // Fallback provider for unsupported/legacy Russian methods.
     return this.cloudPayments;
   }
 
   async charge(request: ChargeRequest): Promise<ChargeResult> {
     const method = request.paymentMethod?.trim().toUpperCase();
 
-    // CRYPTO must always use Platega exclusively.
     if (method === 'CRYPTO') {
       return this.platega.charge(request);
     }
 
-    // SBP/MIR use YooKassa as the default provider.
     if (method === 'SBP' || method === 'MIR') {
       try {
         const yooKassaResult = await this.yooKassa.charge(request);
@@ -48,10 +44,8 @@ export class RussiaPaymentAdapter implements PaymentProvider {
           return yooKassaResult;
         }
 
-        // YooKassa failed, so fall back to CloudPayments.
         return this.cloudPayments.charge(request);
       } catch {
-        // YooKassa request failed unexpectedly, so fall back to CloudPayments.
         return this.cloudPayments.charge(request);
       }
     }
@@ -59,10 +53,20 @@ export class RussiaPaymentAdapter implements PaymentProvider {
     return this.provider(request).charge(request);
   }
 
-  verifyPayment(paymentId: string): Promise<PaymentVerificationResult> {
-    // Verification is intentionally delegated to the provider that owns
-    // the transaction ID. Provider-specific verification is handled by
-    // the payment service/webhook reconciliation layer.
+  verifyPayment(
+    paymentId: string,
+    context?: PaymentVerificationContext,
+  ): Promise<PaymentVerificationResult> {
+    const method = context?.paymentMethod?.trim().toUpperCase();
+
+    if (method === 'CRYPTO') {
+      return this.platega.verifyPayment(paymentId);
+    }
+
+    if (/^\d+$/.test(context?.transactionId ?? paymentId)) {
+      return this.cloudPayments.verifyPayment(context?.transactionId ?? paymentId);
+    }
+
     return this.yooKassa.verifyPayment(paymentId);
   }
 }
