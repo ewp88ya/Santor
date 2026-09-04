@@ -28,6 +28,11 @@ export type ChargeResult = {
 
 export type PaymentVerificationStatus = 'pending' | 'success' | 'failed' | 'expired' | 'unknown';
 
+export type PaymentVerificationContext = {
+  paymentMethod?: PaymentMethod;
+  transactionId?: string;
+};
+
 export type PaymentVerificationResult = {
   status: PaymentVerificationStatus;
   providerPaymentId?: string;
@@ -41,5 +46,8 @@ export type PaymentVerificationResult = {
 export interface PaymentProvider {
   charge(request: ChargeRequest): Promise<ChargeResult>;
 
-  verifyPayment(paymentId: string): Promise<PaymentVerificationResult>;
+  verifyPayment(
+    paymentId: string,
+    context?: PaymentVerificationContext,
+  ): Promise<PaymentVerificationResult>;
 }
