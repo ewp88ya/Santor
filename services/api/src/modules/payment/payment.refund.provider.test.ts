@@ -100,6 +100,73 @@ describe('External Payment Refund Provider Contracts', () => {
     });
   });
 
+  it('rejects a PayPal refund without a capture ID before any provider request', async () => {
+    const result = await refundExternalPayment({
+      provider: 'PayPalAdapter',
+      providerPaymentId: 'order-1',
+      amount: 1,
+      currency: 'USD',
+      referenceId: 'payment-1',
+      refundId: 'refund-paypal-missing-capture',
+    });
+
+    expect(result).toEqual({
+      status: 'failed',
+      error: 'PayPal capture ID is required for refund',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('maps a PayPal pending refund to pending without treating it as success', async () => {
+    fetchMock
+      .mockResolvedValueOnce(response({ access_token: 'paypal-token' }))
+      .mockResolvedValueOnce(response({ id: 'paypal-refund-pending', status: 'PENDING' }));
+
+    const result = await refundExternalPayment({
+      provider: 'PayPalAdapter',
+      providerPaymentId: 'order-1',
+      transactionId: 'capture-pending',
+      amount: 1,
+      currency: 'USD',
+      referenceId: 'payment-1',
+      refundId: 'refund-paypal-pending',
+    });
+
+    expect(result).toEqual({
+      status: 'pending',
+      refundId: 'paypal-refund-pending',
+      error: 'PayPal refund is pending',
+    });
+  });
+
+  it('maps PayPal provider errors to failed', async () => {
+    fetchMock.mockResolvedValueOnce(response({ access_token: 'paypal-token' })).mockResolvedValueOnce(
+      response(
+        {
+          name: 'UNPROCESSABLE_ENTITY',
+          message: 'The capture has already been refunded.',
+        },
+        false,
+        422,
+      ),
+    );
+
+    const result = await refundExternalPayment({
+      provider: 'PayPalAdapter',
+      providerPaymentId: 'order-1',
+      transactionId: 'capture-refunded',
+      amount: 1,
+      currency: 'USD',
+      referenceId: 'payment-1',
+      refundId: 'refund-paypal-error',
+    });
+
+    expect(result).toEqual({
+      status: 'failed',
+      error: 'The capture has already been refunded.',
+    });
+  });
+
   it('preserves major units for Xendit refunds', async () => {
     fetchMock.mockResolvedValue(response({ id: 'xendit-refund-1', status: 'SUCCEEDED' }));
 
@@ -165,6 +232,31 @@ describe('External Payment Refund Provider Contracts', () => {
     const request = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(request.Amount).toBe(100);
     expect(request.TransactionId).toBe(456789);
+  });
+
+  it('treats a CloudPayments business failure as failed even on HTTP 200', async () => {
+    fetchMock.mockResolvedValue(
+      response({
+        Success: false,
+        Message: 'Refund amount exceeds the refundable balance.',
+      }),
+    );
+
+    const result = await refundExternalPayment({
+      provider: 'RussiaPaymentAdapter',
+      providerPaymentId: '456789',
+      transactionId: '456789',
+      amount: 999,
+      currency: 'USD',
+      referenceId: 'payment-1',
+      refundId: 'refund-cloud-failure',
+      paymentMethod: 'MIR',
+    });
+
+    expect(result).toEqual({
+      status: 'failed',
+      error: 'Refund amount exceeds the refundable balance.',
+    });
   });
 
   it('rejects zero or non-finite refund amounts before any provider request', async () => {
