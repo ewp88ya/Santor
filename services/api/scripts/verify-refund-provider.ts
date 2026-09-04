@@ -13,13 +13,17 @@ const refundId = process.env.REFUND_ID?.trim();
 const paymentMethod = process.env.REFUND_PAYMENT_METHOD?.trim();
 const reason = process.env.REFUND_REASON?.trim();
 const allowProduction = process.env.ALLOW_PRODUCTION_REFUND === 'YES';
-const baseUrls = [
-  process.env.STRIPE_BASE_URL,
-  process.env.PAYPAL_BASE_URL,
-  process.env.XENDIT_BASE_URL,
-  process.env.YOOKASSA_BASE_URL,
-  process.env.CLOUDPAYMENTS_BASE_URL,
-].filter((value): value is string => Boolean(value));
+
+const providerBaseUrls: Record<ProviderName, string> = {
+  GlobalCardAdapter: process.env.STRIPE_BASE_URL?.trim() || 'https://api.stripe.com',
+  PayPalAdapter: process.env.PAYPAL_BASE_URL?.trim() || 'https://api-m.paypal.com',
+  XenditAdapter: process.env.XENDIT_BASE_URL?.trim() || 'https://api.xendit.co',
+  RussiaPaymentAdapter:
+    process.env.REFUND_RUSSIA_BASE_URL?.trim() ||
+    process.env.YOOKASSA_BASE_URL?.trim() ||
+    process.env.CLOUDPAYMENTS_BASE_URL?.trim() ||
+    'https://api.yookassa.ru',
+};
 
 const productionHostPatterns = [
   /(^|\.)stripe\.com$/i,
@@ -33,17 +37,16 @@ function validateRequired(name: string, value: string | undefined): asserts valu
   if (!value) throw new Error(`${name} is required`);
 }
 
-function assertSafeTarget(): void {
+function assertSafeTarget(providerName: ProviderName): void {
   if (allowProduction) return;
 
-  for (const baseUrl of baseUrls) {
-    const hostname = new URL(baseUrl).hostname;
+  const baseUrl = providerBaseUrls[providerName];
+  const hostname = new URL(baseUrl).hostname;
 
-    if (productionHostPatterns.some((pattern) => pattern.test(hostname))) {
-      throw new Error(
-        `Production provider target detected at ${baseUrl}. Set ALLOW_PRODUCTION_REFUND=YES only after explicit approval for the authorized test refund.`,
-      );
-    }
+  if (productionHostPatterns.some((pattern) => pattern.test(hostname))) {
+    throw new Error(
+      `Production provider target detected at ${baseUrl}. Set ALLOW_PRODUCTION_REFUND=YES only after explicit approval for the authorized test refund.`,
+    );
   }
 }
 
@@ -57,7 +60,11 @@ async function main(): Promise<void> {
     throw new Error('REFUND_AMOUNT must be a positive finite number');
   }
 
-  assertSafeTarget();
+  if (!['GlobalCardAdapter', 'PayPalAdapter', 'XenditAdapter', 'RussiaPaymentAdapter'].includes(provider)) {
+    throw new Error(`Unsupported REFUND_PROVIDER: ${provider}`);
+  }
+
+  assertSafeTarget(provider);
 
   const result = await refundExternalPayment({
     provider,
