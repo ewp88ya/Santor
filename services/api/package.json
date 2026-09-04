@@ -15,6 +15,7 @@
     "db:studio": "prisma studio",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "refund:verify": "tsx scripts/verify-refund-provider.ts",
     "start": "node dist/index.js"
   },
   "prisma": {
@@ -30,8 +31,8 @@
     "fastify": "^5.2.1",
     "fastify-plugin": "^6.0.0",
     "http-errors": "^2.0.1",
-    "ioredis": "^5.11.1",
-    "jsonwebtoken": "^9.0.3",
+    "ioredis": "^5.11.0",
+    "jsonwebtoken": "^9.0.10",
     "pg": "^8.22.0",
     "prisma": "^7.8.0"
   },
@@ -39,7 +40,6 @@
     "@types/http-errors": "^2.0.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.13.0",
-    "@types/pg": "^8.20.0",
     "tsx": "^4.23.0",
     "typescript": "^5.7.3",
     "vitest": "^4.1.10"
