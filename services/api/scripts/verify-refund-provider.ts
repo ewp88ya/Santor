@@ -3,7 +3,10 @@ import 'dotenv/config';
 import { refundExternalPayment } from '../src/modules/payment/payment.refund.provider.js';
 
 type ProviderName =
-  'GlobalCardAdapter' | 'PayPalAdapter' | 'XenditAdapter' | 'RussiaPaymentAdapter';
+  | 'GlobalCardAdapter'
+  | 'PayPalAdapter'
+  | 'XenditAdapter'
+  | 'RussiaPaymentAdapter';
 
 const provider = process.env.REFUND_PROVIDER as ProviderName | undefined;
 const providerPaymentId = process.env.REFUND_PROVIDER_PAYMENT_ID?.trim();
@@ -28,7 +31,6 @@ const providerBaseUrls: Record<ProviderName, string> = {
 
 const productionHostPatterns = [
   /(^|\.)stripe\.com$/i,
-  /(^|\.)paypal\.com$/i,
   /(^|\.)xendit\.co$/i,
   /(^|\.)yookassa\.ru$/i,
   /(^|\.)cloudpayments\.ru$/i,
@@ -53,15 +55,31 @@ function providerIsEnabled(providerName: ProviderName): boolean {
   }
 }
 
+function isProductionTarget(providerName: ProviderName): boolean {
+  const baseUrl = providerBaseUrls[providerName];
+  const hostname = new URL(baseUrl).hostname;
+
+  if (providerName === 'PayPalAdapter') {
+    return hostname === 'api-m.paypal.com';
+  }
+
+  if (providerName === 'GlobalCardAdapter') {
+    const secretKey = process.env.STRIPE_SECRET_KEY?.trim() ?? '';
+
+    if (/^(sk|rk)_test_/i.test(secretKey)) return false;
+  }
+
+  return productionHostPatterns.some((pattern) => pattern.test(hostname));
+}
+
 function assertSafeTarget(providerName: ProviderName): void {
   if (allowProduction || !providerIsEnabled(providerName)) return;
 
   const baseUrl = providerBaseUrls[providerName];
-  const hostname = new URL(baseUrl).hostname;
 
-  if (productionHostPatterns.some((pattern) => pattern.test(hostname))) {
+  if (isProductionTarget(providerName)) {
     throw new Error(
-      `Production provider target detected at ${baseUrl}. Set ALLOW_PRODUCTION_REFUND=YES only after explicit approval for the authorized test refund.`,
+      `Production provider target detected at ${baseUrl}. Set ALLOW_PRODUCTION_REFUND=YES only after explicit approval for the authorized production test refund.`,
     );
   }
 }
