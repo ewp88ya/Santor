@@ -178,7 +178,10 @@ describe('Payment Service', () => {
       const provider = routePaymentProviderMock.mock.results[0].value;
 
       expect(provider.verifyPayment).toHaveBeenCalledTimes(1);
-      expect(provider.verifyPayment).toHaveBeenCalledWith('provider-payment-1');
+      expect(provider.verifyPayment).toHaveBeenCalledWith('provider-payment-1', {
+        paymentMethod: 'card',
+        transactionId: 'tx-001',
+      });
 
       expect(prismaTransactionMock).toHaveBeenCalledTimes(1);
 

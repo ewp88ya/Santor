@@ -39,12 +39,12 @@ function reasonCode(reason?: string): string {
   return 'requested_by_customer';
 }
 
-function majorAmount(amount: number, currency: string): number {
+function toMinorUnits(amount: number, currency: string): number {
   const normalizedCurrency = currency.trim().toUpperCase();
 
   if (normalizedCurrency === 'JPY') return Math.round(amount);
 
-  return Number((amount / 100).toFixed(2));
+  return Math.round(amount * 100);
 }
 
 async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefundResult> {
@@ -62,7 +62,7 @@ async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefund
   const amount = data.amount;
   const params = new URLSearchParams({
     payment_intent: providerPaymentId,
-    amount: String(amount),
+    amount: String(toMinorUnits(data.amount, data.currency)),
     reason: reasonCode(data.reason),
   });
 
@@ -169,7 +169,7 @@ async function paypalRefund(data: ExternalRefundRequest): Promise<ExternalRefund
         body: JSON.stringify({
           amount: {
             currency_code: data.currency.toUpperCase(),
-            value: majorAmount(data.amount, data.currency).toFixed(2),
+            value: data.amount.toFixed(2),
           },
           note_to_payer: data.reason?.trim() || 'Santor payment refund',
         }),
@@ -237,7 +237,7 @@ async function xenditRefund(data: ExternalRefundRequest): Promise<ExternalRefund
         reference_id: data.refundId,
         payment_request_id: paymentRequestId,
         currency: data.currency.toUpperCase(),
-        amount: majorAmount(data.amount, data.currency),
+        amount: data.amount,
         reason: reasonCode(data.reason).toUpperCase(),
       }),
     });
@@ -303,7 +303,7 @@ async function yookassaRefund(data: ExternalRefundRequest): Promise<ExternalRefu
       },
       body: JSON.stringify({
         amount: {
-          value: majorAmount(data.amount, data.currency).toFixed(2),
+          value: data.amount.toFixed(2),
           currency: data.currency.toUpperCase(),
         },
         payment_id: paymentId,
@@ -351,9 +351,7 @@ async function yookassaRefund(data: ExternalRefundRequest): Promise<ExternalRefu
   }
 }
 
-async function cloudPaymentsRefund(
-  data: ExternalRefundRequest,
-): Promise<ExternalRefundResult> {
+async function cloudPaymentsRefund(data: ExternalRefundRequest): Promise<ExternalRefundResult> {
   const config = paymentConfig.russia;
   const transactionId = Number(data.transactionId ?? data.providerPaymentId);
 
@@ -378,7 +376,7 @@ async function cloudPaymentsRefund(
       },
       body: JSON.stringify({
         TransactionId: transactionId,
-        Amount: majorAmount(data.amount, data.currency),
+        Amount: data.amount,
       }),
     });
 

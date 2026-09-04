@@ -81,7 +81,10 @@ export async function refundPayment(data: {
       },
     });
 
-    throw createError(409, externalRefund.error ?? 'Payment refund is pending provider confirmation');
+    throw createError(
+      409,
+      externalRefund.error ?? 'Payment refund is pending provider confirmation',
+    );
   }
 
   if (externalRefund.status !== 'succeeded') {
