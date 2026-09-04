@@ -93,5 +93,5 @@ jobs:
 
       - name: Browser functional QA
         run: |
-          npx --yes playwright@latest install --with-deps chromium
-          npx --yes @playwright/test@latest test apps/web/qa/frontend-functional.spec.mjs
+          pnpm --filter @santor/web exec playwright install --with-deps chromium
+          pnpm --filter @santor/web exec playwright test apps/web/qa/frontend-functional.spec.mjs
