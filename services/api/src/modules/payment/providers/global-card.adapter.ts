@@ -49,6 +49,16 @@ function toMinorUnits(amount: number, currency: string): number {
   return Math.round(amount * 100);
 }
 
+function toMajorUnits(amount: number | undefined, currency: string): number | undefined {
+  if (amount === undefined) return undefined;
+
+  if (ZERO_DECIMAL_CURRENCIES.has(currency)) {
+    return amount;
+  }
+
+  return amount / 100;
+}
+
 function mapStripeStatus(status?: string): PaymentVerificationResult['status'] {
   switch (status) {
     case 'succeeded':
@@ -307,12 +317,14 @@ export class GlobalCardAdapter implements PaymentProvider {
         config.stripeSecretKey,
       );
 
+      const currency = response.currency?.toUpperCase() ?? 'USD';
+
       return {
         status: mapStripeStatus(response.status),
         providerPaymentId: response.id ?? normalizedId,
         transactionId: response.id ?? normalizedId,
-        amount: response.amount,
-        currency: response.currency?.toUpperCase(),
+        amount: toMajorUnits(response.amount, currency),
+        currency,
       };
     } catch (error) {
       return {
