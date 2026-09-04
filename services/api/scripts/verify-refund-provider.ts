@@ -37,8 +37,21 @@ function validateRequired(name: string, value: string | undefined): asserts valu
   if (!value) throw new Error(`${name} is required`);
 }
 
+function providerIsEnabled(providerName: ProviderName): boolean {
+  switch (providerName) {
+    case 'GlobalCardAdapter':
+      return process.env.STRIPE_ENABLED === 'true' || process.env.STRIPE_ENABLED === '1' || process.env.STRIPE_ENABLED === 'yes';
+    case 'PayPalAdapter':
+      return process.env.PAYPAL_ENABLED === 'true' || process.env.PAYPAL_ENABLED === '1' || process.env.PAYPAL_ENABLED === 'yes';
+    case 'XenditAdapter':
+      return process.env.XENDIT_ENABLED === 'true' || process.env.XENDIT_ENABLED === '1' || process.env.XENDIT_ENABLED === 'yes';
+    case 'RussiaPaymentAdapter':
+      return process.env.RUSSIA_PAYMENT_ENABLED === 'true' || process.env.RUSSIA_PAYMENT_ENABLED === '1' || process.env.RUSSIA_PAYMENT_ENABLED === 'yes';
+  }
+}
+
 function assertSafeTarget(providerName: ProviderName): void {
-  if (allowProduction) return;
+  if (allowProduction || !providerIsEnabled(providerName)) return;
 
   const baseUrl = providerBaseUrls[providerName];
   const hostname = new URL(baseUrl).hostname;
