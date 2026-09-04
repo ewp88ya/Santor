@@ -39,6 +39,22 @@ function reasonCode(reason?: string): string {
   return 'requested_by_customer';
 }
 
+function validateRefundRequest(data: ExternalRefundRequest): string | undefined {
+  if (!Number.isFinite(data.amount) || data.amount <= 0) {
+    return 'Refund amount must be greater than zero';
+  }
+
+  if (!/^[A-Za-z]{3}$/.test(data.currency.trim())) {
+    return 'Refund currency must be a three-letter ISO currency code';
+  }
+
+  if (!data.refundId.trim()) {
+    return 'Refund idempotency key is required';
+  }
+
+  return undefined;
+}
+
 function toMinorUnits(amount: number, currency: string): number {
   const normalizedCurrency = currency.trim().toUpperCase();
 
@@ -59,7 +75,6 @@ async function stripeRefund(data: ExternalRefundRequest): Promise<ExternalRefund
     return { status: 'failed', error: 'Stripe PaymentIntent ID is required' };
   }
 
-  const amount = data.amount;
   const params = new URLSearchParams({
     payment_intent: providerPaymentId,
     amount: String(toMinorUnits(data.amount, data.currency)),
@@ -408,6 +423,12 @@ async function cloudPaymentsRefund(data: ExternalRefundRequest): Promise<Externa
 export async function refundExternalPayment(
   data: ExternalRefundRequest,
 ): Promise<ExternalRefundResult> {
+  const validationError = validateRefundRequest(data);
+
+  if (validationError) {
+    return { status: 'failed', error: validationError };
+  }
+
   switch (data.provider) {
     case 'GlobalCardAdapter':
       return stripeRefund(data);
