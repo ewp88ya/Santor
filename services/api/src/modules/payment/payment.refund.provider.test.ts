@@ -120,9 +120,7 @@ describe('External Payment Refund Provider Contracts', () => {
   });
 
   it('preserves major units for YooKassa refunds', async () => {
-    fetchMock.mockResolvedValue(
-      response({ id: 'yookassa-refund-1', status: 'succeeded' }),
-    );
+    fetchMock.mockResolvedValue(response({ id: 'yookassa-refund-1', status: 'succeeded' }));
 
     const result = await refundExternalPayment({
       provider: 'RussiaPaymentAdapter',
