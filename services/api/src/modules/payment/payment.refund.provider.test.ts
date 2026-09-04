@@ -74,6 +74,63 @@ describe('External Payment Refund Provider Contracts', () => {
     expect(init.headers['Idempotency-Key']).toBe('refund-1');
   });
 
+  it('uses whole units for JPY Stripe refunds', async () => {
+    fetchMock.mockResolvedValue(response({ id: 're_stripe_jpy', status: 'succeeded' }));
+
+    await refundExternalPayment({
+      provider: 'GlobalCardAdapter',
+      providerPaymentId: 'pi_jpy',
+      amount: 1500,
+      currency: 'JPY',
+      referenceId: 'payment-jpy',
+      refundId: 'refund-jpy-1',
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.body).toContain('amount=1500');
+  });
+
+  it('maps provider network failures to failed without throwing', async () => {
+    fetchMock.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    const result = await refundExternalPayment({
+      provider: 'GlobalCardAdapter',
+      providerPaymentId: 'pi_network_error',
+      amount: 10,
+      currency: 'USD',
+      referenceId: 'payment-network',
+      refundId: 'refund-network-1',
+    });
+
+    expect(result).toEqual({
+      status: 'failed',
+      error: 'Stripe refund request failed: connect ECONNREFUSED',
+    });
+  });
+
+  it('maps malformed provider responses to a failed refund', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '{malformed-json',
+    } as Response);
+
+    const result = await refundExternalPayment({
+      provider: 'GlobalCardAdapter',
+      providerPaymentId: 'pi_malformed',
+      amount: 10,
+      currency: 'USD',
+      referenceId: 'payment-malformed',
+      refundId: 'refund-malformed-1',
+    });
+
+    expect(result).toEqual({
+      status: 'failed',
+      refundId: undefined,
+      error: 'Stripe refund status is unknown',
+    });
+  });
+
   it('preserves major units for PayPal refunds', async () => {
     fetchMock
       .mockResolvedValueOnce(response({ access_token: 'paypal-token' }))
