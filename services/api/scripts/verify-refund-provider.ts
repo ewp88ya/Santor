@@ -2,7 +2,11 @@ import 'dotenv/config';
 
 import { refundExternalPayment } from '../src/modules/payment/payment.refund.provider.js';
 
-type ProviderName = 'GlobalCardAdapter' | 'PayPalAdapter' | 'XenditAdapter' | 'RussiaPaymentAdapter';
+type ProviderName =
+  | 'GlobalCardAdapter'
+  | 'PayPalAdapter'
+  | 'XenditAdapter'
+  | 'RussiaPaymentAdapter';
 
 const provider = process.env.REFUND_PROVIDER as ProviderName | undefined;
 const providerPaymentId = process.env.REFUND_PROVIDER_PAYMENT_ID?.trim();
