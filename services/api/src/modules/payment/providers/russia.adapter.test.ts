@@ -3,27 +3,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RussiaPaymentAdapter } from './russia.adapter.js';
 
 const yooKassaCharge = vi.fn();
+const yooKassaVerify = vi.fn();
 const cloudPaymentsCharge = vi.fn();
+const cloudPaymentsVerify = vi.fn();
 const plategaCharge = vi.fn();
+const plategaVerify = vi.fn();
 
 vi.mock('./yookassa.adapter.js', () => ({
   YooKassaAdapter: class {
     charge = yooKassaCharge;
-    verifyPayment = vi.fn();
+    verifyPayment = yooKassaVerify;
   },
 }));
 
 vi.mock('./cloudpayments.adapter.js', () => ({
   CloudPaymentsAdapter: class {
     charge = cloudPaymentsCharge;
-    verifyPayment = vi.fn();
+    verifyPayment = cloudPaymentsVerify;
   },
 }));
 
 vi.mock('./platega.adapter.js', () => ({
   PlategaAdapter: class {
     charge = plategaCharge;
-    verifyPayment = vi.fn();
+    verifyPayment = plategaVerify;
   },
 }));
 
@@ -203,5 +206,62 @@ describe('RussiaPaymentAdapter', () => {
     expect(plategaCharge).toHaveBeenCalledOnce();
     expect(yooKassaCharge).not.toHaveBeenCalled();
     expect(cloudPaymentsCharge).not.toHaveBeenCalled();
+  });
+
+  it('verifies CRYPTO through Platega', async () => {
+    plategaVerify.mockResolvedValueOnce({
+      status: 'success',
+      providerPaymentId: 'platega-crypto-1',
+    });
+
+    const adapter = new RussiaPaymentAdapter();
+
+    const result = await adapter.verifyPayment('platega-crypto-1', {
+      paymentMethod: 'CRYPTO',
+    });
+
+    expect(result.status).toBe('success');
+    expect(plategaVerify).toHaveBeenCalledWith('platega-crypto-1');
+    expect(yooKassaVerify).not.toHaveBeenCalled();
+    expect(cloudPaymentsVerify).not.toHaveBeenCalled();
+  });
+
+  it('verifies a CloudPayments fallback transaction through CloudPayments', async () => {
+    cloudPaymentsVerify.mockResolvedValueOnce({
+      status: 'success',
+      providerPaymentId: '12345',
+      transactionId: '12345',
+    });
+
+    const adapter = new RussiaPaymentAdapter();
+
+    const result = await adapter.verifyPayment('12345', {
+      paymentMethod: 'SBP',
+      transactionId: '12345',
+    });
+
+    expect(result.status).toBe('success');
+    expect(cloudPaymentsVerify).toHaveBeenCalledWith('12345');
+    expect(yooKassaVerify).not.toHaveBeenCalled();
+    expect(plategaVerify).not.toHaveBeenCalled();
+  });
+
+  it('verifies a native YooKassa transaction through YooKassa', async () => {
+    yooKassaVerify.mockResolvedValueOnce({
+      status: 'success',
+      providerPaymentId: 'yookassa-sbp-1',
+    });
+
+    const adapter = new RussiaPaymentAdapter();
+
+    const result = await adapter.verifyPayment('yookassa-sbp-1', {
+      paymentMethod: 'SBP',
+      transactionId: 'yookassa-sbp-1',
+    });
+
+    expect(result.status).toBe('success');
+    expect(yooKassaVerify).toHaveBeenCalledWith('yookassa-sbp-1');
+    expect(cloudPaymentsVerify).not.toHaveBeenCalled();
+    expect(plategaVerify).not.toHaveBeenCalled();
   });
 });
