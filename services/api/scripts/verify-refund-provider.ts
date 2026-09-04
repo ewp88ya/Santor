@@ -40,13 +40,15 @@ function validateRequired(name: string, value: string | undefined): asserts valu
 function providerIsEnabled(providerName: ProviderName): boolean {
   switch (providerName) {
     case 'GlobalCardAdapter':
-      return process.env.STRIPE_ENABLED === 'true' || process.env.STRIPE_ENABLED === '1' || process.env.STRIPE_ENABLED === 'yes';
+      return ['true', '1', 'yes'].includes(process.env.STRIPE_ENABLED?.trim().toLowerCase() ?? '');
     case 'PayPalAdapter':
-      return process.env.PAYPAL_ENABLED === 'true' || process.env.PAYPAL_ENABLED === '1' || process.env.PAYPAL_ENABLED === 'yes';
+      return ['true', '1', 'yes'].includes(process.env.PAYPAL_ENABLED?.trim().toLowerCase() ?? '');
     case 'XenditAdapter':
-      return process.env.XENDIT_ENABLED === 'true' || process.env.XENDIT_ENABLED === '1' || process.env.XENDIT_ENABLED === 'yes';
+      return ['true', '1', 'yes'].includes(process.env.XENDIT_ENABLED?.trim().toLowerCase() ?? '');
     case 'RussiaPaymentAdapter':
-      return process.env.RUSSIA_PAYMENT_ENABLED === 'true' || process.env.RUSSIA_PAYMENT_ENABLED === '1' || process.env.RUSSIA_PAYMENT_ENABLED === 'yes';
+      return ['true', '1', 'yes'].includes(
+        process.env.RUSSIA_PAYMENT_ENABLED?.trim().toLowerCase() ?? '',
+      );
   }
 }
 
@@ -73,7 +75,9 @@ async function main(): Promise<void> {
     throw new Error('REFUND_AMOUNT must be a positive finite number');
   }
 
-  if (!['GlobalCardAdapter', 'PayPalAdapter', 'XenditAdapter', 'RussiaPaymentAdapter'].includes(provider)) {
+  if (
+    !['GlobalCardAdapter', 'PayPalAdapter', 'XenditAdapter', 'RussiaPaymentAdapter'].includes(provider)
+  ) {
     throw new Error(`Unsupported REFUND_PROVIDER: ${provider}`);
   }
 
