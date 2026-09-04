@@ -140,16 +140,18 @@ describe('External Payment Refund Provider Contracts', () => {
   });
 
   it('maps PayPal provider errors to failed', async () => {
-    fetchMock.mockResolvedValueOnce(response({ access_token: 'paypal-token' })).mockResolvedValueOnce(
-      response(
-        {
-          name: 'UNPROCESSABLE_ENTITY',
-          message: 'The capture has already been refunded.',
-        },
-        false,
-        422,
-      ),
-    );
+    fetchMock
+      .mockResolvedValueOnce(response({ access_token: 'paypal-token' }))
+      .mockResolvedValueOnce(
+        response(
+          {
+            name: 'UNPROCESSABLE_ENTITY',
+            message: 'The capture has already been refunded.',
+          },
+          false,
+          422,
+        ),
+      );
 
     const result = await refundExternalPayment({
       provider: 'PayPalAdapter',
