@@ -115,6 +115,7 @@ describe('Payment Refund Lifecycle', () => {
       currency: 'USD',
       referenceId: 'payment-1',
       refundId: 'refund-1',
+      paymentMethod: 'VISA',
       reason: 'customer request',
     });
     expect(result.status).toBe('refunded');
