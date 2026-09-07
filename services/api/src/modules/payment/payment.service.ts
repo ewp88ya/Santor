@@ -1,10 +1,7 @@
 import createError from 'http-errors';
 
 import { prisma } from '../../config/database.js';
-import {
-  activateEntitlement,
-  activateEntitlementInTransaction,
-} from '../entitlement/entitlement.service.js';
+import { activateEntitlementInTransaction } from '../entitlement/entitlement.service.js';
 import { auditLog } from '../audit/audit.service.js';
 
 import {
@@ -58,12 +55,7 @@ export async function createNewPayment(data: {
   try {
     const normalizedCountry = data.country.trim().toUpperCase();
     const normalizedCurrency = data.currency.trim().toUpperCase();
-
-    const paymentProvider = getPaymentProvider(
-      normalizedCountry,
-      data.paymentMethod,
-      normalizedCurrency,
-    );
+    const paymentProvider = getPaymentProvider(normalizedCountry, data.paymentMethod, normalizedCurrency);
 
     const payment = await createPayment({
       subscriptionId: data.subscriptionId,
@@ -75,25 +67,14 @@ export async function createNewPayment(data: {
       autoDebit: data.autoDebit ?? false,
     });
 
-    if (!payment) {
-      throw createError(404, 'Payment not found');
-    }
-
-    if (payment.subscription.userId !== data.userId) {
-      throw createError(403, 'Forbidden');
-    }
+    if (!payment) throw createError(404, 'Payment not found');
+    if (payment.subscription.userId !== data.userId) throw createError(403, 'Forbidden');
 
     const paymentMethodId = payment.paymentMethod?.trim();
-
-    if (!paymentMethodId) {
-      throw createError(400, 'Payment method ID is required');
-    }
+    if (!paymentMethodId) throw createError(400, 'Payment method ID is required');
 
     const paymentCountry = payment.country?.trim().toUpperCase();
-
-    if (!paymentCountry) {
-      throw createError(400, 'Payment country is required');
-    }
+    if (!paymentCountry) throw createError(400, 'Payment country is required');
 
     const chargeResult = await paymentProvider.charge({
       customerId: payment.subscription.userId,
@@ -107,18 +88,13 @@ export async function createNewPayment(data: {
 
     if (!chargeResult.success) {
       await updatePaymentStatus(payment.id, 'failed');
-
       await auditLog({
         userId: data.userId,
         action: 'PAYMENT_PROVIDER_FAILED',
         resource: 'payment',
         resourceId: payment.id,
-        metadata: {
-          provider: payment.provider,
-          error: chargeResult.error,
-        },
+        metadata: { provider: payment.provider, error: chargeResult.error },
       });
-
       throw createError(502, chargeResult.error ?? 'Payment provider request failed');
     }
 
@@ -139,8 +115,7 @@ export async function createNewPayment(data: {
         currency: payment.currency,
         paymentMethod: payment.paymentMethod,
         amount: payment.amount,
-        settlementCurrency:
-          chargeResult.settlementCurrency ?? payment.settlementCurrency ?? undefined,
+        settlementCurrency: chargeResult.settlementCurrency ?? payment.settlementCurrency ?? undefined,
         autoDebit: payment.autoDebit,
         providerPaymentId: chargeResult.providerPaymentId ?? undefined,
         transactionId: chargeResult.transactionId ?? undefined,
@@ -159,31 +134,20 @@ export async function createNewPayment(data: {
   } catch (error: any) {
     if (error.message === 'Subscription already active') {
       const err = createError(409, 'Subscription already active');
-
       err.code = 'SUBSCRIPTION_ACTIVE';
-
       throw err;
     }
-
-    if (error.message === 'Subscription not found') {
-      throw createError(404, 'Subscription not found');
-    }
-
+    if (error.message === 'Subscription not found') throw createError(404, 'Subscription not found');
     if (typeof error.message === 'string' && error.message.startsWith('No active price found')) {
       throw createError(400, error.message);
     }
-
     throw error;
   }
 }
 
 export async function getPayment(id: string, userId: string) {
   const payment = await findPaymentByIdForUser(id, userId);
-
-  if (!payment) {
-    throw createError(404, 'Payment not found');
-  }
-
+  if (!payment) throw createError(404, 'Payment not found');
   return payment;
 }
 
@@ -193,18 +157,12 @@ export async function getPayments(userId: string) {
 
 export async function markPaymentSuccess(id: string, transactionId: string, userId: string) {
   const payment = await findPaymentByIdForUser(id, userId);
-
   if (!payment) throw createError(404, 'Payment not found');
   if (payment.status !== 'pending') throw createError(409, 'Payment is not pending');
   if (!payment.providerPaymentId) throw createError(409, 'Payment does not have a provider payment ID');
   if (!payment.country) throw createError(409, 'Payment does not have a country');
 
-  const paymentProvider = getPaymentProvider(
-    payment.country,
-    payment.paymentMethod as PaymentMethod,
-    payment.currency,
-  );
-
+  const paymentProvider = getPaymentProvider(payment.country, payment.paymentMethod as PaymentMethod, payment.currency);
   const verification = await paymentProvider.verifyPayment(payment.providerPaymentId, {
     paymentMethod: payment.paymentMethod as PaymentMethod,
     transactionId,
@@ -246,7 +204,6 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
   }
 
   const verifiedTransactionId = verification.transactionId ?? transactionId;
-
   if (transactionId && verification.transactionId && transactionId !== verification.transactionId) {
     throw createError(409, 'Payment transaction ID mismatch');
   }
@@ -257,7 +214,6 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
         where: { id },
         select: { id: true, status: true, subscriptionId: true, providerPaymentId: true },
       });
-
       if (!currentPayment) throw createError(404, 'Payment not found');
       if (currentPayment.status !== 'pending') throw createError(409, 'Payment is not pending');
       if (currentPayment.providerPaymentId && currentPayment.providerPaymentId !== payment.providerPaymentId) {
@@ -268,7 +224,6 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
         where: { id },
         data: { status: 'success', transactionId: verifiedTransactionId },
       });
-
       await activateEntitlementInTransaction(currentPayment.subscriptionId, tx);
       return updatedPayment;
     },
@@ -299,7 +254,6 @@ export async function enableAutoDebit(data: {
 }) {
   const paymentMethodId = data.paymentMethodId.trim();
   if (!paymentMethodId) throw createError(400, 'Payment method is required');
-
   const customerId = data.customerId.trim();
   if (!customerId) throw createError(400, 'Payment customer is required');
 
@@ -323,7 +277,6 @@ export async function enableAutoDebit(data: {
 export async function disableAutoDebit(subscriptionId: string, userId: string) {
   try {
     const result = await updateSubscriptionAutoDebit(subscriptionId, userId, { enabled: false });
-
     await auditLog({
       userId,
       action: 'PAYMENT_AUTODEBIT_DISABLED',
@@ -331,7 +284,6 @@ export async function disableAutoDebit(subscriptionId: string, userId: string) {
       resourceId: subscriptionId,
       metadata: { autoDebit: false },
     });
-
     return result;
   } catch (error: any) {
     if (error.message === 'Subscription not found') throw createError(404, 'Subscription not found');
