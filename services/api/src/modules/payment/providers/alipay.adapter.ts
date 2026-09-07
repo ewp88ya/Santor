@@ -17,18 +17,14 @@ function required(value: string | undefined, name: string): string {
   return normalized;
 }
 
-function normalizeBaseUrl(value: string): string {
-  return value.replace(/\/$/, '');
-}
-
 function getConfig() {
   return {
-    appId: required(paymentConfig.alipay.appId, 'app ID'),
-    privateKey: required(paymentConfig.alipay.privateKey, 'private key'),
-    publicKey: required(paymentConfig.alipay.publicKey, 'public key'),
-    baseUrl: normalizeBaseUrl(
-      paymentConfig.alipay.baseUrl ?? 'https://open-na-global.alipay.com',
-    ),
+    appId: required(paymentConfig.alipay.alipayAppId, 'app ID'),
+    privateKey: required(paymentConfig.alipay.alipayPrivateKey, 'private key'),
+    publicKey: required(paymentConfig.alipay.alipayPublicKey, 'public key'),
+    baseUrl: (paymentConfig.alipay.alipayBaseUrl ?? 'https://open-na-global.alipay.com').replace(/\/$/, ''),
+    returnUrl: paymentConfig.alipay.alipayReturnUrl,
+    notifyUrl: paymentConfig.alipay.alipayNotifyUrl,
   };
 }
 
@@ -54,49 +50,35 @@ async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
   return payload as T;
 }
 
-type AlipayCreateResponse = {
-  response?: {
-    result?: {
-      resultCode?: string;
-      resultStatus?: string;
-      resultMessage?: string;
-      paymentId?: string;
-      paymentUrl?: string;
-      actionForm?: string;
-      amount?: { value?: string; currency?: string };
-    };
-  };
+type AlipayResult = {
+  resultCode?: string;
+  resultStatus?: string;
+  resultMessage?: string;
+  paymentId?: string;
+  paymentUrl?: string;
+  actionForm?: string;
+  referenceOrderId?: string;
+  paymentStatus?: string;
+  amount?: { value?: string; currency?: string };
 };
 
-type AlipayQueryResponse = {
-  response?: {
-    result?: {
-      resultCode?: string;
-      resultStatus?: string;
-      resultMessage?: string;
-      paymentId?: string;
-      referenceOrderId?: string;
-      paymentStatus?: string;
-      amount?: { value?: string; currency?: string };
-    };
-  };
-};
+type AlipayResponse = { response?: { result?: AlipayResult } };
 
 function isSuccess(status: string | undefined, code: string | undefined): boolean {
   return status === 'S' && code === 'SUCCESS';
 }
 
-function toMinorUnitAmount(amount: number): string {
+function amountToProviderValue(amount: number): string {
   if (!Number.isFinite(amount) || amount < 0) {
     throw new Error('Alipay amount must be a finite non-negative number');
   }
 
-  return Math.round(amount).toString();
+  return (Math.round(amount) / 100).toFixed(2);
 }
 
 export class AlipayAdapter implements PaymentProvider {
   async charge(request: ChargeRequest): Promise<ChargeResult> {
-    const config = getConfig();
+    const current = getConfig();
 
     const payload = {
       productCode: 'CASHIER_PAYMENT',
@@ -105,24 +87,32 @@ export class AlipayAdapter implements PaymentProvider {
         referenceOrderId: request.referenceId,
         orderDescription: `Santor payment ${request.referenceId}`,
         orderAmount: {
-          value: toMinorUnitAmount(request.amount),
+          value: amountToProviderValue(request.amount),
           currency: request.currency.toUpperCase(),
         },
       },
       paymentAmount: {
-        value: toMinorUnitAmount(request.amount),
+        value: amountToProviderValue(request.amount),
         currency: request.currency.toUpperCase(),
       },
-      paymentRedirectUrl: paymentConfig.alipay.returnUrl,
+      paymentRedirectUrl: current.returnUrl,
+      paymentNotifyUrl: current.notifyUrl,
     };
 
-    const result = await requestJson<AlipayCreateResponse>(
-      `${config.baseUrl}/ams/api/v1/payments/pay`,
+    // The adapter deliberately requires both merchant and Alipay public keys
+    // before making a provider call. The final provider signature envelope is
+    // provider-account specific and is completed/validated by live credentials
+    // in Phase 15; local tests exercise the contract without network access.
+    void current.privateKey;
+    void current.publicKey;
+
+    const result = await requestJson<AlipayResponse>(
+      `${current.baseUrl}/ams/api/v1/payments/pay`,
       {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'client-id': config.appId,
+          'client-id': current.appId,
         },
         body: JSON.stringify(payload),
       },
@@ -151,15 +141,17 @@ export class AlipayAdapter implements PaymentProvider {
     paymentId: string,
     context?: PaymentVerificationContext,
   ): Promise<PaymentVerificationResult> {
-    const config = getConfig();
+    const current = getConfig();
+    void current.privateKey;
+    void current.publicKey;
 
-    const result = await requestJson<AlipayQueryResponse>(
-      `${config.baseUrl}/ams/api/v1/payments/consult`,
+    const result = await requestJson<AlipayResponse>(
+      `${current.baseUrl}/ams/api/v1/payments/consult`,
       {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'client-id': config.appId,
+          'client-id': current.appId,
         },
         body: JSON.stringify({
           paymentId,
@@ -169,24 +161,26 @@ export class AlipayAdapter implements PaymentProvider {
     );
 
     const data = result.response?.result;
-    const status = data?.paymentStatus?.toUpperCase();
-
-    let normalized: PaymentVerificationResult['status'];
-    if (status === 'SUCCESS') normalized = 'success';
-    else if (status === 'CANCELED' || status === 'FAILED') normalized = 'failed';
-    else if (status === 'EXPIRED') normalized = 'expired';
-    else if (status === 'PROCESSING' || status === 'PENDING') normalized = 'pending';
-    else normalized = 'unknown';
+    const providerStatus = data?.paymentStatus?.toUpperCase();
+    const status: PaymentVerificationResult['status'] =
+      providerStatus === 'SUCCESS'
+        ? 'success'
+        : providerStatus === 'CANCELED' || providerStatus === 'FAILED'
+          ? 'failed'
+          : providerStatus === 'EXPIRED'
+            ? 'expired'
+            : providerStatus === 'PROCESSING' || providerStatus === 'PENDING'
+              ? 'pending'
+              : 'unknown';
 
     return {
-      status: normalized,
+      status,
       providerPaymentId: data?.paymentId ?? paymentId,
       transactionId: data?.referenceOrderId,
       referenceId: data?.referenceOrderId,
-      amount: data?.amount?.value ? Number(data.amount.value) : undefined,
+      amount: data?.amount?.value ? Math.round(Number(data.amount.value) * 100) : undefined,
       currency: data?.amount?.currency?.toUpperCase(),
-      error:
-        normalized === 'unknown' ? data?.resultMessage ?? 'Unknown Alipay payment status' : undefined,
+      error: status === 'unknown' ? data?.resultMessage ?? 'Unknown Alipay payment status' : undefined,
     };
   }
 }
