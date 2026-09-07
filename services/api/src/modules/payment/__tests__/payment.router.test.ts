@@ -6,17 +6,10 @@ import type { PaymentProvider } from '../providers/payment.provider.js';
 function createProvider(name: string): PaymentProvider {
   return {
     async charge() {
-      return {
-        success: true,
-        providerPaymentId: name,
-      };
+      return { success: true, providerPaymentId: name };
     },
-
     async verifyPayment() {
-      return {
-        status: 'success',
-        providerPaymentId: name,
-      };
+      return { status: 'success', providerPaymentId: name };
     },
   };
 }
@@ -27,6 +20,8 @@ describe('routePaymentProvider', () => {
     paypal: createProvider('paypal'),
     xendit: createProvider('xendit'),
     russia: createProvider('russia'),
+    alipay: createProvider('alipay'),
+    wechat: createProvider('wechat'),
   };
 
   it('routes VISA to the global card provider', () => {
@@ -41,12 +36,12 @@ describe('routePaymentProvider', () => {
     expect(routePaymentProvider('ID', 'PAYPAL', providers)).toBe(providers.paypal);
   });
 
-  it('routes China Alipay to Xendit', () => {
-    expect(routePaymentProvider('CN', 'ALIPAY', providers)).toBe(providers.xendit);
+  it('routes China Alipay to the dedicated Alipay provider', () => {
+    expect(routePaymentProvider('CN', 'ALIPAY', providers, 'CNY')).toBe(providers.alipay);
   });
 
-  it('routes China WeChat Pay to Xendit', () => {
-    expect(routePaymentProvider('CN', 'WECHAT_PAY', providers)).toBe(providers.xendit);
+  it('routes China WeChat Pay to the dedicated WeChat provider', () => {
+    expect(routePaymentProvider('CN', 'WECHAT_PAY', providers, 'CNY')).toBe(providers.wechat);
   });
 
   it('routes Russia SBP to the Russia provider', () => {
@@ -93,8 +88,14 @@ describe('routePaymentProvider', () => {
     expect(routePaymentProvider('KH', 'QRIS', providers, 'KHR')).toBe(providers.xendit);
   });
 
-  it('uses Xendit as the default provider', () => {
-    expect(routePaymentProvider('ID', 'QRIS', providers)).toBe(providers.xendit);
+  it('rejects unsupported combinations instead of silently falling back', () => {
+    expect(() => routePaymentProvider('CN', 'QRIS', providers, 'CNY')).toThrow(
+      'Unsupported payment route',
+    );
+  });
+
+  it('rejects missing currency for ASEAN QRIS', () => {
+    expect(() => routePaymentProvider('ID', 'QRIS', providers)).toThrow('Unsupported payment route');
   });
 
   it('normalizes lowercase country codes', () => {
