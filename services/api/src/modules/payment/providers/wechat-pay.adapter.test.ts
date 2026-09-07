@@ -5,7 +5,7 @@ vi.hoisted(() => {
   process.env.WECHAT_PAY_APP_ID = 'wx-test';
   process.env.WECHAT_PAY_MCH_ID = 'mch-test';
   process.env.WECHAT_PAY_API_V3_KEY = '12345678901234567890123456789012';
-  process.env.WECHAT_PAY_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDsQaPK8POJcPgc\nTUNCXyXnsemeegkoAmg/gaXl+5CcXUcd0CejU2XXsmIOfywFTZHJQ9awy6YqtjME\nwQ+06FQ9Ez2HlSSIjAcq6pDFywNe47sKJaFGe1Ro615QQUJDSbEp39/54ArZKmkh\ncRvyZWrTz/BKPM/TcnRX2AfNvZqegJfRN17E+BfpeKsE6MUeC57w0bmtCIzQYg6x\nZG4MpXGxj36w5R4NKMwPb22XxtjRD9Q6qgxe/ouxwzV1gn2lFF1RGXwbuy23OWV7\nVwWXegBqodJtnw4mTdIBvuWdDi1h02bBHeAluybdGRGJ4Flu7ylHU2nXi/GiriXg\nv9DfhbHbAgMBAAECggEAHDVmKigE3Ac6CJ8NBdK4guaSP1LQ3w8ShWqkdUZJKPJW\nOHAPG4gso8lvvc1fYy601nQcITXfnD/u7YVjq7UFwdkXQqYDG66keHJTYNpxh5Xn\nUjnV/MVi+bgIpcp07/XPinFpm7stcGqI7O5FaPbE/49XYHXMVrHWxFpN7DnUSVJU\njerzlOYKHC87CLDdB/FtAMjw2qCiJyVkkqHy4qavlbLVYTb1+sQhdcSWUoGFCgQE\nlqICNMHi4Pj/0LHs2dKsG0eFM2YNs6RCrnsoMId8gsIBuUN5K8qdK/mPy2XFyY5X\nOmpBbZ3nTLjZiwBB66ogzHsiEJ8DkUD5e+5VTVeImQKBgQD85E4HdpsfE3Kz5dGo\n/FHrD3pYu3e0duxtS9BNkfVwglP/+UbY1fCzPvoSSp930U7HQyHA+JK9bD+MsyT9\nkGIbJOdrBvEtheNUcgcnDmYmY8Uo+L7lFf0TM/U+ubOC2n1+2RzJa7qnx9QlDLKe\npOkfAt2m3Vm1OPhZDHs+IC/o7wKBgQDvKP5cYcakrxz9cCm79DxWiRvp1wzYOc47\n0FhvwyquPN0FUWjJroRnsMFSfPum4tP0QGsxP/CAf5AcGNna+YuN7lDywonImLp\nyTowh/nPBr8zvJ1XP+QZDA3ngLsKV5EHtsBZgN6bETUla0opgGEKNvu/QXsnK/U+\njUfnEPdN1QKBgQCY+w8Myr3p3ZzsoKDlBcYUWSec18MBI1PAhjU7R4lfBygDV+t4\nrmrOM9GZERVIqRBrz/tyPaye9AW5eoFs9lOyse9gOjHZZP3xDo2vHbHDlWUmdNsd\nv+B5Jlw8FqA2DzANdQ9J9WZTqrl1tCm1eHMhdF1bXNmwnAb372n6WgRBdwKBgQCA\n+ZuLGJO21lUM/EMVgJZVmKV8CyR7K1lj+mznANpwkpPU6m/el5D61aKYpJQvVqTf\ni3iawram2spR2ApTiOXegOChhcrY5ftv1rxR1dLLafkNHqe/mM4bD9wjv9GetzCY\nd17uJchm2fXOUzjwfrJWfuZu8xJGQreEX06qdwTXbQKBgQD29pH+KHJrbGCWk9X3\nBeiJbrDc+DS8WbKQsbHIw4EY3NFxbmpY03bj9f5QndSiQ7/8xekgOYO/zxP/H96S\nUuAA5/qvX1ZEpqiZwzzumeyDqG++tF1ROy6PghWVpCaySAbVEkAzOyIj3a0u4ENx\ngOafMKu4sr42Ur/5KuoZ4Th1eg==\n-----END PRIVATE KEY-----`;
+  process.env.WECHAT_PAY_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDbB0x7RoQqWn1V\n2V2ARb1+tR/C8lwC/ph9vf7LpXW9MMXl7Kl9gguAQW2ZIBkU4+GaaUyymP2mQT20\ny/QJkOwLxbTOZx9ANJaQ3u+xMlg6IpD7vkjDD+u6xToJQwbMMjo6MZs6cgIjKOWi\nCLs+rFXdbUgG+B0cdH/8JtaDd1ED98WVdfEuVEFSGHIsRqkUX2SwzXMXxbXlwLR/\ndCjii0U2WfY+yc7bLmJAMpW51A9QLDleT0RCP3yf1TjlZQzDotU3sTM/t+8KZZaH\nda195RNGtz3sG2pSYRAo7PpZO+X+LzBFnmpoTaZOfd3j8DFDuxY/TJb9BnGM9BPm\ngCkogViBAgMBAAECggEABw+6R2n6F9pFmskNV49013Fw3gDUHTEAUWMY14/BkIE4\n8bukD6ZSLZpIAmODbrKvUtWc24MzZkx8xOfwbO1UFuF5MOn1NKvQkOIguZNFPraS\nx9li9vSVjB0Qszy+EUMRsOk2UN32s+B9KspIrL5/1DA4qsGnQQQZt9NR7JIiHAd6\nx6HNiVEVihhAuS+JCYT8nYuQjyBcMC1p/mCr4hmOulhAByJ2oihn+sZT+eW2C78L\njo+ZouV8pPTW1d0LIoxKO/JOUEV0K5F6XB8jrcbPwsWQZBGX8mhdTlGZCaYPusx1\nqzDEjwgzz29tm6jzUCH8rqxE/Ta8QiZSQFEzR8LoawKBgQD16AhlxCoVO6wiG3V+\nSKi0ujSs3BEBCvB+GAbiNeWLGRBrtlfQEXGWXhacQvS2lQ4D+Unj9iHg0xbKas9d\nc5rAP4tcLP+EgaF+VJX6jEXJTQ2XsODloQGubc9MCvVTlHo5lVHJ97uKKj6Oanas\nM60OdO5goZ2Uqn82SoWXhqTNjwKBgQDkBNXOmIfGJU1zc7aYCh7YRP1yMogeHUs3\n2Mnxwanti/hUoWrjE3iRAGYCbVnMXAthPepk4Krv9vhlToJS1PQnNjByToRcTq0C\nklYVuVtAuHmvufPFVPMyJzocQ/DXZPiG08VL7iiGiki1DpFUwhBUpb8+BDUbP2nN\nuHH8JiuQ7wKBgAtoF/ugfdM+UV3DqE+TT0AS4x6hlqhVuZIfyzHzDhLFtt1IOAqO\nxJYVBzd4Y6GUiHHmvma0pB2prQT2r2fGVQdV60D7VV7wJG2Xvt1AZHxR9q9ypPwB\n2/IbZeJBH+AgowrIwmJ7+1cNXpl8lsSmIQDqq6QP2x9qSTxbeJbux/ZBAoGAUqHF\n8dao7Y+7H6nBdBvGzc1Co83YMkGfbp+rn2b1c9aTqefNWnlF6hZg4WRLdJmurhDI\nDsK0b73qipwG8oml6UfkCqiVovYIELSDaeAAR9YSkzIqO0rrzzMUBgZBE23N+t5n\n03p9STR34NVkqXiifmqKgaj4reUvLJQ5Co2yoBUCgYBV9hAHLidQQi5CCwwxkTSR\nKhXcyAqMQ8aA4Wb1P34dzl8zZ+AqflCz6rDeV0eWDdFs0TcAa6tzluW1nfHic/fO\nSW6fiDsGbk3t2aMqMepBlQwN192WVdx7SJFNX1Dtl21poXprZYmryJXnEHLOpGJy\nTFEfF9+QEPUy17eOqEaxCg==\n-----END PRIVATE KEY-----`;
   process.env.WECHAT_PAY_SERIAL_NUMBER = 'serial-test';
   process.env.WECHAT_PAY_BASE_URL = 'https://wechat.test';
   process.env.WECHAT_PAY_NOTIFY_URL = 'https://santor.test/wechat/webhook';
@@ -17,11 +17,15 @@ describe('WeChatPayAdapter', () => {
   it('creates a native payment and exposes the QR action', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ prepay_id: 'prepay-1', code_url: 'weixin://wxpay/bizpayurl' }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({ prepay_id: 'prepay-1', code_url: 'weixin://wxpay/bizpayurl' }),
+            {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            },
+          ),
       ),
     );
 
@@ -56,16 +60,17 @@ describe('WeChatPayAdapter', () => {
   it('maps a successful order query to the common verification contract', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            transaction_id: 'wx-tx-1',
-            out_trade_no: 'payment-1',
-            trade_state: 'SUCCESS',
-            amount: { total: 199, currency: 'CNY' },
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              transaction_id: 'wx-tx-1',
+              out_trade_no: 'payment-1',
+              trade_state: 'SUCCESS',
+              amount: { total: 199, currency: 'CNY' },
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
       ),
     );
 

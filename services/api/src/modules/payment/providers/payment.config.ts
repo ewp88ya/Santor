@@ -116,8 +116,10 @@ export const paymentConfig = {
     alipayPrivateKey: getOptionalEnv('ALIPAY_PRIVATE_KEY'),
     alipayPublicKey: getOptionalEnv('ALIPAY_PUBLIC_KEY'),
     alipayBaseUrl: getOptionalEnv('ALIPAY_BASE_URL') ?? 'https://open-na-global.alipay.com',
-    alipayReturnUrl: getOptionalEnv('ALIPAY_RETURN_URL') ?? 'https://santor.app/payment/alipay/return',
-    alipayNotifyUrl: getOptionalEnv('ALIPAY_NOTIFY_URL') ?? 'https://santor.app/payment/webhook/alipay',
+    alipayReturnUrl:
+      getOptionalEnv('ALIPAY_RETURN_URL') ?? 'https://santor.app/payment/alipay/return',
+    alipayNotifyUrl:
+      getOptionalEnv('ALIPAY_NOTIFY_URL') ?? 'https://santor.app/payment/webhook/alipay',
   } satisfies PaymentProviderConfig,
 
   wechat: {
@@ -128,6 +130,7 @@ export const paymentConfig = {
     wechatPrivateKey: getOptionalEnv('WECHAT_PAY_PRIVATE_KEY'),
     wechatSerialNumber: getOptionalEnv('WECHAT_PAY_SERIAL_NUMBER'),
     wechatBaseUrl: getOptionalEnv('WECHAT_PAY_BASE_URL') ?? 'https://api.mch.weixin.qq.com',
-    wechatNotifyUrl: getOptionalEnv('WECHAT_PAY_NOTIFY_URL') ?? 'https://santor.app/payment/webhook/wechat',
+    wechatNotifyUrl:
+      getOptionalEnv('WECHAT_PAY_NOTIFY_URL') ?? 'https://santor.app/payment/webhook/wechat',
   } satisfies PaymentProviderConfig,
 } as const;

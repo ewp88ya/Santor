@@ -92,9 +92,14 @@ export async function seedProducts(prisma: PrismaClient) {
     });
   }
 
+  const activeProductCodes = products.map((product) => product.code);
+
   await prisma.product.updateMany({
     where: {
-      code: 'GENERAL-PRO',
+      code: {
+        notIn: activeProductCodes,
+      },
+      active: true,
     },
     data: {
       active: false,

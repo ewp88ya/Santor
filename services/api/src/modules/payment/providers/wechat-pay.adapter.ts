@@ -26,7 +26,10 @@ function config() {
     apiV3Key: required(paymentConfig.wechat.wechatApiV3Key, 'API v3 key'),
     privateKey: required(paymentConfig.wechat.wechatPrivateKey, 'private key'),
     serialNumber: required(paymentConfig.wechat.wechatSerialNumber, 'certificate serial number'),
-    baseUrl: (paymentConfig.wechat.wechatBaseUrl ?? 'https://api.mch.weixin.qq.com').replace(/\/$/, ''),
+    baseUrl: (paymentConfig.wechat.wechatBaseUrl ?? 'https://api.mch.weixin.qq.com').replace(
+      /\/$/,
+      '',
+    ),
     notifyUrl: paymentConfig.wechat.wechatNotifyUrl,
   };
 }
@@ -139,7 +142,10 @@ export class WeChatPayAdapter implements PaymentProvider {
       actions: response.code_url
         ? [{ type: 'qr', descriptor: 'code_url', value: response.code_url }]
         : [],
-      error: response.prepay_id || response.code_url ? undefined : 'WeChat Pay did not return a payment token',
+      error:
+        response.prepay_id || response.code_url
+          ? undefined
+          : 'WeChat Pay did not return a payment token',
     };
   }
 

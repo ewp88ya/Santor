@@ -16,20 +16,21 @@ describe('AlipayAdapter', () => {
   it('creates a payment contract and exposes provider actions', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            response: {
-              result: {
-                resultStatus: 'S',
-                resultCode: 'SUCCESS',
-                paymentId: 'ali-payment-1',
-                paymentUrl: 'https://alipay.test/pay/1',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              response: {
+                result: {
+                  resultStatus: 'S',
+                  resultCode: 'SUCCESS',
+                  paymentId: 'ali-payment-1',
+                  paymentUrl: 'https://alipay.test/pay/1',
+                },
               },
-            },
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
       ),
     );
 
@@ -48,20 +49,21 @@ describe('AlipayAdapter', () => {
   it('maps provider status to the common verification contract', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            response: {
-              result: {
-                paymentStatus: 'SUCCESS',
-                paymentId: 'ali-payment-1',
-                referenceOrderId: 'payment-1',
-                amount: { value: '1.99', currency: 'USD' },
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              response: {
+                result: {
+                  paymentStatus: 'SUCCESS',
+                  paymentId: 'ali-payment-1',
+                  referenceOrderId: 'payment-1',
+                  amount: { value: '1.99', currency: 'USD' },
+                },
               },
-            },
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
       ),
     );
 

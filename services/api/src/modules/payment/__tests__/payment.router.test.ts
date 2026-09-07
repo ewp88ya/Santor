@@ -95,7 +95,9 @@ describe('routePaymentProvider', () => {
   });
 
   it('rejects missing currency for ASEAN QRIS', () => {
-    expect(() => routePaymentProvider('ID', 'QRIS', providers)).toThrow('Unsupported payment route');
+    expect(() => routePaymentProvider('ID', 'QRIS', providers)).toThrow(
+      'Unsupported payment route',
+    );
   });
 
   it('normalizes lowercase country codes', () => {

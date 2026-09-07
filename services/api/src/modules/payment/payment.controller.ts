@@ -1,10 +1,7 @@
 import createError from 'http-errors';
 import type { FastifyRequest } from 'fastify';
 
-import {
-  processAlipayWebhook,
-  processWeChatPayWebhook,
-} from './china-webhook.service.js';
+import { processAlipayWebhook, processWeChatPayWebhook } from './china-webhook.service.js';
 import {
   processPaymentWebhook,
   processPlategaWebhook,

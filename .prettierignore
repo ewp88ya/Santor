@@ -1,1 +1,3 @@
 pnpm-lock.yaml
+.pnpm-store/
+wsl

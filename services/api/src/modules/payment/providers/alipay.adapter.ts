@@ -22,7 +22,10 @@ function getConfig() {
     appId: required(paymentConfig.alipay.alipayAppId, 'app ID'),
     privateKey: required(paymentConfig.alipay.alipayPrivateKey, 'private key'),
     publicKey: required(paymentConfig.alipay.alipayPublicKey, 'public key'),
-    baseUrl: (paymentConfig.alipay.alipayBaseUrl ?? 'https://open-na-global.alipay.com').replace(/\/$/, ''),
+    baseUrl: (paymentConfig.alipay.alipayBaseUrl ?? 'https://open-na-global.alipay.com').replace(
+      /\/$/,
+      '',
+    ),
     returnUrl: paymentConfig.alipay.alipayReturnUrl,
     notifyUrl: paymentConfig.alipay.alipayNotifyUrl,
   };
@@ -106,17 +109,14 @@ export class AlipayAdapter implements PaymentProvider {
     void current.privateKey;
     void current.publicKey;
 
-    const result = await requestJson<AlipayResponse>(
-      `${current.baseUrl}/ams/api/v1/payments/pay`,
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'client-id': current.appId,
-        },
-        body: JSON.stringify(payload),
+    const result = await requestJson<AlipayResponse>(`${current.baseUrl}/ams/api/v1/payments/pay`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'client-id': current.appId,
       },
-    );
+      body: JSON.stringify(payload),
+    });
 
     const data = result.response?.result;
     const success = isSuccess(data?.resultStatus, data?.resultCode);
@@ -133,7 +133,7 @@ export class AlipayAdapter implements PaymentProvider {
           ? [{ type: 'form', descriptor: 'action_form', value: data.actionForm }]
           : []),
       ],
-      error: success ? undefined : data?.resultMessage ?? 'Alipay payment failed',
+      error: success ? undefined : (data?.resultMessage ?? 'Alipay payment failed'),
     };
   }
 
@@ -180,7 +180,8 @@ export class AlipayAdapter implements PaymentProvider {
       referenceId: data?.referenceOrderId,
       amount: data?.amount?.value ? Math.round(Number(data.amount.value) * 100) : undefined,
       currency: data?.amount?.currency?.toUpperCase(),
-      error: status === 'unknown' ? data?.resultMessage ?? 'Unknown Alipay payment status' : undefined,
+      error:
+        status === 'unknown' ? (data?.resultMessage ?? 'Unknown Alipay payment status') : undefined,
     };
   }
 }

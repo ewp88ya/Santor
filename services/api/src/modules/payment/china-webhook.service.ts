@@ -37,7 +37,10 @@ function assertReconciled(
     throw createError(409, 'Provider amount mismatch');
   }
 
-  if (verification.currency && verification.currency.toUpperCase() !== payment.currency.toUpperCase()) {
+  if (
+    verification.currency &&
+    verification.currency.toUpperCase() !== payment.currency.toUpperCase()
+  ) {
     throw createError(409, 'Provider currency mismatch');
   }
 }
@@ -180,7 +183,8 @@ export async function processWeChatPayWebhook(body: WeChatWebhookBody) {
   assertReconciled(payment, verification);
 
   const status = verification.status === 'success' ? 'success' : 'failed';
-  const eventId = clean(body.id) ?? `wechat:${transactionId}:${data.trade_state?.trim().toUpperCase() ?? status}`;
+  const eventId =
+    clean(body.id) ?? `wechat:${transactionId}:${data.trade_state?.trim().toUpperCase() ?? status}`;
 
   return transitionVerifiedPayment({
     paymentId,

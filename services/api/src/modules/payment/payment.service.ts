@@ -33,14 +33,19 @@ const alipayAdapter = new AlipayAdapter();
 const wechatPayAdapter = new WeChatPayAdapter();
 
 function getPaymentProvider(country: string, paymentMethod: PaymentMethod, currency: string) {
-  return routePaymentProvider(country, paymentMethod, {
-    globalCard: globalCardAdapter,
-    paypal: paypalAdapter,
-    xendit: xenditAdapter,
-    russia: russiaPaymentAdapter,
-    alipay: alipayAdapter,
-    wechat: wechatPayAdapter,
-  }, currency);
+  return routePaymentProvider(
+    country,
+    paymentMethod,
+    {
+      globalCard: globalCardAdapter,
+      paypal: paypalAdapter,
+      xendit: xenditAdapter,
+      russia: russiaPaymentAdapter,
+      alipay: alipayAdapter,
+      wechat: wechatPayAdapter,
+    },
+    currency,
+  );
 }
 
 export async function createNewPayment(data: {
@@ -55,7 +60,11 @@ export async function createNewPayment(data: {
   try {
     const normalizedCountry = data.country.trim().toUpperCase();
     const normalizedCurrency = data.currency.trim().toUpperCase();
-    const paymentProvider = getPaymentProvider(normalizedCountry, data.paymentMethod, normalizedCurrency);
+    const paymentProvider = getPaymentProvider(
+      normalizedCountry,
+      data.paymentMethod,
+      normalizedCurrency,
+    );
 
     const payment = await createPayment({
       subscriptionId: data.subscriptionId,
@@ -115,7 +124,8 @@ export async function createNewPayment(data: {
         currency: payment.currency,
         paymentMethod: payment.paymentMethod,
         amount: payment.amount,
-        settlementCurrency: chargeResult.settlementCurrency ?? payment.settlementCurrency ?? undefined,
+        settlementCurrency:
+          chargeResult.settlementCurrency ?? payment.settlementCurrency ?? undefined,
         autoDebit: payment.autoDebit,
         providerPaymentId: chargeResult.providerPaymentId ?? undefined,
         transactionId: chargeResult.transactionId ?? undefined,
@@ -137,7 +147,8 @@ export async function createNewPayment(data: {
       err.code = 'SUBSCRIPTION_ACTIVE';
       throw err;
     }
-    if (error.message === 'Subscription not found') throw createError(404, 'Subscription not found');
+    if (error.message === 'Subscription not found')
+      throw createError(404, 'Subscription not found');
     if (typeof error.message === 'string' && error.message.startsWith('No active price found')) {
       throw createError(400, error.message);
     }
@@ -159,10 +170,15 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
   const payment = await findPaymentByIdForUser(id, userId);
   if (!payment) throw createError(404, 'Payment not found');
   if (payment.status !== 'pending') throw createError(409, 'Payment is not pending');
-  if (!payment.providerPaymentId) throw createError(409, 'Payment does not have a provider payment ID');
+  if (!payment.providerPaymentId)
+    throw createError(409, 'Payment does not have a provider payment ID');
   if (!payment.country) throw createError(409, 'Payment does not have a country');
 
-  const paymentProvider = getPaymentProvider(payment.country, payment.paymentMethod as PaymentMethod, payment.currency);
+  const paymentProvider = getPaymentProvider(
+    payment.country,
+    payment.paymentMethod as PaymentMethod,
+    payment.currency,
+  );
   const verification = await paymentProvider.verifyPayment(payment.providerPaymentId, {
     paymentMethod: payment.paymentMethod as PaymentMethod,
     transactionId,
@@ -174,7 +190,11 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
       action: 'PAYMENT_SUCCESS_VERIFICATION_FAILED',
       resource: 'payment',
       resourceId: id,
-      metadata: { provider: payment.provider, providerPaymentId: payment.providerPaymentId, reason: verification.error },
+      metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        reason: verification.error,
+      },
     });
     throw createError(502, verification.error ?? 'Unable to verify payment with provider');
   }
@@ -185,12 +205,19 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
       action: 'PAYMENT_SUCCESS_VERIFICATION_REJECTED',
       resource: 'payment',
       resourceId: id,
-      metadata: { provider: payment.provider, providerPaymentId: payment.providerPaymentId, providerStatus: verification.status },
+      metadata: {
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId,
+        providerStatus: verification.status,
+      },
     });
     throw createError(409, `Payment provider status is ${verification.status}`);
   }
 
-  if (verification.providerPaymentId && verification.providerPaymentId !== payment.providerPaymentId) {
+  if (
+    verification.providerPaymentId &&
+    verification.providerPaymentId !== payment.providerPaymentId
+  ) {
     throw createError(409, 'Provider payment ID mismatch');
   }
   if (verification.referenceId && verification.referenceId !== payment.id) {
@@ -199,7 +226,10 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
   if (verification.amount !== undefined && verification.amount !== payment.amount) {
     throw createError(409, 'Payment amount mismatch');
   }
-  if (verification.currency && verification.currency.toUpperCase() !== payment.currency.toUpperCase()) {
+  if (
+    verification.currency &&
+    verification.currency.toUpperCase() !== payment.currency.toUpperCase()
+  ) {
     throw createError(409, 'Payment currency mismatch');
   }
 
@@ -216,7 +246,10 @@ export async function markPaymentSuccess(id: string, transactionId: string, user
       });
       if (!currentPayment) throw createError(404, 'Payment not found');
       if (currentPayment.status !== 'pending') throw createError(409, 'Payment is not pending');
-      if (currentPayment.providerPaymentId && currentPayment.providerPaymentId !== payment.providerPaymentId) {
+      if (
+        currentPayment.providerPaymentId &&
+        currentPayment.providerPaymentId !== payment.providerPaymentId
+      ) {
         throw createError(409, 'Provider payment ID mismatch');
       }
 
@@ -286,7 +319,8 @@ export async function disableAutoDebit(subscriptionId: string, userId: string) {
     });
     return result;
   } catch (error: any) {
-    if (error.message === 'Subscription not found') throw createError(404, 'Subscription not found');
+    if (error.message === 'Subscription not found')
+      throw createError(404, 'Subscription not found');
     throw error;
   }
 }

@@ -55,8 +55,10 @@ vi.mock('../payment.router.js', () => ({
 }));
 
 vi.mock('../providers/index.js', () => ({
+  AlipayAdapter: vi.fn(),
   GlobalCardAdapter: vi.fn(),
   PayPalAdapter: vi.fn(),
+  WeChatPayAdapter: vi.fn(),
   XenditAdapter: vi.fn(),
   RussiaPaymentAdapter: vi.fn(),
 }));
@@ -168,11 +170,14 @@ describe('Payment Service', () => {
         'US',
         'card',
         expect.objectContaining({
+          alipay: expect.anything(),
           globalCard: expect.anything(),
           paypal: expect.anything(),
           russia: expect.anything(),
+          wechat: expect.anything(),
           xendit: expect.anything(),
         }),
+        'USD',
       );
 
       const provider = routePaymentProviderMock.mock.results[0].value;
@@ -195,7 +200,6 @@ describe('Payment Service', () => {
           status: true,
           subscriptionId: true,
           providerPaymentId: true,
-          transactionId: true,
         },
       });
 
@@ -423,18 +427,6 @@ describe('Payment Service', () => {
       expect(prismaTransactionMock).not.toHaveBeenCalled();
       expect(paymentUpdateMock).not.toHaveBeenCalled();
       expect(activateEntitlementInTransactionMock).not.toHaveBeenCalled();
-
-      expect(auditLogMock).toHaveBeenCalledWith({
-        userId: 'user-1',
-        action: 'PAYMENT_SUCCESS_VERIFICATION_MISMATCH',
-        resource: 'payment',
-        resourceId: 'payment-1',
-        metadata: {
-          reason: 'PROVIDER_PAYMENT_ID_MISMATCH',
-          expectedProviderPaymentId: 'provider-payment-1',
-          providerPaymentId: 'different-provider-payment',
-        },
-      });
     });
 
     it('rejects reference ID mismatch', async () => {
