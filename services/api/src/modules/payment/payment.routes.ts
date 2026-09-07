@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
 import {
+  alipayWebhookController,
   createPaymentController,
   detailPaymentController,
   disableAutoDebitController,
@@ -10,6 +11,7 @@ import {
   paymentWebhookController,
   plategaWebhookController,
   refundPaymentController,
+  wechatPayWebhookController,
   xenditWebhookController,
 } from './payment.controller.js';
 
@@ -42,6 +44,8 @@ export default async function paymentRoutes(app: FastifyInstance) {
   app.post('/payments/webhook', paymentWebhookController);
   app.post('/payments/webhook/xendit', xenditWebhookController);
   app.post('/payments/webhook/platega', plategaWebhookController);
+  app.post('/payments/webhook/alipay', alipayWebhookController);
+  app.post('/payments/webhook/wechat', wechatPayWebhookController);
 
   app.post(
     '/payments/autodebit/enable',
