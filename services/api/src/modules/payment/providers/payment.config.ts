@@ -26,6 +26,21 @@ type PaymentProviderConfig = {
   cloudPaymentsPublicId?: string;
   cloudPaymentsApiSecret?: string;
   cloudPaymentsBaseUrl?: string;
+
+  alipayAppId?: string;
+  alipayPrivateKey?: string;
+  alipayPublicKey?: string;
+  alipayBaseUrl?: string;
+  alipayReturnUrl?: string;
+  alipayNotifyUrl?: string;
+
+  wechatAppId?: string;
+  wechatMchId?: string;
+  wechatApiV3Key?: string;
+  wechatPrivateKey?: string;
+  wechatSerialNumber?: string;
+  wechatBaseUrl?: string;
+  wechatNotifyUrl?: string;
 };
 
 function getOptionalEnv(name: string): string | undefined {
@@ -79,23 +94,40 @@ export const paymentConfig = {
 
   russia: {
     enabled: getBooleanEnv('RUSSIA_PAYMENT_ENABLED'),
-
     apiKey: getOptionalEnv('RUSSIA_PAYMENT_API_KEY'),
     apiSecret: getOptionalEnv('RUSSIA_PAYMENT_API_SECRET'),
     baseUrl: getOptionalEnv('RUSSIA_PAYMENT_BASE_URL'),
-
     plategaMerchantId: getOptionalEnv('PLATEGA_MERCHANT_ID'),
     plategaSecret: getOptionalEnv('PLATEGA_SECRET'),
     plategaBaseUrl: getOptionalEnv('PLATEGA_BASE_URL') ?? 'https://app.platega.io',
-
     yookassaShopId: getOptionalEnv('YOOKASSA_SHOP_ID'),
     yookassaSecret: getOptionalEnv('YOOKASSA_SECRET'),
     yookassaBaseUrl: getOptionalEnv('YOOKASSA_BASE_URL') ?? 'https://api.yookassa.ru',
     yookassaReturnUrl: getOptionalEnv('YOOKASSA_RETURN_URL') ?? 'https://santor.app/payment/return',
-
     cloudPaymentsPublicId: getOptionalEnv('CLOUDPAYMENTS_PUBLIC_ID'),
     cloudPaymentsApiSecret: getOptionalEnv('CLOUDPAYMENTS_API_SECRET'),
     cloudPaymentsBaseUrl:
       getOptionalEnv('CLOUDPAYMENTS_BASE_URL') ?? 'https://api.cloudpayments.ru',
+  } satisfies PaymentProviderConfig,
+
+  alipay: {
+    enabled: getBooleanEnv('ALIPAY_ENABLED'),
+    alipayAppId: getOptionalEnv('ALIPAY_APP_ID'),
+    alipayPrivateKey: getOptionalEnv('ALIPAY_PRIVATE_KEY'),
+    alipayPublicKey: getOptionalEnv('ALIPAY_PUBLIC_KEY'),
+    alipayBaseUrl: getOptionalEnv('ALIPAY_BASE_URL') ?? 'https://open-na-global.alipay.com',
+    alipayReturnUrl: getOptionalEnv('ALIPAY_RETURN_URL') ?? 'https://santor.app/payment/alipay/return',
+    alipayNotifyUrl: getOptionalEnv('ALIPAY_NOTIFY_URL') ?? 'https://santor.app/payment/webhook/alipay',
+  } satisfies PaymentProviderConfig,
+
+  wechat: {
+    enabled: getBooleanEnv('WECHAT_PAY_ENABLED'),
+    wechatAppId: getOptionalEnv('WECHAT_PAY_APP_ID'),
+    wechatMchId: getOptionalEnv('WECHAT_PAY_MCH_ID'),
+    wechatApiV3Key: getOptionalEnv('WECHAT_PAY_API_V3_KEY'),
+    wechatPrivateKey: getOptionalEnv('WECHAT_PAY_PRIVATE_KEY'),
+    wechatSerialNumber: getOptionalEnv('WECHAT_PAY_SERIAL_NUMBER'),
+    wechatBaseUrl: getOptionalEnv('WECHAT_PAY_BASE_URL') ?? 'https://api.mch.weixin.qq.com',
+    wechatNotifyUrl: getOptionalEnv('WECHAT_PAY_NOTIFY_URL') ?? 'https://santor.app/payment/webhook/wechat',
   } satisfies PaymentProviderConfig,
 } as const;
