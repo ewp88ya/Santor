@@ -2,6 +2,10 @@ import createError from 'http-errors';
 import type { FastifyRequest } from 'fastify';
 
 import {
+  processAlipayWebhook,
+  processWeChatPayWebhook,
+} from './china-webhook.service.js';
+import {
   processPaymentWebhook,
   processPlategaWebhook,
   processXenditWebhook,
@@ -102,13 +106,7 @@ export async function disableAutoDebitController(request: FastifyRequest) {
 
 export async function paymentWebhookController(request: FastifyRequest) {
   getInternalWebhookSecret(request);
-  const body = request.body as {
-    eventId: string;
-    type: 'payment.success' | 'payment.failed';
-    paymentId: string;
-    transactionId?: string;
-  };
-  return processPaymentWebhook(body);
+  return processPaymentWebhook(request.body as Parameters<typeof processPaymentWebhook>[0]);
 }
 
 export async function xenditWebhookController(request: FastifyRequest) {
@@ -122,4 +120,12 @@ export async function xenditWebhookController(request: FastifyRequest) {
 
 export async function plategaWebhookController(request: FastifyRequest) {
   return processPlategaWebhook(request.body as Parameters<typeof processPlategaWebhook>[0]);
+}
+
+export async function alipayWebhookController(request: FastifyRequest) {
+  return processAlipayWebhook(request.body as Parameters<typeof processAlipayWebhook>[0]);
+}
+
+export async function wechatPayWebhookController(request: FastifyRequest) {
+  return processWeChatPayWebhook(request.body as Parameters<typeof processWeChatPayWebhook>[0]);
 }
