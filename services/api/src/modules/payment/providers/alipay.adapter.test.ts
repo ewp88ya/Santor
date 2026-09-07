@@ -1,16 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.hoisted(() => {
+  process.env.ALIPAY_ENABLED = 'true';
+  process.env.ALIPAY_APP_ID = 'test-app';
+  process.env.ALIPAY_PRIVATE_KEY = 'test-private-key';
+  process.env.ALIPAY_PUBLIC_KEY = 'test-public-key';
+  process.env.ALIPAY_BASE_URL = 'https://alipay.test';
+  process.env.ALIPAY_RETURN_URL = 'https://santor.test/alipay/return';
+  process.env.ALIPAY_NOTIFY_URL = 'https://santor.test/alipay/webhook';
+});
 
 import { AlipayAdapter } from './alipay.adapter.js';
-
-beforeEach(() => {
-  vi.stubEnv('ALIPAY_ENABLED', 'true');
-  vi.stubEnv('ALIPAY_APP_ID', 'test-app');
-  vi.stubEnv('ALIPAY_PRIVATE_KEY', 'test-private-key');
-  vi.stubEnv('ALIPAY_PUBLIC_KEY', 'test-public-key');
-  vi.stubEnv('ALIPAY_BASE_URL', 'https://alipay.test');
-  vi.stubEnv('ALIPAY_RETURN_URL', 'https://santor.test/alipay/return');
-  vi.stubEnv('ALIPAY_NOTIFY_URL', 'https://santor.test/alipay/webhook');
-});
 
 describe('AlipayAdapter', () => {
   it('creates a payment contract and exposes provider actions', async () => {
