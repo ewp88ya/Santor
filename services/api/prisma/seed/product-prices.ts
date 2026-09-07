@@ -40,5 +40,17 @@ export async function seedProductPrices(prisma: PrismaClient) {
     });
   }
 
+  await prisma.productPrice.updateMany({
+    where: {
+      active: true,
+      product: {
+        active: false,
+      },
+    },
+    data: {
+      active: false,
+    },
+  });
+
   console.log(`✓ Product prices seed completed (${products.length} products)`);
 }
