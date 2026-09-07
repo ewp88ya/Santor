@@ -13,6 +13,8 @@ const EXPECTED_CATALOG = [
   ['WG-12M', 3999, 'USD', 365, 5],
 ] as const;
 
+const EXPECTED_CODES = EXPECTED_CATALOG.map(([code]) => code).sort();
+
 describe('final production catalog seed', () => {
   it('contains exactly the approved active catalog', async () => {
     const products = await prisma.product.findMany({
@@ -37,34 +39,28 @@ describe('final production catalog seed', () => {
       expect(product).toMatchObject({ code, price, currency, durationDays, deviceLimit });
     }
 
-    expect(products.map((product) => product.code).sort()).toEqual(
-      [...EXPECTED_CATALOG.map(([code]) => code)].sort(),
-    );
+    expect(products.map((product) => product.code).sort()).toEqual(EXPECTED_CODES);
   });
 
-  it('has one active US ProductPrice per approved product and no active legacy product price', async () => {
+  it('contains exactly one active US/USD ProductPrice for each approved product', async () => {
     const prices = await prisma.productPrice.findMany({
-      where: {
-        active: true,
-        country: 'US',
-        currency: 'USD',
-      },
-      include: {
-        product: {
-          select: { code: true, active: true },
-        },
-      },
+      where: { active: true, country: 'US', currency: 'USD' },
+      include: { product: { select: { code: true, active: true } } },
       orderBy: { product: { code: 'asc' } },
     });
 
     expect(prices).toHaveLength(EXPECTED_CATALOG.length);
+    expect(prices.map((price) => price.product.code).sort()).toEqual(EXPECTED_CODES);
+    expect(prices.every((price) => price.product.active)).toBe(true);
+  });
 
-    for (const price of prices) {
-      expect(price.product.active).toBe(true);
-    }
+  it('does not keep any active ProductPrice attached to an inactive product', async () => {
+    const activeLegacyPrices = await prisma.productPrice.findMany({
+      where: { active: true, product: { active: false } },
+      select: { product: { select: { code: true } }, country: true, currency: true },
+    });
 
-    const codes = prices.map((price) => price.product.code).sort();
-    expect(codes).toEqual([...EXPECTED_CATALOG.map(([code]) => code)].sort());
+    expect(activeLegacyPrices).toEqual([]);
   });
 
   it('does not keep the legacy GENERAL-PRO product active', async () => {
@@ -73,8 +69,6 @@ describe('final production catalog seed', () => {
       select: { active: true },
     });
 
-    if (legacy) {
-      expect(legacy.active).toBe(false);
-    }
+    if (legacy) expect(legacy.active).toBe(false);
   });
 });
