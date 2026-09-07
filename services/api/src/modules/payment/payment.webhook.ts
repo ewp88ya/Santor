@@ -231,6 +231,19 @@ function getPlategaReferenceId(body: PlategaWebhookBody): string | undefined {
   );
 }
 
+function verifyPlategaWebhook(headers: { merchantId?: string; secret?: string }) {
+  const configuredMerchantId = clean(paymentConfig.russia.plategaMerchantId);
+  const configuredSecret = clean(paymentConfig.russia.plategaSecret);
+
+  if (!configuredMerchantId || !configuredSecret) {
+    throw createError(503, 'Platega webhook credentials are not configured');
+  }
+
+  if (headers.merchantId !== configuredMerchantId || headers.secret !== configuredSecret) {
+    throw createError(401, 'Invalid Platega webhook credentials');
+  }
+}
+
 function getPlategaStatus(body: PlategaWebhookBody): string | undefined {
   const data = getPlategaData(body);
 
@@ -257,8 +270,7 @@ function normalizePlategaWebhook(body: PlategaWebhookBody): PaymentWebhookEvent 
   const transactionId = getPlategaTransactionId(body);
   const referenceId = getPlategaReferenceId(body);
   const status = getPlategaStatus(body)?.trim().toLowerCase();
-
-  const paymentId = referenceId;
+  const paymentId = referenceId ?? transactionId;
 
   if (!paymentId) {
     return null;

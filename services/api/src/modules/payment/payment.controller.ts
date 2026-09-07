@@ -119,6 +119,23 @@ export async function xenditWebhookController(request: FastifyRequest) {
 }
 
 export async function plategaWebhookController(request: FastifyRequest) {
+  const merchantIdHeader = request.headers['x-merchantid'];
+  const secretHeader = request.headers['x-secret'];
+
+  const merchantId = Array.isArray(merchantIdHeader) ? merchantIdHeader[0] : merchantIdHeader;
+  const secret = Array.isArray(secretHeader) ? secretHeader[0] : secretHeader;
+
+  const configuredMerchantId = process.env.PLATEGA_MERCHANT_ID?.trim();
+  const configuredSecret = process.env.PLATEGA_SECRET?.trim();
+
+  if (!configuredMerchantId || !configuredSecret) {
+    throw createError(503, 'Platega webhook credentials are not configured');
+  }
+
+  if (merchantId !== configuredMerchantId || secret !== configuredSecret) {
+    throw createError(401, 'Invalid Platega webhook credentials');
+  }
+
   return processPlategaWebhook(request.body as Parameters<typeof processPlategaWebhook>[0]);
 }
 
