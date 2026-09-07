@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.hoisted(() => {
+  process.env.WECHAT_PAY_ENABLED = 'true';
+  process.env.WECHAT_PAY_APP_ID = 'wx-test';
+  process.env.WECHAT_PAY_MCH_ID = 'mch-test';
+  process.env.WECHAT_PAY_API_V3_KEY = '12345678901234567890123456789012';
+  process.env.WECHAT_PAY_PRIVATE_KEY = 'test-private-key';
+  process.env.WECHAT_PAY_SERIAL_NUMBER = 'serial-test';
+  process.env.WECHAT_PAY_BASE_URL = 'https://wechat.test';
+  process.env.WECHAT_PAY_NOTIFY_URL = 'https://santor.test/wechat/webhook';
+});
 
 import { WeChatPayAdapter } from './wechat-pay.adapter.js';
-
-beforeEach(() => {
-  vi.stubEnv('WECHAT_PAY_ENABLED', 'true');
-  vi.stubEnv('WECHAT_PAY_APP_ID', 'wx-test');
-  vi.stubEnv('WECHAT_PAY_MCH_ID', 'mch-test');
-  vi.stubEnv('WECHAT_PAY_API_V3_KEY', '12345678901234567890123456789012');
-  vi.stubEnv('WECHAT_PAY_PRIVATE_KEY', 'test-private-key');
-  vi.stubEnv('WECHAT_PAY_SERIAL_NUMBER', 'serial-test');
-  vi.stubEnv('WECHAT_PAY_BASE_URL', 'https://wechat.test');
-  vi.stubEnv('WECHAT_PAY_NOTIFY_URL', 'https://santor.test/wechat/webhook');
-});
 
 describe('WeChatPayAdapter', () => {
   it('creates a native payment and exposes the QR action', async () => {
