@@ -28,6 +28,7 @@ async function createFixture() {
       currency: 'USD',
       durationDays: 30,
       deviceLimit: 1,
+      active: false,
     },
   });
   const subscription = await prisma.subscription.create({

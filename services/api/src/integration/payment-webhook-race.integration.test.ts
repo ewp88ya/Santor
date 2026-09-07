@@ -41,7 +41,7 @@ describe('PAYMENT WEBHOOK — PostgreSQL concurrency protection', () => {
         code: `WEBHOOK-RACE-${randomUUID()}`,
         price: 1000,
         durationDays: 30,
-        active: true,
+        active: false,
       },
     });
 

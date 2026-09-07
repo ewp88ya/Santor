@@ -69,6 +69,7 @@ async function createFixture(options: {
       currency: 'USD',
       durationDays: 30,
       deviceLimit: 1,
+      active: false,
     },
   });
 
