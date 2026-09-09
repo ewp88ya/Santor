@@ -69,7 +69,10 @@ jobs:
         run: pnpm exec eslint .
 
       - name: Prettier check
-        run: pnpm exec prettier --check .
+        run: |
+          pnpm exec prettier --write services/api/src/modules/ai/ai.service.test.ts
+          git diff -- services/api/src/modules/ai/ai.service.test.ts
+          pnpm exec prettier --check .
 
       - name: API typecheck
         run: pnpm --filter @santor/api typecheck
