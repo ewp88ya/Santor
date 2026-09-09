@@ -17,23 +17,29 @@ export interface LnNeuTaskResponse {
 }
 
 interface LnNeuClientOptions {
+  apiUrl?: string;
+  apiKey?: string;
+  enabled?: boolean;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   maxRetries?: number;
 }
 
 export function createLnNeuClient(options: LnNeuClientOptions = {}) {
+  const enabled = options.enabled ?? env.LN_NEU_ENABLED;
+  const apiUrl = options.apiUrl ?? env.LN_NEU_API_URL;
+  const apiKey = options.apiKey ?? env.LN_NEU_API_KEY;
   const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? 5000;
   const maxRetries = options.maxRetries ?? 2;
 
   return {
     async executeChat(userId: string, request: AiChatRequest): Promise<LnNeuTaskResponse> {
-      if (!env.LN_NEU_ENABLED) {
+      if (!enabled) {
         throw createError(503, 'LN-NeU integration is disabled');
       }
 
-      const url = `${env.LN_NEU_API_URL.replace(/\/$/, '')}/execute`;
+      const url = `${apiUrl.replace(/\/$/, '')}/execute`;
       const body = {
         taskId: randomUUID(),
         action: 'chat',
@@ -55,7 +61,7 @@ export function createLnNeuClient(options: LnNeuClientOptions = {}) {
             method: 'POST',
             headers: {
               'content-type': 'application/json',
-              'x-ln-neu-api-key': env.LN_NEU_API_KEY,
+              'x-ln-neu-api-key': apiKey,
             },
             body: JSON.stringify(body),
             signal: controller.signal,
