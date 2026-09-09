@@ -82,7 +82,8 @@ export async function seedPermissions(prisma: PrismaClient) {
       },
       update: {},
       create: {
-        name,
+        permissionId: permission.id,
+        roleId: adminRole.id,
       },
     });
   }
