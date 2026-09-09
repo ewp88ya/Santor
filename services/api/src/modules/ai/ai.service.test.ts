@@ -33,7 +33,7 @@ describe('LN-NeU client', () => {
 
     const result = await client.executeChat('user-1', {
       message: 'hello',
-      context: { source: 'dashboard' },
+      context: { source: 'dashboard', userId: 'spoofed-user' },
     });
 
     expect(result.status).toBe('queued');
@@ -82,5 +82,22 @@ describe('LN-NeU client', () => {
 
     expect(result.task_id).toBe('task-2');
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry non-transient upstream failures', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+
+    const client = createLnNeuClient({
+      enabled: true,
+      apiUrl: 'http://ln-neu:8000',
+      apiKey: 'z'.repeat(32),
+      fetchImpl,
+      maxRetries: 2,
+    });
+
+    await expect(client.executeChat('user-3', { message: 'unauthorized' })).rejects.toMatchObject({
+      statusCode: 502,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
