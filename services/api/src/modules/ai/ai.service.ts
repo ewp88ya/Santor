@@ -50,44 +50,44 @@ export function createLnNeuClient(options: LnNeuClientOptions = {}) {
         },
       };
 
-      let lastError: unknown;
-
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
-          const response = await fetchImpl(url, {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'x-ln-neu-api-key': apiKey,
-            },
-            body: JSON.stringify(body),
-            signal: controller.signal,
-          });
+          let response: Response;
+
+          try {
+            response = await fetchImpl(url, {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                'x-ln-neu-api-key': apiKey,
+              },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
+          } catch {
+            if (attempt === maxRetries) {
+              throw createError(502, 'LN-NeU integration unavailable');
+            }
+            continue;
+          }
 
           if (response.ok) {
             return (await response.json()) as LnNeuTaskResponse;
           }
 
-          if (![502, 503, 504].includes(response.status) || attempt === maxRetries) {
+          const transientFailure = [502, 503, 504].includes(response.status);
+          if (!transientFailure || attempt === maxRetries) {
             throw createError(502, `LN-NeU returned HTTP ${response.status}`);
-          }
-
-          lastError = new Error(`LN-NeU returned HTTP ${response.status}`);
-        } catch (error) {
-          lastError = error;
-
-          if (attempt === maxRetries) {
-            throw createError(502, 'LN-NeU integration unavailable');
           }
         } finally {
           clearTimeout(timeout);
         }
       }
 
-      throw createError(502, lastError instanceof Error ? lastError.message : 'LN-NeU integration unavailable');
+      throw createError(502, 'LN-NeU integration unavailable');
     },
   };
 }
