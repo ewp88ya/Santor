@@ -45,8 +45,8 @@ export function createLnNeuClient(options: LnNeuClientOptions = {}) {
         action: 'chat',
         input: request.message,
         context: {
-          userId,
           ...(request.context ?? {}),
+          userId,
         },
       };
 
