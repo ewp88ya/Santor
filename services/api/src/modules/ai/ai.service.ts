@@ -37,8 +37,9 @@ export async function executeAiTask(task: AiTask, options: AiClientOptions = {})
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
+    let response: Response;
     try {
-      const response = await fetch(`${baseUrl}/execute`, {
+      response = await fetch(`${baseUrl}/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,34 +48,34 @@ export async function executeAiTask(task: AiTask, options: AiClientOptions = {})
         body: JSON.stringify(task),
         signal: controller.signal,
       });
-
-      if (response.ok) return (await response.json()) as unknown;
-
-      const body = await response.text();
-      const error = createError(
-        response.status,
-        body || `LN-NeU request failed with status ${response.status}`,
-      );
-
-      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < retries) {
-        lastError = error;
-        continue;
-      }
-
-      throw error;
     } catch (error) {
-      if (error === lastError) continue;
+      clearTimeout(timeout);
       lastError = error;
-
       if (attempt === retries) {
         if (error instanceof Error && error.name === 'AbortError') {
           throw createError(504, 'LN-NeU request timed out');
         }
         throw error;
       }
-    } finally {
-      clearTimeout(timeout);
+      continue;
     }
+
+    clearTimeout(timeout);
+
+    if (response.ok) return (await response.json()) as unknown;
+
+    const body = await response.text();
+    const error = createError(
+      response.status,
+      body || `LN-NeU request failed with status ${response.status}`,
+    );
+
+    if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < retries) {
+      lastError = error;
+      continue;
+    }
+
+    throw error;
   }
 
   throw lastError ?? createError(502, 'LN-NeU request failed');
