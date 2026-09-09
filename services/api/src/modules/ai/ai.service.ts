@@ -56,12 +56,14 @@ export async function executeAiTask(task: AiTask, options: AiClientOptions = {})
         body || `LN-NeU request failed with status ${response.status}`,
       );
 
-      if (!RETRYABLE_STATUS_CODES.has(response.status) || attempt === retries) {
-        throw error;
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < retries) {
+        lastError = error;
+        continue;
       }
 
-      lastError = error;
+      throw error;
     } catch (error) {
+      if (error === lastError) continue;
       lastError = error;
 
       if (attempt === retries) {
