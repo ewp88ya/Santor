@@ -1,82 +1,95 @@
+import { randomUUID } from 'node:crypto';
+
 import createError from 'http-errors';
 
 import { env } from '../../config/env.js';
 
-export interface AiTask {
-  taskId: string;
-  action: string;
-  input: unknown;
+export interface AiChatRequest {
+  message: string;
   context?: Record<string, unknown>;
 }
 
-export interface AiClientOptions {
-  baseUrl?: string;
+export interface LnNeuTaskResponse {
+  status: string;
+  message: string;
+  task_id: string;
+  queue_size: number;
+}
+
+interface LnNeuClientOptions {
+  apiUrl?: string;
   apiKey?: string;
+  enabled?: boolean;
+  fetchImpl?: typeof fetch;
   timeoutMs?: number;
-  retries?: number;
+  maxRetries?: number;
 }
 
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
+export function createLnNeuClient(options: LnNeuClientOptions = {}) {
+  const enabled = options.enabled ?? env.LN_NEU_ENABLED;
+  const apiUrl = options.apiUrl ?? env.LN_NEU_API_URL;
+  const apiKey = options.apiKey ?? env.LN_NEU_API_KEY;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const timeoutMs = options.timeoutMs ?? 5000;
+  const maxRetries = options.maxRetries ?? 2;
 
-function normalizeBaseUrl(baseUrl: string) {
-  return baseUrl.replace(/\/$/, '');
-}
-
-export async function executeAiTask(task: AiTask, options: AiClientOptions = {}) {
-  const baseUrl = normalizeBaseUrl(options.baseUrl ?? env.LN_NEU_BASE_URL);
-  const apiKey = options.apiKey ?? env.SANTOR_API_KEY;
-  const timeoutMs = options.timeoutMs ?? env.LN_NEU_TIMEOUT_MS;
-  const retries = options.retries ?? env.LN_NEU_RETRIES;
-
-  if (!baseUrl) throw createError(503, 'LN-NeU service is not configured');
-  if (!apiKey) throw createError(503, 'LN-NeU API key is not configured');
-
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    let response: Response;
-    try {
-      response = await fetch(`${baseUrl}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-LN-NeU-API-Key': apiKey,
-        },
-        body: JSON.stringify(task),
-        signal: controller.signal,
-      });
-    } catch (error) {
-      clearTimeout(timeout);
-      lastError = error;
-      if (attempt === retries) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw createError(504, 'LN-NeU request timed out');
-        }
-        throw error;
+  return {
+    async executeChat(userId: string, request: AiChatRequest): Promise<LnNeuTaskResponse> {
+      if (!enabled) {
+        throw createError(503, 'LN-NeU integration is disabled');
       }
-      continue;
-    }
 
-    clearTimeout(timeout);
+      const url = `${apiUrl.replace(/\/$/, '')}/execute`;
+      const body = {
+        taskId: randomUUID(),
+        action: 'chat',
+        input: request.message,
+        context: {
+          ...(request.context ?? {}),
+          userId,
+        },
+      };
 
-    if (response.ok) return (await response.json()) as unknown;
+      for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    const body = await response.text();
-    const error = createError(
-      response.status,
-      body || `LN-NeU request failed with status ${response.status}`,
-    );
+        try {
+          let response: Response;
 
-    if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < retries) {
-      lastError = error;
-      continue;
-    }
+          try {
+            response = await fetchImpl(url, {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                'x-ln-neu-api-key': apiKey,
+              },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
+          } catch {
+            if (attempt === maxRetries) {
+              throw createError(502, 'LN-NeU integration unavailable');
+            }
+            continue;
+          }
 
-    throw error;
-  }
+          if (response.ok) {
+            return (await response.json()) as LnNeuTaskResponse;
+          }
 
-  throw lastError ?? createError(502, 'LN-NeU request failed');
+          const transientFailure = [502, 503, 504].includes(response.status);
+          if (!transientFailure || attempt === maxRetries) {
+            throw createError(502, `LN-NeU returned HTTP ${response.status}`);
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      throw createError(502, 'LN-NeU integration unavailable');
+    },
+  };
 }
+
+export const lnNeuClient = createLnNeuClient();

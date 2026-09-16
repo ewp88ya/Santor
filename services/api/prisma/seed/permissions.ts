@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 
 const userPermissions = [
   'dashboard:read',
+  'ai:chat',
   'subscription:read',
   'subscription:create',
   'subscription:cancel',
@@ -81,8 +82,8 @@ export async function seedPermissions(prisma: PrismaClient) {
       },
       update: {},
       create: {
-        roleId: adminRole.id,
         permissionId: permission.id,
+        roleId: adminRole.id,
       },
     });
   }

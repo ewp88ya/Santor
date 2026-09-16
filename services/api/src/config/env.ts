@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const isProduction = nodeEnv === 'production';
+const lnNeuEnabled = process.env.LN_NEU_ENABLED === 'true';
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -19,13 +20,13 @@ if (isProduction && (!internalWebhookSecret || internalWebhookSecret.length < 32
   throw new Error('SANTOR_INTERNAL_WEBHOOK_SECRET must be at least 32 characters in production');
 }
 
-const lnNeuBaseUrl = process.env.LN_NEU_BASE_URL?.trim();
-const santorApiKey = process.env.SANTOR_API_KEY?.trim();
-if (isProduction && !lnNeuBaseUrl) {
-  throw new Error('LN_NEU_BASE_URL is required in production');
+const lnNeuApiUrl = process.env.LN_NEU_API_URL?.trim() ?? '';
+const lnNeuApiKey = process.env.LN_NEU_API_KEY?.trim() ?? '';
+if (lnNeuEnabled && !lnNeuApiUrl) {
+  throw new Error('LN_NEU_API_URL is required when LN_NEU_ENABLED=true');
 }
-if (isProduction && (!santorApiKey || santorApiKey.length < 32)) {
-  throw new Error('SANTOR_API_KEY must be at least 32 characters in production');
+if (lnNeuEnabled && lnNeuApiKey.length < 32) {
+  throw new Error('LN_NEU_API_KEY must be at least 32 characters when LN_NEU_ENABLED=true');
 }
 
 export const env = {
@@ -36,8 +37,7 @@ export const env = {
   JWT_SECRET: jwtSecret ?? (isProduction ? required('JWT_SECRET') : 'development-secret'),
   JWT_EXPIRES: process.env.JWT_EXPIRES ?? '7d',
   SANTOR_INTERNAL_WEBHOOK_SECRET: internalWebhookSecret ?? '',
-  LN_NEU_BASE_URL: lnNeuBaseUrl ?? '',
-  SANTOR_API_KEY: santorApiKey ?? '',
-  LN_NEU_TIMEOUT_MS: Number(process.env.LN_NEU_TIMEOUT_MS ?? 10000),
-  LN_NEU_RETRIES: Number(process.env.LN_NEU_RETRIES ?? 2),
+  LN_NEU_ENABLED: lnNeuEnabled,
+  LN_NEU_API_URL: lnNeuApiUrl,
+  LN_NEU_API_KEY: lnNeuApiKey,
 };

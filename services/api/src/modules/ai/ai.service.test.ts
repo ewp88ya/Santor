@@ -1,95 +1,103 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { executeAiTask } from './ai.service.js';
+import { createLnNeuClient } from './ai.service.js';
 
-const task = {
-  taskId: 'test-task-1',
-  action: 'chat',
-  input: 'hello',
-  context: { source: 'test' },
-};
+describe('LN-NeU client', () => {
+  it('rejects when integration is disabled', async () => {
+    const client = createLnNeuClient({ enabled: false });
 
-describe('LN-NeU AI service client', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+    await expect(client.executeChat('user-1', { message: 'hello' })).rejects.toMatchObject({
+      statusCode: 503,
+    });
   });
 
   it('sends the authenticated execute contract', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ result: 'ok' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: 'queued',
+          message: 'Task successfully queued',
+          task_id: 'task-1',
+          queue_size: 1,
+        }),
+        { status: 200 },
+      ),
     );
 
-    await expect(
-      executeAiTask(task, {
-        baseUrl: 'http://ln-neu:8000/',
-        apiKey: 'a'.repeat(32),
-        retries: 0,
-      }),
-    ).resolves.toEqual({ result: 'ok' });
+    const client = createLnNeuClient({
+      enabled: true,
+      apiUrl: 'http://ln-neu:8000/',
+      apiKey: 'x'.repeat(32),
+      fetchImpl,
+    });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
+    const result = await client.executeChat('user-1', {
+      message: 'hello',
+      context: { source: 'dashboard', userId: 'spoofed-user' },
+    });
+
+    expect(result.status).toBe('queued');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe('http://ln-neu:8000/execute');
     expect(init?.method).toBe('POST');
-    expect(init?.headers).toEqual({
-      'Content-Type': 'application/json',
-      'X-LN-NeU-API-Key': 'a'.repeat(32),
+    expect(init?.headers).toMatchObject({
+      'content-type': 'application/json',
+      'x-ln-neu-api-key': 'x'.repeat(32),
     });
-    expect(JSON.parse(String(init?.body))).toEqual(task);
-  });
 
-  it('returns upstream authentication failures without retrying', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response('unauthorized', { status: 401 }));
-
-    await expect(
-      executeAiTask(task, {
-        baseUrl: 'http://ln-neu:8000',
-        apiKey: 'a'.repeat(32),
-        retries: 2,
-      }),
-    ).rejects.toMatchObject({ statusCode: 401 });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String(init?.body));
+    expect(body.action).toBe('chat');
+    expect(body.input).toBe('hello');
+    expect(body.context).toMatchObject({ userId: 'user-1', source: 'dashboard' });
+    expect(body.taskId).toEqual(expect.any(String));
   });
 
   it('retries transient upstream failures', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response('busy', { status: 503 }))
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ result: 'ok' }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            status: 'queued',
+            message: 'Task successfully queued',
+            task_id: 'task-2',
+            queue_size: 2,
+          }),
+          { status: 200 },
+        ),
       );
 
-    await expect(
-      executeAiTask(task, {
-        baseUrl: 'http://ln-neu:8000',
-        apiKey: 'a'.repeat(32),
-        retries: 1,
-      }),
-    ).resolves.toEqual({ result: 'ok' });
+    const client = createLnNeuClient({
+      enabled: true,
+      apiUrl: 'http://ln-neu:8000',
+      apiKey: 'y'.repeat(32),
+      fetchImpl,
+      maxRetries: 2,
+    });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const result = await client.executeChat('user-2', { message: 'retry me' });
+
+    expect(result.task_id).toBe('task-2');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
-  it('maps transport timeout to 504', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-      Object.assign(new Error('aborted'), { name: 'AbortError' }),
-    );
+  it('does not retry non-transient upstream failures', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
 
-    await expect(
-      executeAiTask(task, {
-        baseUrl: 'http://ln-neu:8000',
-        apiKey: 'a'.repeat(32),
-        retries: 0,
-      }),
-    ).rejects.toMatchObject({ statusCode: 504 });
+    const client = createLnNeuClient({
+      enabled: true,
+      apiUrl: 'http://ln-neu:8000',
+      apiKey: 'z'.repeat(32),
+      fetchImpl,
+      maxRetries: 2,
+    });
+
+    await expect(client.executeChat('user-3', { message: 'unauthorized' })).rejects.toMatchObject({
+      statusCode: 502,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
