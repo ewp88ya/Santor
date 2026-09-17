@@ -3,7 +3,7 @@
 
 ## Reconciliation baseline
 
-**Authoritative code baseline:** `main` @ `5d1a0198a1306d35c87db8719f0d9a6ae8ca7e35` (`test: isolate integration product fixtures`, 2026-09-07).
+**Authoritative code baseline:** `main` @ `22bb01e9d0de1c1f3c531ecac9f71691e55dd4` (current Santor integration baseline).
 
 The previous roadmap PR (#1) was created from an older snapshot and is superseded. This file is reconciled to the current `main` baseline.
 
@@ -264,14 +264,14 @@ Application / Service Layer
 ```
 
 ## 13.1 LN-NeU Integration
-- ⏳ Integration contract
-- ⏳ API authentication
-- ⏳ Request/response contract
-- ⏳ Error handling contract
-- ⏳ Timeout handling
-- ⏳ Retry strategy
-- ⏳ Integration tests
-- ⏳ Security tests
+- ✅ Integration contract
+- ✅ API authentication
+- ✅ Request/response contract
+- ✅ Error handling contract
+- ✅ Timeout handling
+- ✅ Retry strategy
+- ✅ Integration tests
+- ✅ Security tests
 - ⏳ AI Chatbot integration
 - ⏳ Dashboard AI integration
 
@@ -283,9 +283,9 @@ Application / Service Layer
 - ⏳ External-client rate limiting
 - ⏳ External API audit logging
 
-**Current assessment:** Phase 13 is not implemented on current `main`. Recent history is payment/catalog/webhook/integration-test hardening; no verified LN-NeU integration implementation is present in the reconciled baseline.
+**Current assessment:** LN-NeU ↔ Santor core integration is implemented and runtime-validated. Verified evidence includes the `/execute` contract, `X-LN-NeU-API-Key` authentication, request/response mapping, HTTP error handling, timeout and bounded retry behavior, recovery after LN-NeU restart, integration/security tests, and a real Santor API → LN-NeU runtime E2E call. The reproducible LN-NeU Docker override is present on LN-NeU `main` and both LN-NeU CI workflows are green for commit `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
 
-**Next execution target:** fresh current-main regression, then Phase 13 implementation.
+AI Chatbot and Dashboard AI integration remain unverified/not completed. External Service API Readiness items in 13.2 also remain pending.
 
 ---
 
@@ -323,7 +323,7 @@ Application / Service Layer
 
 # EXECUTION GATE
 
-**Current baseline:** Santor `main` @ `5d1a0198a1306d35c87db8719f0d9a6ae8ca7e35`.
+**Current baseline:** Santor `main` @ `22bb01e9d0de1c1f3c531ecac9f71691e55dd4`. LN-NeU integration runtime gate is validated; LN-NeU CI is green on `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
 
-**Immediate next action:** run a fresh full current-main regression. If it passes, begin Phase 13. Do not start VPS/production work before Santor + LN-NeU integration is stable.
+**Immediate next action:** complete the remaining Phase 13 checklist items (AI Chatbot/Dashboard AI integration and External Service API Readiness) only when repository/runtime evidence is available. Do not start VPS/production work before Santor + LN-NeU integration is stable.
 <!-- prettier-ignore-end -->
