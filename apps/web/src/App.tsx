@@ -43,6 +43,10 @@ type Dashboard = {
 function App() {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [error, setError] = useState('');
+  const [aiMessage, setAiMessage] = useState('');
+  const [aiReply, setAiReply] = useState('');
+  const [aiError, setAiError] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   const token = localStorage.getItem('santor_token');
 
@@ -106,6 +110,41 @@ function App() {
   const subscription = dashboard.subscription;
   const expired = !subscription || subscription.lifecycle.expired;
 
+  const sendAiMessage = async () => {
+    const message = aiMessage.trim();
+    if (!message || aiLoading) {
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError('');
+    setAiReply('');
+
+    const apiUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
+    try {
+      const response = await fetch(`${apiUrl}/api/v1/ai/chat`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.message ?? 'Unable to contact AI service');
+      }
+
+      setAiReply(data?.message ?? data?.response ?? data?.task_id ?? 'AI task accepted.');
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Unable to contact AI service');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <main className="dashboard">
       <header className="dashboard-header">
@@ -147,6 +186,37 @@ function App() {
           >
             Upgrade
           </Button>
+        )}
+      </section>
+
+      <section className="ai-chat-card" aria-labelledby="ai-chat-title">
+        <div>
+          <p className="eyebrow">Santor AI</p>
+          <h2 id="ai-chat-title">AI Assistant</h2>
+          <p>Ask the Santor AI service a question from your authenticated dashboard.</p>
+        </div>
+
+        <label className="ai-chat-label" htmlFor="ai-message">Message</label>
+        <textarea
+          id="ai-message"
+          value={aiMessage}
+          onChange={(event) => setAiMessage(event.target.value)}
+          placeholder="How can Santor help?"
+          rows={4}
+          disabled={aiLoading}
+        />
+        <Button onClick={sendAiMessage} disabled={!aiMessage.trim() || aiLoading}>
+          {aiLoading ? 'Sending...' : 'Send to AI'}
+        </Button>
+
+        {aiReply && (
+          <div className="ai-chat-reply" role="status">
+            <strong>AI response</strong>
+            <p>{aiReply}</p>
+          </div>
+        )}
+        {aiError && (
+          <p className="ai-chat-error" role="alert">{aiError}</p>
         )}
       </section>
 
