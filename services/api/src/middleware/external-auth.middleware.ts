@@ -20,7 +20,15 @@ function loadClients(): ExternalClient[] {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return Object.entries(parsed).flatMap(([key, scopes]) =>
       typeof scopes === 'string'
-        ? [{ key, scopes: scopes.split(',').map((scope) => scope.trim()).filter(Boolean) }]
+        ? [
+            {
+              key,
+              scopes: scopes
+                .split(',')
+                .map((scope) => scope.trim())
+                .filter(Boolean),
+            },
+          ]
         : Array.isArray(scopes) && scopes.every((scope) => typeof scope === 'string')
           ? [{ key, scopes: scopes as string[] }]
           : [],
