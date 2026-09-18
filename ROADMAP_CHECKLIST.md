@@ -3,7 +3,7 @@
 
 ## Reconciliation baseline
 
-**Authoritative code baseline:** `main` @ `22bb01e9d0de1c1f3c531ecac9f71691e55dd4` (current Santor integration baseline).
+**Authoritative code baseline:** `main` @ `b27cf647eac4d9033fbadf3d918c32046d5d7fa2` (current Santor integration baseline).
 
 The previous roadmap PR (#1) was created from an older snapshot and is superseded. This file is reconciled to the current `main` baseline.
 
@@ -273,7 +273,7 @@ Application / Service Layer
 - ✅ Integration tests
 - ✅ Security tests
 - ✅ AI Chatbot integration
-- ⏳ Dashboard AI integration
+- ✅ Dashboard AI integration
 
 ## 13.2 External Service API Readiness
 - ⏳ API authentication / service-to-service authentication
@@ -285,7 +285,7 @@ Application / Service Layer
 
 **Current assessment:** LN-NeU ↔ Santor core integration is implemented and runtime-validated. Verified evidence includes the `/execute` contract, `X-LN-NeU-API-Key` authentication, request/response mapping, HTTP error handling, timeout and bounded retry behavior, recovery after LN-NeU restart, integration/security tests, and a real Santor API → LN-NeU runtime E2E call. The reproducible LN-NeU Docker override is present on LN-NeU `main` and both LN-NeU CI workflows are green for commit `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
 
-AI Chatbot backend integration is implemented and repository/runtime-validated via `/api/v1/ai/chat`, JWT authentication, `ai:chat` permission, schema validation, dashboard rate limiting, LN-NeU client invocation, and dedicated transport/retry/auth tests. Dashboard AI integration remains pending until the dashboard client implementation is validated.
+AI Chatbot backend integration is implemented and repository/runtime-validated via `/api/v1/ai/chat`, JWT authentication, `ai:chat` permission, schema validation, dashboard rate limiting, LN-NeU client invocation, and dedicated transport/retry/auth tests. Dashboard AI integration is repository-implemented and browser-QA validated: CI run #200 passed with 4/4 frontend functional tests, including authenticated AI request and response handling.
 
 ---
 
@@ -323,7 +323,7 @@ AI Chatbot backend integration is implemented and repository/runtime-validated v
 
 # EXECUTION GATE
 
-**Current baseline:** Santor `main` @ `22bb01e9d0de1c1f3c531ecac9f71691e55dd4`. LN-NeU integration runtime gate is validated; LN-NeU CI is green on `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
+**Current baseline:** Santor `main` @ `b27cf647eac4d9033fbadf3d918c32046d5d7fa2`. LN-NeU integration runtime gate is validated; LN-NeU CI is green on `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
 
-**Immediate next action:** validate the newly implemented Dashboard AI integration, then address the remaining External Service API Readiness items only when their contracts and runtime requirements are explicitly defined and evidence is available. Do not start VPS/production work before Santor + LN-NeU integration is stable.
+**Immediate next action:** address the remaining External Service API Readiness items only when their contracts and runtime requirements are explicitly defined and evidence is available. Repository audit found no Telegram or Ads endpoint contract, external service credential/scope definition, or dedicated external-client rate-limit/audit integration to implement safely without inventing requirements. Do not start VPS/production work before Santor + LN-NeU integration is stable.
 <!-- prettier-ignore-end -->
