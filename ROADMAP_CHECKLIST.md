@@ -3,7 +3,7 @@
 
 ## Reconciliation baseline
 
-**Authoritative code baseline:** `main` @ `eef6d5baee0c9a4c2072508fb01d6e37a4b49219` (current Santor integration baseline).
+**Authoritative code baseline:** `main` @ `4dd32899b54cc06ad064782b3611fab2fcdd43c3` (current Santor integration baseline).
 
 The previous roadmap PR (#1) was created from an older snapshot and is superseded. This file is reconciled to the current `main` baseline.
 
