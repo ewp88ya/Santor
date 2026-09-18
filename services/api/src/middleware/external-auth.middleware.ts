@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import createError from 'http-errors';
@@ -32,7 +34,22 @@ export function externalAuth(requiredScope: string) {
   return async (request: FastifyRequest, _reply: FastifyReply) => {
     const providedKey = request.headers['x-santor-api-key'];
     const key = typeof providedKey === 'string' ? providedKey : '';
-    const client = loadClients().find((item) => item.key === key);
+    if (env.NODE_ENV === 'production' && key.length < 32) {
+      await auditLog({
+        action: 'external_auth_failed',
+        resource: request.url,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+        metadata: { reason: 'invalid_api_key' },
+      });
+      throw createError(401, 'Invalid external client credentials');
+    }
+
+    const client = loadClients().find((item) => {
+      const expected = Buffer.from(item.key);
+      const provided = Buffer.from(key);
+      return expected.length === provided.length && timingSafeEqual(expected, provided);
+    });
 
     if (!client) {
       await auditLog({
@@ -48,7 +65,7 @@ export function externalAuth(requiredScope: string) {
     if (!client.scopes.includes(requiredScope)) {
       await auditLog({
         action: 'external_scope_denied',
-        resource: request.routerPath ?? request.url,
+        resource: request.url,
         ipAddress: request.ip,
         userAgent: request.headers['user-agent'],
         metadata: { scope: requiredScope },
@@ -71,8 +88,5 @@ export function externalAuth(requiredScope: string) {
       },
     });
 
-    if (env.NODE_ENV === 'production' && key.length < 32) {
-      throw createError(401, 'Invalid external client credentials');
-    }
   };
 }
