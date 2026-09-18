@@ -100,3 +100,45 @@ test('renders expired subscription state and upgrade action', async ({ page }) =
   await expect(page.getByText('0 days remaining')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Upgrade' }).first()).toBeVisible();
 });
+
+test('sends authenticated dashboard message to AI service', async ({ page }) => {
+  await page.route('**/api/v1/dashboard', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(dashboard),
+    });
+  });
+
+  let aiRequest;
+  await page.route('**/api/v1/ai/chat', async (route) => {
+    aiRequest = {
+      authorization: route.request().headers().authorization,
+      body: route.request().postDataJSON(),
+    };
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'queued',
+        message: 'AI task accepted.',
+      }),
+    });
+  });
+
+  await page.addInitScript(() => {
+    localStorage.setItem('santor_token', 'browser-qa-token');
+  });
+
+  await page.goto('http://127.0.0.1:4173');
+
+  await page.getByRole('textbox', { name: 'Message' }).fill('Help me check my VPN status');
+  await page.getByRole('button', { name: 'Send to AI' }).click();
+
+  await expect(page.getByRole('status')).toContainText('AI task accepted.');
+  expect(aiRequest.authorization).toBe('Bearer browser-qa-token');
+  expect(aiRequest.body).toEqual({
+    message: 'Help me check my VPN status',
+  });
+});
