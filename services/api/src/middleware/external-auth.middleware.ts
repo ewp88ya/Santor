@@ -79,7 +79,7 @@ export function externalAuth(requiredScope: string) {
 
     await auditLog({
       action: 'external_api_request',
-      resource: request.routerPath ?? request.url,
+      resource: request.url,
       ipAddress: request.ip,
       userAgent: request.headers['user-agent'],
       metadata: {
@@ -87,6 +87,5 @@ export function externalAuth(requiredScope: string) {
         clientId: request.headers['x-santor-client-id'] ?? 'unknown',
       },
     });
-
   };
 }
