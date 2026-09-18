@@ -3,7 +3,7 @@
 
 ## Reconciliation baseline
 
-**Authoritative code baseline:** `main` @ `b27cf647eac4d9033fbadf3d918c32046d5d7fa2` (current Santor integration baseline).
+**Authoritative code baseline:** `main` @ `eef6d5baee0c9a4c2072508fb01d6e37a4b49219` (current Santor integration baseline).
 
 The previous roadmap PR (#1) was created from an older snapshot and is superseded. This file is reconciled to the current `main` baseline.
 
@@ -276,16 +276,18 @@ Application / Service Layer
 - ✅ Dashboard AI integration
 
 ## 13.2 External Service API Readiness
-- ⏳ API authentication / service-to-service authentication
-- ⏳ API permission / scope model
+- 🟢 API authentication / service-to-service authentication foundation
+- 🟢 API permission / scope model foundation
 - ⏳ Telegram endpoint contract
 - ⏳ Ads endpoint / data contract
-- ⏳ External-client rate limiting
-- ⏳ External API audit logging
+- 🟢 External-client rate limiting foundation
+- 🟢 External API audit logging foundation
 
 **Current assessment:** LN-NeU ↔ Santor core integration is implemented and runtime-validated. Verified evidence includes the `/execute` contract, `X-LN-NeU-API-Key` authentication, request/response mapping, HTTP error handling, timeout and bounded retry behavior, recovery after LN-NeU restart, integration/security tests, and a real Santor API → LN-NeU runtime E2E call. The reproducible LN-NeU Docker override is present on LN-NeU `main` and both LN-NeU CI workflows are green for commit `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
 
 AI Chatbot backend integration is implemented and repository/runtime-validated via `/api/v1/ai/chat`, JWT authentication, `ai:chat` permission, schema validation, dashboard rate limiting, LN-NeU client invocation, and dedicated transport/retry/auth tests. Dashboard AI integration is repository-implemented and browser-QA validated: CI run #200 passed with 4/4 frontend functional tests, including authenticated AI request and response handling.
+
+External Service API Readiness now has reusable service-to-service authentication, scope enforcement, external-client rate limiting, and audit logging foundations. These are intentionally generic and are not yet bound to Telegram or Ads because the endpoint/data contracts for those external consumers are still undefined.
 
 ---
 
@@ -323,7 +325,7 @@ AI Chatbot backend integration is implemented and repository/runtime-validated v
 
 # EXECUTION GATE
 
-**Current baseline:** Santor `main` @ `b27cf647eac4d9033fbadf3d918c32046d5d7fa2`. LN-NeU integration runtime gate is validated; LN-NeU CI is green on `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
+**Current baseline:** Santor `main` @ `eef6d5baee0c9a4c2072508fb01d6e37a4b49219`. LN-NeU integration runtime gate is validated; LN-NeU CI is green on `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
 
-**Immediate next action:** address the remaining External Service API Readiness items only when their contracts and runtime requirements are explicitly defined and evidence is available. Repository audit found no Telegram or Ads endpoint contract, external service credential/scope definition, or dedicated external-client rate-limit/audit integration to implement safely without inventing requirements. Do not start VPS/production work before Santor + LN-NeU integration is stable.
+**Immediate next action:** define the Telegram and Ads endpoint/data contracts and their runtime ownership, then bind the reusable external authentication, scope, rate-limit, and audit foundations to those concrete endpoints. Do not invent consumer contracts. Repository audit found no existing Telegram or Ads endpoint contract, so those two items remain explicitly pending. Do not start VPS/production work before Santor + LN-NeU integration is stable.
 <!-- prettier-ignore-end -->
