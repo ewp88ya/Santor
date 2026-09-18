@@ -37,7 +37,7 @@ export function externalAuth(requiredScope: string) {
     if (!client) {
       await auditLog({
         action: 'external_auth_failed',
-        resource: request.routerPath ?? request.url,
+        resource: request.url,
         ipAddress: request.ip,
         userAgent: request.headers['user-agent'],
         metadata: { reason: 'invalid_api_key' },
