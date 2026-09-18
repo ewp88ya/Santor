@@ -196,7 +196,9 @@ function App() {
           <p>Ask the Santor AI service a question from your authenticated dashboard.</p>
         </div>
 
-        <label className="ai-chat-label" htmlFor="ai-message">Message</label>
+        <label className="ai-chat-label" htmlFor="ai-message">
+          Message
+        </label>
         <textarea
           id="ai-message"
           value={aiMessage}
@@ -216,7 +218,9 @@ function App() {
           </div>
         )}
         {aiError && (
-          <p className="ai-chat-error" role="alert">{aiError}</p>
+          <p className="ai-chat-error" role="alert">
+            {aiError}
+          </p>
         )}
       </section>
 
