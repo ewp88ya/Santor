@@ -274,20 +274,23 @@ Application / Service Layer
 - ✅ Security tests
 - ✅ AI Chatbot integration
 - ✅ Dashboard AI integration
+- ✅ Live timeout → retry → controlled error validation
+- ✅ Live LN-NeU restart → recovery validation
+- ✅ Live authenticated Dashboard → Santor → LN-NeU E2E
 
 ## 13.2 External Service API Readiness
 - 🟢 API authentication / service-to-service authentication foundation
 - 🟢 API permission / scope model foundation
-- ⏳ Telegram endpoint contract
-- ⏳ Ads endpoint / data contract
+- ⏸️ Telegram endpoint contract — deferred to external consumer project
+- ⏸️ Ads endpoint / data contract — deferred to external consumer project
 - 🟢 External-client rate limiting foundation
 - 🟢 External API audit logging foundation
 
-**Current assessment:** LN-NeU ↔ Santor core integration is implemented and runtime-validated. Verified evidence includes the `/execute` contract, `X-LN-NeU-API-Key` authentication, request/response mapping, HTTP error handling, timeout and bounded retry behavior, recovery after LN-NeU restart, integration/security tests, and a real Santor API → LN-NeU runtime E2E call. The reproducible LN-NeU Docker override is present on LN-NeU `main` and both LN-NeU CI workflows are green for commit `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
+**Current assessment:** LN-NeU ↔ Santor core integration is now locked and runtime-validated. The final live gate verified a real container-to-container Santor API → LN-NeU /execute call with the configured service credential, invalid-credential rejection, bounded timeout/retry behavior with a controlled 502, successful recovery after stopping/restarting ln-neu-ai, and a subsequent successful authenticated call. The live authenticated dashboard path also completed end-to-end through /api/v1/ai/chat using a real user JWT and returned 200 with a queued LN-NeU task. The full Santor API suite passed with 39/39 test files and 278/278 tests.
 
-AI Chatbot backend integration is implemented and repository/runtime-validated via `/api/v1/ai/chat`, JWT authentication, `ai:chat` permission, schema validation, dashboard rate limiting, LN-NeU client invocation, and dedicated transport/retry/auth tests. Dashboard AI integration is repository-implemented and browser-QA validated: CI run #200 passed with 4/4 frontend functional tests, including authenticated AI request and response handling.
+The reproducible LN-NeU Docker override remains present on LN-NeU main, and LN-NeU CI is green for commit 4b3fe5f143a895a33ab12d3aa6d260ace0367ffd. Santor final CI run #217 is green for commit 4ffeca22412bfe8bd4f33f8bd89225cff5ed80ce.
 
-External Service API Readiness now has reusable service-to-service authentication, scope enforcement, external-client rate limiting, and audit logging foundations. These are intentionally generic and are not yet bound to Telegram or Ads because the endpoint/data contracts for those external consumers are still undefined.
+External Service API Readiness retains reusable authentication, scope enforcement, external-client rate limiting, and audit logging foundations. Telegram and Ads endpoint/data contracts are explicitly deferred because those consumers are separate projects and their contracts are not part of the locked LN-NeU ↔ Santor core integration gate.
 
 ---
 
@@ -325,7 +328,7 @@ External Service API Readiness now has reusable service-to-service authenticatio
 
 # EXECUTION GATE
 
-**Current baseline:** Santor `main` @ `eef6d5baee0c9a4c2072508fb01d6e37a4b49219`. LN-NeU integration runtime gate is validated; LN-NeU CI is green on `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd`.
+**Current baseline:** Santor main @ 4ffeca22412bfe8bd4f33f8bd89225cff5ed80ce. Phase 13 LN-NeU ↔ Santor core integration is locked after live runtime validation and Santor CI run #217 passed. LN-NeU CI is green on 4b3fe5f143a895a33ab12d3aa6d260ace0367ffd.
 
 **Immediate next action:** define the Telegram and Ads endpoint/data contracts and their runtime ownership, then bind the reusable external authentication, scope, rate-limit, and audit foundations to those concrete endpoints. Do not invent consumer contracts. Repository audit found no existing Telegram or Ads endpoint contract, so those two items remain explicitly pending. Do not start VPS/production work before Santor + LN-NeU integration is stable.
 <!-- prettier-ignore-end -->
