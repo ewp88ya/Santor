@@ -13,7 +13,7 @@ type ExternalClient = {
 };
 
 function loadClients(): ExternalClient[] {
-  const raw = process.env.SANTOR_EXTERNAL_API_KEYS?.trim() ?? '';
+  const raw = env.SANTOR_EXTERNAL_API_KEYS;
   if (!raw) return [];
 
   try {
