@@ -67,6 +67,33 @@ export async function deviceRateLimit(request: FastifyRequest, _reply: FastifyRe
   }
 }
 
+const externalRequests = new Map<string, RateLimitEntry>();
+
+const EXTERNAL_WINDOW_MS = 60_000;
+const EXTERNAL_MAX_REQUESTS = 60;
+
+export async function externalClientRateLimit(request: FastifyRequest, _reply: FastifyReply) {
+  const clientId = request.headers['x-santor-client-id'];
+  const key = `external:${typeof clientId === 'string' && clientId ? clientId : request.ip}`;
+  const now = Date.now();
+  const current = externalRequests.get(key);
+
+  if (!current || current.resetAt <= now) {
+    externalRequests.set(key, {
+      count: 1,
+      resetAt: now + EXTERNAL_WINDOW_MS,
+    });
+
+    return;
+  }
+
+  current.count += 1;
+
+  if (current.count > EXTERNAL_MAX_REQUESTS) {
+    throw createError(429, 'Too many external client requests. Please try again later.');
+  }
+}
+
 const paymentRequests = new Map<string, RateLimitEntry>();
 
 const PAYMENT_WINDOW_MS = 60_000;
