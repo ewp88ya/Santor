@@ -12,7 +12,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "test": "vitest run",
+    "test": "bash scripts/test-local.sh",
     "typecheck": "tsc --noEmit",
     "refund:verify": "tsx scripts/verify-refund-provider.ts",
     "start": "node dist/index.js"
