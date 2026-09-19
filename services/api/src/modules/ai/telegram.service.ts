@@ -22,7 +22,10 @@ export interface TelegramUpdate {
   };
 }
 
-interface TelegramApiResponse { ok: boolean; result?: unknown; }
+interface TelegramApiResponse {
+  ok: boolean;
+  result?: unknown;
+}
 
 interface TelegramServiceOptions {
   botToken?: string;
@@ -36,21 +39,30 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
   const executeChat = options.executeChat ?? lnNeuClient.executeChat;
 
   async function sendMessage(chatId: number, text: string) {
-    if (!botToken) throw createError(503, 'Telegram bot integration is disabled');
-    const response = await fetchImpl('https://api.telegram.org/bot' + botToken + '/sendMessage', {
+    if (!botToken) {
+      throw createError(503, 'Telegram bot integration is disabled');
+    }
+    const response = await fetchImpl(
+      'https://api.telegram.org/bot' + botToken + '/sendMessage',
+      {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text }),
-    });
+      },
+    );
     const payload = (await response.json().catch(() => null)) as TelegramApiResponse | null;
-    if (!response.ok || !payload?.ok) throw createError(502, 'Telegram API request failed');
+    if (!response.ok || !payload?.ok) {
+      throw createError(502, 'Telegram API request failed');
+    }
     return payload;
   }
 
   async function linkTelegramUser(userId: string) {
     const code = randomBytes(24).toString('base64url');
     const expiresAt = new Date(Date.now() + LINK_TTL_MS);
-    const existing = await prisma.telegramIdentity.findUnique({ where: { userId } });
+    const existing = await prisma.telegramIdentity.findUnique({
+      where: { userId },
+    });
 
     if (existing) {
       await prisma.telegramIdentity.update({
@@ -77,16 +89,28 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
     };
   }
 
-  async function consumeLinkCode(code: string, telegramUserId: string, username?: string, firstName?: string) {
+  async function consumeLinkCode(
+    code: string,
+    telegramUserId: string,
+    username?: string,
+    firstName?: string,
+  ) {
     const identity = await prisma.telegramIdentity.findFirst({
-      where: { linkCodeHash: hashLinkCode(code), linkCodeExpiresAt: { gt: new Date() } },
+      where: {
+        linkCodeHash: hashLinkCode(code),
+        linkCodeExpiresAt: { gt: new Date() },
+      },
     });
-    if (!identity) throw createError(400, 'Invalid or expired Telegram link code');
+    if (!identity) {
+      throw createError(400, 'Invalid or expired Telegram link code');
+    }
 
     const telegramOwner = await prisma.telegramIdentity.findFirst({
       where: { telegramUserId, NOT: { id: identity.id } },
     });
-    if (telegramOwner) throw createError(409, 'Telegram account is already linked to another Santor account');
+    if (telegramOwner) {
+      throw createError(409, 'Telegram account is already linked to another Santor account');
+    }
 
     return prisma.telegramIdentity.update({
       where: { id: identity.id },
@@ -106,16 +130,26 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
     const text = message?.text?.trim();
     const chatId = message?.chat.id;
     const telegramUserId = message?.from?.id;
-    if (!message || !text || chatId === undefined || telegramUserId === undefined) return { handled: false };
+    if (!message || !text || chatId === undefined || telegramUserId === undefined) {
+      return { handled: false };
+    }
 
     if (text.startsWith('/start link_')) {
-      await consumeLinkCode(text.slice('/start link_'.length).trim(), String(telegramUserId), message.from?.username, message.from?.first_name);
+      await consumeLinkCode(
+        text.slice('/start link_'.length).trim(),
+        String(telegramUserId),
+        message.from?.username,
+        message.from?.first_name,
+      );
       await sendMessage(chatId, 'Telegram berhasil terhubung ke akun Santor Anda.');
       return { handled: true, type: 'link' };
     }
 
     if (text === '/start' || text === '/help') {
-      await sendMessage(chatId, 'Santor Bot\n\nUse /chat <message> to talk to Santor AI.\nYou can also send a normal message directly.\nUse /help to show this message.');
+      await sendMessage(
+        chatId,
+        'Santor Bot\n\nUse /chat <message> to talk to Santor AI.\nYou can also send a normal message directly.\nUse /help to show this message.',
+      );
       return { handled: true, type: 'help' };
     }
 
@@ -130,13 +164,21 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
       select: { userId: true },
     });
     if (!identity) {
-      await sendMessage(chatId, 'Akun Telegram belum terhubung. Hubungkan Telegram dari Dashboard Santor terlebih dahulu.');
+      await sendMessage(
+        chatId,
+        'Akun Telegram belum terhubung. Hubungkan Telegram dari Dashboard Santor terlebih dahulu.',
+      );
       return { handled: true, type: 'unlinked' };
     }
 
     const result = await executeChat(identity.userId, {
       message: chatMessage,
-      context: { source: 'telegram', telegramUserId, telegramChatId: chatId, telegramUsername: message.from?.username },
+      context: {
+        source: 'telegram',
+        telegramUserId,
+        telegramChatId: chatId,
+        telegramUsername: message.from?.username,
+      },
     });
     await sendMessage(chatId, result.message || 'Your AI task was accepted.');
     return { handled: true, type: 'chat', taskId: result.task_id };
