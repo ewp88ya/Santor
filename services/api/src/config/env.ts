@@ -47,4 +47,5 @@ export const env = {
   SANTOR_EXTERNAL_API_KEYS: externalApiKeys,
   TELEGRAM_BOT_TOKEN: telegramBotToken,
   TELEGRAM_WEBHOOK_SECRET: telegramWebhookSecret,
+  TELEGRAM_BOT_USERNAME: telegramBotUsername,
 };
