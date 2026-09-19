@@ -3,9 +3,9 @@
 
 ## Reconciliation baseline
 
-**Authoritative code baseline:** `main` @ `4dd32899b54cc06ad064782b3611fab2fcdd43c3` (current Santor integration baseline).
+**Authoritative code baseline:** `main` @ `76fa126804ab9a382379908dfaef80cff23e89a7` (current Santor repository baseline as of 2026-09-19).
 
-The previous roadmap PR (#1) was created from an older snapshot and is superseded. This file is reconciled to the current `main` baseline.
+The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are superseded. This file is reconciled to the current `main` baseline. Phase 13 runtime completion is also recorded against LN-NeU `main` @ `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`.
 
 ### Status legend
 - ✅ Complete / implemented and supported by repository evidence
@@ -281,14 +281,14 @@ Application / Service Layer
 ## 13.2 External Service API Readiness
 - 🟢 API authentication / service-to-service authentication foundation
 - 🟢 API permission / scope model foundation
-- ⏸️ Telegram endpoint contract — deferred to external consumer project
+- 🟢 Telegram integration implementation exists in Santor (webhook, AI dispatch, account identity/linking); final production contract verification remains pending
 - ⏸️ Ads endpoint / data contract — deferred to external consumer project
 - 🟢 External-client rate limiting foundation
 - 🟢 External API audit logging foundation
 
-**Current assessment:** LN-NeU ↔ Santor core integration is now locked and runtime-validated. The final live gate verified a real container-to-container Santor API → LN-NeU /execute call with the configured service credential, invalid-credential rejection, bounded timeout/retry behavior with a controlled 502, successful recovery after stopping/restarting ln-neu-ai, and a subsequent successful authenticated call. The live authenticated dashboard path also completed end-to-end through /api/v1/ai/chat using a real user JWT and returned 200 with a queued LN-NeU task. The full Santor API suite passed with 39/39 test files and 278/278 tests.
+**Current assessment:** LN-NeU ↔ Santor core integration is **LOCKED / COMPLETE** and runtime-validated. LN-NeU `main` is now `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`; live worker → AnalysisAgent → Ollama execution has produced a successful `PH13_OK` response. Santor `main` is now `76fa126804ab9a382379908dfaef80cff23e89a7` and includes the latest Telegram account-linking validation. The final live gate verified a real container-to-container Santor API → LN-NeU /execute call with the configured service credential, invalid-credential rejection, bounded timeout/retry behavior with a controlled 502, successful recovery after stopping/restarting ln-neu-ai, and a subsequent successful authenticated call. The live authenticated dashboard path also completed end-to-end through /api/v1/ai/chat using a real user JWT and returned 200 with a queued LN-NeU task. The full Santor API suite passed with 39/39 test files and 278/278 tests.
 
-The reproducible LN-NeU Docker override remains present on LN-NeU main, and LN-NeU CI is green for commit 4b3fe5f143a895a33ab12d3aa6d260ace0367ffd. Santor final CI run #217 is green for commit 4ffeca22412bfe8bd4f33f8bd89225cff5ed80ce.
+The reproducible LN-NeU Docker override remains present on LN-NeU main. Historical CI validation is recorded for `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd` and Santor `4ffeca22412bfe8bd4f33f8bd89225cff5ed80ce`; no current connector-surfaced CI result is claimed here for LN-NeU `9e2ac08` or Santor `76fa126`. Local Phase 13 validation remains the authoritative runtime evidence.
 
 External Service API Readiness retains reusable authentication, scope enforcement, external-client rate limiting, and audit logging foundations. Telegram and Ads endpoint/data contracts are explicitly deferred because those consumers are separate projects and their contracts are not part of the locked LN-NeU ↔ Santor core integration gate.
 
@@ -309,7 +309,7 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 - ⏳ WG production nodes/device enforcement/connectivity/recovery
 - ⏳ Monitoring/logging/backup/restore/CI/CD/rollback/secrets/health/recovery
 
-**Held until Santor and LN-NeU are stable.**
+**Gate condition:** Santor + LN-NeU core integration is now stable and Phase 13 is locked. Phase 14 is therefore OPEN for execution.
 
 ---
 
@@ -328,7 +328,7 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 # EXECUTION GATE
 
-**Current baseline:** Santor main @ 4ffeca22412bfe8bd4f33f8bd89225cff5ed80ce. Phase 13 LN-NeU ↔ Santor core integration is locked after live runtime validation and Santor CI run #217 passed. LN-NeU CI is green on 4b3fe5f143a895a33ab12d3aa6d260ace0367ffd.
+**Current baseline:** Santor main @ `76fa126804ab9a382379908dfaef80cff23e89a7`; LN-NeU main @ `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`. Phase 13 LN-NeU ↔ Santor core integration is locked after live runtime validation. Current connector-surfaced CI status for these latest commits is not available, so no CI-green claim is made.
 
-**Immediate next action:** define the Telegram and Ads endpoint/data contracts and their runtime ownership, then bind the reusable external authentication, scope, rate-limit, and audit foundations to those concrete endpoints. Do not invent consumer contracts. Repository audit found no existing Telegram or Ads endpoint contract, so those two items remain explicitly pending. Do not start VPS/production work before Santor + LN-NeU integration is stable.
+**Immediate next action:** perform a fresh current-main regression where the latest tree is locally available, then begin **PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE**. Preserve the local-only Santor override `.pnpm-store/` / local environment artifacts and do not promote them into the roadmap baseline. Phase 13 is not reopened.
 <!-- prettier-ignore-end -->
