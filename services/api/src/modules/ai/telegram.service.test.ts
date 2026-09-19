@@ -12,6 +12,7 @@ describe('Telegram service', () => {
       botToken: 'bot-token',
       fetchImpl,
       executeChat,
+      findLinkedUserId: vi.fn().mockResolvedValue('user-201'),
     });
 
     const result = await service.handleUpdate({
@@ -57,7 +58,7 @@ describe('Telegram service', () => {
 
     expect(result.type).toBe('chat');
     expect(executeChat).toHaveBeenCalledWith(
-      'telegram:201',
+      'user-201',
       expect.objectContaining({
         message: 'hello Santor',
         context: expect.objectContaining({
