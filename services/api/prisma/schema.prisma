@@ -32,9 +32,30 @@ model User {
 
   subscriptions Subscription[]
   auditLogs     AuditLog[]
+  telegramIdentity TelegramIdentity?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model TelegramIdentity {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  telegramUserId String @unique
+  username String?
+  firstName String?
+
+  linkCodeHash String? @unique
+  linkCodeExpiresAt DateTime?
+  linkedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([telegramUserId])
 }
 
 model Role {
