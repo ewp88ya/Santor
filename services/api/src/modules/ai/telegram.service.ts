@@ -31,12 +31,22 @@ interface TelegramServiceOptions {
   botToken?: string;
   fetchImpl?: typeof fetch;
   executeChat?: typeof lnNeuClient.executeChat;
+  findLinkedUserId?: (telegramUserId: string) => Promise<string | undefined>;
 }
 
 export function createTelegramService(options: TelegramServiceOptions = {}) {
   const botToken = options.botToken ?? env.TELEGRAM_BOT_TOKEN;
   const fetchImpl = options.fetchImpl ?? fetch;
   const executeChat = options.executeChat ?? lnNeuClient.executeChat;
+  const findLinkedUserId =
+    options.findLinkedUserId ??
+    (async (telegramUserId: string) => {
+      const identity = await prisma.telegramIdentity.findUnique({
+        where: { telegramUserId },
+        select: { userId: true },
+      });
+      return identity?.userId;
+    });
 
   async function sendMessage(chatId: number, text: string) {
     if (!botToken) {
@@ -156,11 +166,8 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
       return { handled: true, type: 'prompt' };
     }
 
-    const identity = await prisma.telegramIdentity.findUnique({
-      where: { telegramUserId: String(telegramUserId) },
-      select: { userId: true },
-    });
-    if (!identity) {
+    const santorUserId = await findLinkedUserId(String(telegramUserId));
+    if (!santorUserId) {
       await sendMessage(
         chatId,
         'Akun Telegram belum terhubung. Hubungkan Telegram dari Dashboard Santor terlebih dahulu.',
@@ -168,7 +175,7 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
       return { handled: true, type: 'unlinked' };
     }
 
-    const result = await executeChat(identity.userId, {
+    const result = await executeChat(santorUserId, {
       message: chatMessage,
       context: {
         source: 'telegram',
