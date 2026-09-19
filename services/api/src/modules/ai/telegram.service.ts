@@ -42,14 +42,11 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
     if (!botToken) {
       throw createError(503, 'Telegram bot integration is disabled');
     }
-    const response = await fetchImpl(
-      'https://api.telegram.org/bot' + botToken + '/sendMessage',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text }),
-      },
-    );
+    const response = await fetchImpl('https://api.telegram.org/bot' + botToken + '/sendMessage', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    });
     const payload = (await response.json().catch(() => null)) as TelegramApiResponse | null;
     if (!response.ok || !payload?.ok) {
       throw createError(502, 'Telegram API request failed');
@@ -109,10 +106,7 @@ export function createTelegramService(options: TelegramServiceOptions = {}) {
       where: { telegramUserId, NOT: { id: identity.id } },
     });
     if (telegramOwner) {
-      throw createError(
-        409,
-        'Telegram account is already linked to another Santor account',
-      );
+      throw createError(409, 'Telegram account is already linked to another Santor account');
     }
 
     return prisma.telegramIdentity.update({
