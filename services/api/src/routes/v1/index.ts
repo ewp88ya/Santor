@@ -13,6 +13,7 @@ import dashboardRoutes from '../../modules/dashboard/dashboard.routes.js';
 import authRoutes from '../../modules/auth/auth.routes.js';
 import { vpnNodeRoutes } from '../../modules/vpn-node/vpn-node.routes.js';
 import aiRoutes from '../../modules/ai/ai.routes.js';
+import telegramRoutes from '../../modules/ai/telegram.routes.js';
 
 export default async function v1Routes(app: FastifyInstance) {
   await app.register(healthRoute);
@@ -45,5 +46,8 @@ export default async function v1Routes(app: FastifyInstance) {
   });
   await app.register(aiRoutes, {
     prefix: '/ai',
+  });
+  await app.register(telegramRoutes, {
+    prefix: '/telegram',
   });
 }
