@@ -22,7 +22,9 @@ if (isProduction && (!internalWebhookSecret || internalWebhookSecret.length < 32
 
 const lnNeuApiUrl = process.env.LN_NEU_API_URL?.trim() ?? '';
 const lnNeuApiKey = process.env.LN_NEU_API_KEY?.trim() ?? '';
-const externalApiKeys = process.env.SANTOR_EXTERNAL_API_KEYS?.trim() ?? '';\nconst telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim() ?? '';\nconst telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() ?? '';
+const externalApiKeys = process.env.SANTOR_EXTERNAL_API_KEYS?.trim() ?? '';
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim() ?? '';
+const telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() ?? '';
 if (lnNeuEnabled && !lnNeuApiUrl) {
   throw new Error('LN_NEU_API_URL is required when LN_NEU_ENABLED=true');
 }
@@ -41,5 +43,7 @@ export const env = {
   LN_NEU_ENABLED: lnNeuEnabled,
   LN_NEU_API_URL: lnNeuApiUrl,
   LN_NEU_API_KEY: lnNeuApiKey,
-  SANTOR_EXTERNAL_API_KEYS: externalApiKeys,\n  TELEGRAM_BOT_TOKEN: telegramBotToken,\n  TELEGRAM_WEBHOOK_SECRET: telegramWebhookSecret,
+  SANTOR_EXTERNAL_API_KEYS: externalApiKeys,
+  TELEGRAM_BOT_TOKEN: telegramBotToken,
+  TELEGRAM_WEBHOOK_SECRET: telegramWebhookSecret,
 };
