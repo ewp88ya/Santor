@@ -1,17 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 
-import { createTelegramService } from "./telegram.service.js";
+import { createTelegramService } from './telegram.service.js';
 
-describe("Telegram service", () => {
-  it("handles /help without calling LN-NeU", async () => {
+describe('Telegram service', () => {
+  it('handles /help without calling LN-NeU', async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ ok: true, result: {} }), { status: 200 }),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true, result: {} }), { status: 200 }));
     const executeChat = vi.fn();
     const service = createTelegramService({
-      botToken: "bot-token",
+      botToken: 'bot-token',
       fetchImpl,
       executeChat,
     });
@@ -20,31 +18,29 @@ describe("Telegram service", () => {
       update_id: 1,
       message: {
         message_id: 1,
-        chat: { id: 100, type: "private" },
+        chat: { id: 100, type: 'private' },
         from: { id: 200 },
-        text: "/help",
+        text: '/help',
       },
     });
 
-    expect(result.type).toBe("help");
+    expect(result.type).toBe('help');
     expect(executeChat).not.toHaveBeenCalled();
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
-  it("routes chat to LN-NeU and sends the accepted task message to Telegram", async () => {
+  it('routes chat to LN-NeU and sends the accepted task message to Telegram', async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ ok: true, result: {} }), { status: 200 }),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true, result: {} }), { status: 200 }));
     const executeChat = vi.fn().mockResolvedValue({
-      status: "queued",
-      message: "Task successfully queued",
-      task_id: "task-telegram-1",
+      status: 'queued',
+      message: 'Task successfully queued',
+      task_id: 'task-telegram-1',
       queue_size: 1,
     });
     const service = createTelegramService({
-      botToken: "bot-token",
+      botToken: 'bot-token',
       fetchImpl,
       executeChat,
     });
@@ -53,19 +49,19 @@ describe("Telegram service", () => {
       update_id: 2,
       message: {
         message_id: 2,
-        chat: { id: 101, type: "private" },
-        from: { id: 201, username: "alice" },
-        text: "/chat hello Santor",
+        chat: { id: 101, type: 'private' },
+        from: { id: 201, username: 'alice' },
+        text: '/chat hello Santor',
       },
     });
 
-    expect(result.type).toBe("chat");
+    expect(result.type).toBe('chat');
     expect(executeChat).toHaveBeenCalledWith(
-      "telegram:201",
+      'telegram:201',
       expect.objectContaining({
-        message: "hello Santor",
+        message: 'hello Santor',
         context: expect.objectContaining({
-          source: "telegram",
+          source: 'telegram',
           telegramUserId: 201,
           telegramChatId: 101,
         }),
