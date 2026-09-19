@@ -47,4 +47,7 @@ export default async function v1Routes(app: FastifyInstance) {
   await app.register(aiRoutes, {
     prefix: '/ai',
   });
+  await app.register(telegramRoutes, {
+    prefix: '/telegram',
+  });
 }
