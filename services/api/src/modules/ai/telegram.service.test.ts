@@ -44,6 +44,7 @@ describe('Telegram service', () => {
       botToken: 'bot-token',
       fetchImpl,
       executeChat,
+      findLinkedUserId: vi.fn().mockResolvedValue('user-201'),
     });
 
     const result = await service.handleUpdate({
