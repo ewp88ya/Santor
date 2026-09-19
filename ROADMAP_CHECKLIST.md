@@ -296,7 +296,23 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 # PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE
 
-- ⏳ VPS provisioning
+## 14.1 Provider Gate
+- ✅ Provider roles selected: OVHcloud = EU Core; Contabo = EU VPN; Hostinger Indonesia = ID VPN
+- 🟡 LightNode = APAC/US candidate; production customer-VPN use remains provider-policy confirmation dependent
+- ✅ OVH public/customer VPN excluded from architecture; OVH reserved for EU Core
+- ✅ Contabo WireGuard/WGDashboard path validated from provider documentation
+- ✅ Hostinger WireGuard deployment path validated from provider documentation
+
+## 14.2 VPS Provisioning
+- 🟢 Purchase/provisioning specifications locked for EU-CORE-01, EU-VPN-01, ID-JKT-VPN-01
+- ⏳ EU-CORE-01 — OVH VPS-2, Gravelines, Ubuntu 24.04 LTS
+- ⏳ EU-VPN-01 — Contabo Cloud VPS 4, EU region, Ubuntu 24.04 LTS
+- ⏳ ID-JKT-VPN-01 — Hostinger KVM 1, Indonesia, Ubuntu 24.04 LTS
+- ⏳ Record public IPv4/IPv6, datacenter, renewal price, and provisioning timestamp after purchase
+- ⏳ Register each server in SentinelX and run baseline hardware/network/security audit
+- ⏸️ LightNode — do not provision until commercial/customer VPN policy is explicitly confirmed
+
+## Remaining Phase 14
 - 🟢 Local Docker stack
 - ⏳ Production Docker stack
 - ⏳ Nginx / SSL
@@ -309,8 +325,7 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 - ⏳ WG production nodes/device enforcement/connectivity/recovery
 - ⏳ Monitoring/logging/backup/restore/CI/CD/rollback/secrets/health/recovery
 
-**Gate condition:** Santor + LN-NeU core integration is now stable and Phase 13 is locked. Phase 14 is therefore OPEN for execution.
-
+**Gate condition:** Phase 13 remains LOCKED / COMPLETE. Phase 14 provider gate is complete; VPS provisioning is the active next gate. No server is marked provisioned until the provider account confirms creation and live connectivity.
 ---
 
 # PHASE 15 — PRODUCTION LAUNCH & LIVE VALIDATION
