@@ -67,7 +67,7 @@ Unlinked Telegram users are not sent to LN-NeU. Linking is initiated by an authe
 ## Expected authentication failures
 
 | Boundary | Failure | Expected result |
-|---|---|---|
+| --- | --- | --- |
 | Santor user API | Missing/invalid/expired JWT | HTTP 401 |
 | Santor AI permission | JWT valid, no `ai:chat` | HTTP 403 |
 | Santor → LN-NeU | Missing/wrong/short service key | HTTP 401 or 503 when LN-NeU is not configured |
