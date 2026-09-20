@@ -12,4 +12,5 @@ dist/
 # temp
 *.tsbuildinfo
 node_modules/
+.pnpm-store/
 .env
