@@ -1,12 +1,6 @@
 #!/bin/bash
+set -euo pipefail
 
-while true
-do
-  inotifywait -r -e modify,create,delete .
-
-  git add .
-  git commit -m "auto sync $(date +'%H:%M:%S')"
-  git push origin main
-
-  echo "🚀 Synced to GitHub!"
-done
+echo "Automatic sync/push is disabled by project policy."
+echo "Use the normal manual workflow: git status && git add && git commit && git push origin main"
+exit 1

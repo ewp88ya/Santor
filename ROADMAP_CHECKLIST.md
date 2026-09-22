@@ -65,7 +65,7 @@ The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are 
 - ✅ Argon2 password hashing
 - ✅ Authentication/authorization security regression coverage
 
-**Recorded regression baseline:** 264/264 PASS before latest fixture-isolation changes. Fresh current-main run required for a current count.
+**Current regression baseline:** 40 test files / 280 tests PASS on the current local main working tree, including real PostgreSQL integration and Phase 12 E2E coverage.
 
 **Current assessment:** implemented locally; live production security verification remains Phase 15.
 
@@ -219,7 +219,7 @@ The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are 
 
 **Current-main evidence:** commit `5d1a019` isolates integration product fixtures so test-created products do not interfere with the authoritative production catalog.
 
-**Recorded historical regression baseline:** 35 test files / 264 tests PASS. Fresh current-main run required after latest changes.
+**Current regression baseline:** 40 test files / 280 tests PASS on the current local main working tree.
 
 ---
 
@@ -239,10 +239,10 @@ The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are 
 - ✅ `git diff --check` baseline
 
 ## Reconciliation status
-- ⚠️ These are recorded readiness results, not proof that latest `main` has been freshly executed here.
-- ⏳ Fresh full current-main regression is required before claiming the current tree revalidated.
+- ✅ Current local `main` working tree has been freshly revalidated: 40 test files / 280 tests PASS.
+- ✅ API typecheck, monorepo build, ESLint, Prettier, and `git diff --check` are part of the final application gate.
 
-**Gate result:** architecture remains ready for Phase 13, subject to fresh current-main regression.
+**Gate result:** application-layer gate is revalidated locally. Phase 14/15 production verification remains intentionally HOLD.
 
 ---
 
@@ -286,9 +286,9 @@ Application / Service Layer
 - 🟢 External-client rate limiting foundation
 - 🟢 External API audit logging foundation
 
-**Current assessment:** LN-NeU ↔ Santor core integration is **LOCKED / COMPLETE** and runtime-validated. LN-NeU `main` is now `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`; live worker → AnalysisAgent → Ollama execution has produced a successful `PH13_OK` response. Santor `main` is now `76fa126804ab9a382379908dfaef80cff23e89a7` and includes the latest Telegram account-linking validation. The final live gate verified a real container-to-container Santor API → LN-NeU /execute call with the configured service credential, invalid-credential rejection, bounded timeout/retry behavior with a controlled 502, successful recovery after stopping/restarting ln-neu-ai, and a subsequent successful authenticated call. The live authenticated dashboard path also completed end-to-end through /api/v1/ai/chat using a real user JWT and returned 200 with a queued LN-NeU task. The full Santor API suite passed with 39/39 test files and 278/278 tests.
+**Current assessment:** LN-NeU ↔ Santor core integration is **LOCKED / COMPLETE** and runtime-validated. LN-NeU `main` is now `774cb1d8d0b0941976c5e6c9cfe8b5f5d50e9eac`; live worker → AnalysisAgent → Ollama execution has produced a successful `PH13_OK` response. Santor `main` is now `4ab91da26bcc825e11ed55ccc85b1c5bac329c11` and includes the latest Telegram account-linking validation. The final live gate verified a real container-to-container Santor API → LN-NeU /execute call with the configured service credential, invalid-credential rejection, bounded timeout/retry behavior with a controlled 502, successful recovery after stopping/restarting ln-neu-ai, and a subsequent successful authenticated call. The live authenticated dashboard path also completed end-to-end through /api/v1/ai/chat using a real user JWT and returned 200 with a queued LN-NeU task. The full Santor API suite passes with 40/40 test files and 280/280 tests on the current local main working tree.
 
-The reproducible LN-NeU Docker override remains present on LN-NeU main. Historical CI validation is recorded for `4b3fe5f143a895a33ab12d3aa6d260ace0367ffd` and Santor `4ffeca22412bfe8bd4f33f8bd89225cff5ed80ce`; no current connector-surfaced CI result is claimed here for LN-NeU `9e2ac08` or Santor `76fa126`. Local Phase 13 validation remains the authoritative runtime evidence.
+The reproducible LN-NeU Docker override remains present on LN-NeU main. Current GitHub CI is green for LN-NeU `774cb1d` (both LN-NeU CI workflows) and Santor `4ab91da` (Santor CI). Local Phase 13 validation remains the authoritative application/runtime evidence; production verification remains Phase 14/15.
 
 External Service API Readiness retains reusable authentication, scope enforcement, external-client rate limiting, and audit logging foundations. Telegram and Ads endpoint/data contracts are explicitly deferred because those consumers are separate projects and their contracts are not part of the locked LN-NeU ↔ Santor core integration gate.
 
