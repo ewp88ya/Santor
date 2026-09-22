@@ -66,17 +66,17 @@ Unlinked Telegram users are not sent to LN-NeU. Linking is initiated by an authe
 
 ## Expected authentication failures
 
-| Boundary | Failure | Expected result |
-| --- | --- | --- |
-| Santor user API | Missing/invalid/expired JWT | HTTP 401 |
-| Santor AI permission | JWT valid, no `ai:chat` | HTTP 403 |
-| Santor → LN-NeU | Missing/wrong/short service key | HTTP 401 or 503 when LN-NeU is not configured |
-| Telegram webhook | Missing/wrong secret | HTTP 401 + audit event |
-| Telegram account | Not linked | Telegram response explaining linking is required |
-| Telegram linking | Invalid/expired code | HTTP 400 |
-| Telegram linking | Telegram identity already owned | HTTP 409 |
-| External Santor API | Wrong key | HTTP 401 |
-| External Santor API | Missing required scope | HTTP 403 |
+| Boundary             | Failure                         | Expected result                                  |
+| -------------------- | ------------------------------- | ------------------------------------------------ |
+| Santor user API      | Missing/invalid/expired JWT     | HTTP 401                                         |
+| Santor AI permission | JWT valid, no `ai:chat`         | HTTP 403                                         |
+| Santor → LN-NeU      | Missing/wrong/short service key | HTTP 401 or 503 when LN-NeU is not configured    |
+| Telegram webhook     | Missing/wrong secret            | HTTP 401 + audit event                           |
+| Telegram account     | Not linked                      | Telegram response explaining linking is required |
+| Telegram linking     | Invalid/expired code            | HTTP 400                                         |
+| Telegram linking     | Telegram identity already owned | HTTP 409                                         |
+| External Santor API  | Wrong key                       | HTTP 401                                         |
+| External Santor API  | Missing required scope          | HTTP 403                                         |
 
 ## Production gate
 
