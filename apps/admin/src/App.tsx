@@ -141,11 +141,32 @@ function App() {
         <div><span>Customers</span><strong>{stats.users}</strong></div><div><span>Subscriptions</span><strong>{stats.subscriptions}</strong></div><div><span>Active products</span><strong>{stats.activeProducts}</strong></div><div><span>Published ads</span><strong>{ads.filter((ad) => ad.status === 'published').length}</strong></div>
       </section><section className="grid-two"><div className="panel"><p className="eyebrow">Operating model</p><h2>Manage what actually changes.</h2><p>Website copy, products, campaigns and roadmap status stay editable here. The roadmap is context and control, not a giant CMS form.</p></div><div className="panel"><p className="eyebrow">Publishing</p><h2>Draft → Preview → Publish</h2><p>Marketing changes can be prepared and published without touching application source code.</p></div></section></>}
 
-      {section === 'website' && <div className="grid-two"><section className="panel"><div className="panel-head"><div><p className="eyebrow">Website</p><h2>Customer website design</h2></div><button className="primary" onClick={saveSite}>Save changes</button></div>
-        <div className="form-grid">{(['brand','heroTitle','heroSubtitle','primaryCta','secondaryCta','trustLine','primaryColor'] as const).map((key) => <label key={key}>{key}<input value={site[key]} onChange={(e) => setSite({ ...site, [key]: e.target.value })} /></label>)}</div>
-        <h3>Services shown on website</h3>{site.services.map((service, index) => <div className="service-editor" key={index}><input value={service.label} onChange={(e) => { const services=[...site.services]; services[index]={...services[index],label:e.target.value}; setSite({...site,services}); }} /><input value={service.title} onChange={(e) => { const services=[...site.services]; services[index]={...services[index],title:e.target.value}; setSite({...site,services}); }} /><input value={service.description} onChange={(e) => { const services=[...site.services]; services[index]={...services[index],description:e.target.value}; setSite({...site,services}); }} /></div>)}
-      </section><section className="panel preview" style={{ '--accent': site.primaryColor } as CSSProperties}><p className="eyebrow">Preview</p><div className="preview-card"><strong>{site.brand}</strong><h2>{site.heroTitle}</h2><p>{site.heroSubtitle}</p><div className="preview-actions"><button>{site.primaryCta}</button><button>{site.secondaryCta}</button></div><small>{site.trustLine}</small></div>{site.services.map((s) => <div className="preview-service" key={s.label}><b>{s.label}</b><strong>{s.title}</strong><span>{s.description}</span></div>)}</section></div>}
-
+      {section === 'website' && <section className="panel publisher-workspace">
+        <div className="panel-head"><div><p className="eyebrow">Publisher</p><h2>Website & Marketing Publisher</h2><p>Edit, preview and publish the public Santor website from one internal workspace.</p></div><span className="live-pill">● Publisher ready</span></div>
+        <div className="publisher-layout">
+          <div className="publisher-editor">
+            <div className="editor-group"><h3>Brand & Hero</h3><div className="form-grid">
+              <label>Brand<input value={site.brand} onChange={e=>setSite({...site,brand:e.target.value})}/></label>
+              <label>Primary color<input value={site.primaryColor} onChange={e=>setSite({...site,primaryColor:e.target.value})}/></label>
+              <label className="full">Hero title<input value={site.heroTitle} onChange={e=>setSite({...site,heroTitle:e.target.value})}/></label>
+              <label className="full">Hero subtitle<textarea rows={3} value={site.heroSubtitle} onChange={e=>setSite({...site,heroSubtitle:e.target.value})}/></label>
+              <label>Primary CTA<input value={site.primaryCta} onChange={e=>setSite({...site,primaryCta:e.target.value})}/></label>
+              <label>Secondary CTA<input value={site.secondaryCta} onChange={e=>setSite({...site,secondaryCta:e.target.value})}/></label>
+              <label className="full">Trust line<input value={site.trustLine} onChange={e=>setSite({...site,trustLine:e.target.value})}/></label>
+            </div></div>
+            <div className="editor-group"><h3>Services / Product messaging</h3>{site.services.map((s,i)=><div className="service-editor" key={i}>
+              <input aria-label="Service label" value={s.label} onChange={e=>{const services=[...site.services];services[i]={...services[i],label:e.target.value};setSite({...site,services})}}/>
+              <input aria-label="Service title" value={s.title} onChange={e=>{const services=[...site.services];services[i]={...services[i],title:e.target.value};setSite({...site,services})}}/>
+              <textarea aria-label="Service description" rows={2} value={s.description} onChange={e=>{const services=[...site.services];services[i]={...services[i],description:e.target.value};setSite({...site,services})}}/>
+            </div>)}</div>
+            <div className="publisher-actions"><button className="primary" onClick={saveSite}>Publish website changes</button><a href="https://santor.app/" target="_blank" rel="noreferrer">Open customer website ↗</a></div>
+          </div>
+          <div className="publisher-preview"><div className="preview-browser"><div className="browser-bar"><span></span><span></span><span></span><small>santor.app</small></div>
+            <div className="preview-hero" style={{'--preview-color':site.primaryColor} as CSSProperties}><strong className="preview-brand">{site.brand}</strong><h1>{site.heroTitle}</h1><p>{site.heroSubtitle}</p><div><button>{site.primaryCta}</button><button className="ghost">{site.secondaryCta}</button></div><small>{site.trustLine}</small></div>
+            <div className="preview-services">{site.services.map((s,i)=><article key={i}><small>{s.label}</small><h3>{s.title}</h3><p>{s.description}</p></article>)}</div>
+          </div></div>
+        </div>
+      </section>
       {section === 'ads' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Marketing</p><h2>Ads & campaigns</h2></div><button className="primary" onClick={() => setAdDraft({ name:'', title:'', body:'', channel:'website', status:'draft' })}>New ad</button></div>
         <div className="ad-list">{ads.map((ad) => <article className="ad-row" key={ad.id}><div><span className={`status ${ad.status}`}>{ad.status}</span><h3>{ad.name}</h3><p>{ad.title}</p><small>{ad.channel}{ad.productCode ? ` · ${ad.productCode}` : ''}</small></div><div className="row-actions"><button onClick={() => setAdDraft(ad)}>Edit</button>{ad.status === 'published' ? <button onClick={async()=>{const x=await api(`/api/v1/admin/ads/${ad.id}/unpublish`,{method:'POST'});setAds(ads.map(a=>a.id===x.id?x:a));}}>Unpublish</button> : <button onClick={async()=>{const x=await api(`/api/v1/admin/ads/${ad.id}/publish`,{method:'POST'});setAds(ads.map(a=>a.id===x.id?x:a));}}>Publish</button>}<button className="danger" onClick={async()=>{await api(`/api/v1/admin/ads/${ad.id}`,{method:'DELETE'});setAds(ads.filter(a=>a.id!==ad.id));}}>Delete</button></div></article>)}</div>
       </section>}
