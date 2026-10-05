@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import './App.css';
 import ControlPlane from './ControlPlane';
 import FinancialReports from './FinancialReports';
+import OperationsAlerts from './OperationsAlerts';
 
 type SiteService = { label: string; title: string; description: string };
 type SiteConfig = {
@@ -498,6 +499,7 @@ function App() {
   const nav = [
     ['overview', 'Control Center'],
     ['control', 'Service Control'],
+    ['operations', 'Messages & Alerts'],
     ['customers', 'Customers'],
     ['payments', 'Payments & Billing'],
     ['financial', 'Financial Reports'],
@@ -611,6 +613,7 @@ function App() {
         </header>
         {message && <div className="notice">{message}</div>}
         {section === 'control' && <ControlPlane />}
+        {section === 'operations' && <OperationsAlerts monitoring={monitoring} />}
         {section === 'overview' && (
           <>
             <section className="hero-panel">
