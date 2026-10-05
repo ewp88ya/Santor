@@ -206,3 +206,95 @@ export async function createAdminProductPrice(data: {
     },
   });
 }
+
+export async function createAdminProduct(data: {
+  name: string;
+  code: string;
+  price: number;
+  currency: string;
+  durationDays: number;
+  deviceLimit: number;
+  active?: boolean;
+}) {
+  return prisma.product.create({
+    data: {
+      name: data.name.trim(),
+      code: data.code.trim(),
+      price: Number(data.price),
+      currency: data.currency.trim().toUpperCase(),
+      durationDays: Number(data.durationDays),
+      deviceLimit: Number(data.deviceLimit),
+      active: data.active ?? true,
+    },
+    include: { prices: true },
+  });
+}
+
+export async function updateAdminProductPrice(
+  id: string,
+  data: {
+    country?: string | null;
+    currency?: string;
+    amount?: number;
+    active?: boolean;
+  },
+) {
+  return prisma.productPrice.update({
+    where: { id },
+    data: {
+      ...(data.country !== undefined
+        ? { country: data.country?.trim().toUpperCase() || null }
+        : {}),
+      ...(data.currency !== undefined ? { currency: data.currency.trim().toUpperCase() } : {}),
+      ...(data.amount !== undefined ? { amount: Number(data.amount) } : {}),
+      ...(data.active !== undefined ? { active: Boolean(data.active) } : {}),
+    },
+  });
+}
+
+export async function deleteAdminProductPrice(id: string) {
+  return prisma.productPrice.delete({ where: { id } });
+}
+
+export async function updateAdminPayment(
+  id: string,
+  data: {
+    provider?: string;
+    country?: string | null;
+    currency?: string;
+    paymentMethod?: string | null;
+    amount?: number;
+    settlementCurrency?: string | null;
+    status?: string;
+    transactionId?: string | null;
+    type?: string;
+    autoDebit?: boolean;
+    providerPaymentId?: string | null;
+    refundId?: string | null;
+    refundReason?: string | null;
+  },
+) {
+  return prisma.payment.update({
+    where: { id },
+    data: {
+      ...(data.provider !== undefined ? { provider: data.provider.trim() } : {}),
+      ...(data.country !== undefined ? { country: data.country?.trim().toUpperCase() || null } : {}),
+      ...(data.currency !== undefined ? { currency: data.currency.trim().toUpperCase() } : {}),
+      ...(data.paymentMethod !== undefined ? { paymentMethod: data.paymentMethod?.trim() || null } : {}),
+      ...(data.amount !== undefined ? { amount: Number(data.amount) } : {}),
+      ...(data.settlementCurrency !== undefined
+        ? { settlementCurrency: data.settlementCurrency?.trim().toUpperCase() || null }
+        : {}),
+      ...(data.status !== undefined ? { status: data.status.trim() } : {}),
+      ...(data.transactionId !== undefined ? { transactionId: data.transactionId?.trim() || null } : {}),
+      ...(data.type !== undefined ? { type: data.type.trim() } : {}),
+      ...(data.autoDebit !== undefined ? { autoDebit: Boolean(data.autoDebit) } : {}),
+      ...(data.providerPaymentId !== undefined
+        ? { providerPaymentId: data.providerPaymentId?.trim() || null }
+        : {}),
+      ...(data.refundId !== undefined ? { refundId: data.refundId?.trim() || null } : {}),
+      ...(data.refundReason !== undefined ? { refundReason: data.refundReason?.trim() || null } : {}),
+    },
+    include: { subscription: { include: { user: true, product: true } } },
+  });
+}
