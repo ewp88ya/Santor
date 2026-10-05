@@ -50,7 +50,6 @@ export async function createAdminProductPriceController(request: FastifyRequest)
   return createAdminProductPrice(request.body as any);
 }
 
-
 export async function adminFinancialReportController() {
   return adminFinancialReport();
 }

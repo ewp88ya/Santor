@@ -65,9 +65,15 @@ export async function updateAdminSubscription(id: string, input: any) {
     where: { id },
     data: {
       ...(input.status !== undefined ? { status: String(input.status).trim() } : {}),
-      ...(input.startDate !== undefined ? { startDate: input.startDate ? new Date(input.startDate) : null } : {}),
-      ...(input.endDate !== undefined ? { endDate: input.endDate ? new Date(input.endDate) : null } : {}),
-      ...(input.autoDebitEnabled !== undefined ? { autoDebitEnabled: Boolean(input.autoDebitEnabled) } : {}),
+      ...(input.startDate !== undefined
+        ? { startDate: input.startDate ? new Date(input.startDate) : null }
+        : {}),
+      ...(input.endDate !== undefined
+        ? { endDate: input.endDate ? new Date(input.endDate) : null }
+        : {}),
+      ...(input.autoDebitEnabled !== undefined
+        ? { autoDebitEnabled: Boolean(input.autoDebitEnabled) }
+        : {}),
       ...(input.productId !== undefined ? { productId: String(input.productId) } : {}),
     },
     include: { user: true, product: true },
