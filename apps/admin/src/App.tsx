@@ -75,7 +75,7 @@ type InfrastructureMonitoring = {
     disk: { totalBytes: number | null; freeBytes: number | null; usedPercent: number | null };
   };
   internet: { status: string; latencyMs: number; speedMbps: number | null; note: string };
-  domains: Array<{ url: string; ok: boolean; status: number | null; latencyMs: number; status: string }>;
+  domains: Array<{ url: string; ok: boolean; httpStatus: number | null; latencyMs: number; status: string }>;
   regions: Array<{ country: string; city: string; nodeId: string; status: string; stabilityIndex: number; latencyMs: number }>;
 };
 
