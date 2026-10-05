@@ -63,6 +63,24 @@ type NetworkData = {
   bypass: BypassRule[];
 };
 type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'tunnel' | 'client' | 'bypass' };
+type AdminCustomer = {
+  id: string;
+  email: string;
+  name: string | null;
+  status: string;
+  emailVerified: boolean;
+  role: { name: string };
+  telegramIdentity: { telegramUserId: string; username: string | null; linkedAt: string | null } | null;
+  subscriptions: Array<{
+    id: string;
+    status: string;
+    startDate: string | null;
+    endDate: string | null;
+    autoDebitEnabled: boolean;
+    product: { id: string; name: string; code: string };
+  }>;
+};
+
 type PaymentData = {
   payments: Array<{
     id: string;
@@ -181,6 +199,7 @@ function App() {
     profiles: [],
     bypass: [],
   });
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [payments, setPayments] = useState<PaymentData>({
     payments: [],
     subscriptions: [],
@@ -225,13 +244,14 @@ function App() {
   });
 
   const load = async () => {
-    const [overview, config, adList, roadmap, networkData, paymentData] = await Promise.all([
+    const [overview, config, adList, roadmap, networkData, paymentData, customerData] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
       api('/api/v1/admin/ads'),
       api('/api/v1/admin/roadmap'),
       api('/api/v1/admin/network'),
       api('/api/v1/admin/payments'),
+      api('/api/v1/admin/customers'),
     ]);
     setStats(overview.stats);
     setSite(config);
@@ -239,6 +259,7 @@ function App() {
     setPhases(roadmap);
     setNetwork(networkData);
     setPayments(paymentData);
+    setCustomers(customerData);
   };
 
   useEffect(() => {
@@ -515,27 +536,61 @@ function App() {
         {section === 'customers' && (
           <section className="panel">
             <div className="panel-head">
-              <div><p className="eyebrow">Customer operations</p><h2>Customers</h2><p>Operational visibility from the existing customer, subscription and billing data.</p></div>
-              <span className="status published">READ / OPERATE</span>
+              <div><p className="eyebrow">Customer operations</p><h2>Customers</h2><p>Edit customer identity, account status, verification and subscription lifecycle directly from Admin.</p></div>
+              <span className="status published">FULL CONTROL</span>
             </div>
             <div className="customer-summary">
-              <div><span>Total customers</span><strong>{stats.users}</strong></div>
-              <div><span>Subscriptions</span><strong>{stats.subscriptions}</strong></div>
-              <div><span>Active plans</span><strong>{stats.activeProducts}</strong></div>
+              <div><span>Total customers</span><strong>{customers.length}</strong></div>
+              <div><span>Subscriptions</span><strong>{customers.reduce((n, c) => n + c.subscriptions.length, 0)}</strong></div>
+              <div><span>Active customers</span><strong>{customers.filter((c) => c.status === 'active').length}</strong></div>
             </div>
             <div className="customer-list">
-              {payments.subscriptions.length ? payments.subscriptions.map((subscription) => (
-                <article className="customer-row" key={subscription.id}>
-                  <div><strong>{subscription.user.email}</strong><small>{subscription.product.name}</small></div>
-                  <span className={subscription.status === 'active' ? 'status published' : 'status'}>{subscription.status}</span>
-                  <small>{subscription.startDate ? new Date(subscription.startDate).toLocaleDateString() : '—'} → {subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : '—'}</small>
+              {customers.length ? customers.map((customer) => (
+                <article className="customer-row" key={customer.id}>
+                  <div className="customer-editor">
+                    <input value={customer.name ?? ''} placeholder="Customer name" onChange={(e) => setCustomers(customers.map((x) => x.id === customer.id ? { ...x, name: e.target.value } : x))} />
+                    <input value={customer.email} type="email" onChange={(e) => setCustomers(customers.map((x) => x.id === customer.id ? { ...x, email: e.target.value } : x))} />
+                    <small>{customer.role.name}{customer.telegramIdentity?.username ? ' · @' + customer.telegramIdentity.username : ''}</small>
+                  </div>
+                  <select value={customer.status} onChange={async (e) => {
+                    const saved = await api('/api/v1/admin/customers/' + customer.id, { method: 'PUT', body: JSON.stringify({ status: e.target.value }) });
+                    setCustomers(customers.map((x) => x.id === saved.id ? saved : x));
+                    setMessage('Customer status saved.');
+                  }}>
+                    <option value="active">active</option>
+                    <option value="suspended">suspended</option>
+                    <option value="disabled">disabled</option>
+                  </select>
+                  <button className="primary" onClick={async () => {
+                    const saved = await api('/api/v1/admin/customers/' + customer.id, { method: 'PUT', body: JSON.stringify({ name: customer.name, email: customer.email }) });
+                    setCustomers(customers.map((x) => x.id === saved.id ? saved : x));
+                    setMessage('Customer saved.');
+                  }}>Save customer</button>
+                  <div className="subscription-editor">
+                    {customer.subscriptions.map((sub) => (
+                      <div className="customer-row" key={sub.id}>
+                        <div><strong>{sub.product.name}</strong><small>{sub.product.code}</small></div>
+                        <select value={sub.status} onChange={async (e) => {
+                          const saved = await api('/api/v1/admin/subscriptions/' + sub.id, { method: 'PUT', body: JSON.stringify({ status: e.target.value }) });
+                          setCustomers(customers.map((x) => x.id === customer.id ? { ...x, subscriptions: x.subscriptions.map((z) => z.id === saved.id ? { ...z, status: saved.status, startDate: saved.startDate, endDate: saved.endDate, autoDebitEnabled: saved.autoDebitEnabled } : z) } : x));
+                          setMessage('Subscription status saved.');
+                        }}>
+                          <option value="pending">pending</option>
+                          <option value="active">active</option>
+                          <option value="expired">expired</option>
+                          <option value="cancelled">cancelled</option>
+                          <option value="suspended">suspended</option>
+                        </select>
+                        <label className="inline-check"><input type="checkbox" checked={sub.autoDebitEnabled} onChange={async (e) => {
+                          const saved = await api('/api/v1/admin/subscriptions/' + sub.id, { method: 'PUT', body: JSON.stringify({ autoDebitEnabled: e.target.checked }) });
+                          setCustomers(customers.map((x) => x.id === customer.id ? { ...x, subscriptions: x.subscriptions.map((z) => z.id === saved.id ? { ...z, autoDebitEnabled: saved.autoDebitEnabled } : z) } : x));
+                        }} /> Auto debit</label>
+                        <small>{sub.startDate ? new Date(sub.startDate).toLocaleDateString() : 'no start'} → {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : 'no end'}</small>
+                      </div>
+                    ))}
+                  </div>
                 </article>
-              )) : <div className="empty-state">No subscriptions are available yet.</div>}
-            </div>
-            <div className="panel soft">
-              <p className="eyebrow">Boundary</p>
-              <h3>Customer website stays untouched</h3>
-              <p>This panel only consumes existing authenticated Admin APIs. It does not edit public-site configuration unless you explicitly use Website & Marketing.</p>
+              )) : <div className="empty-state">No customers found.</div>}
             </div>
           </section>
         )}
