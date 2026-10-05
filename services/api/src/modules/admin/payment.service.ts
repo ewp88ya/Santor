@@ -105,14 +105,7 @@ export async function ensureProductCatalog() {
   for (const item of catalog) {
     await prisma.product.upsert({
       where: { code: item.code },
-      update: {
-        name: item.name,
-        price: Math.round(item.price * 100),
-        currency: item.currency,
-        durationDays: item.durationDays,
-        deviceLimit: item.deviceLimit,
-        active: true,
-      },
+      update: {},
       create: {
         name: item.name,
         code: item.code,
@@ -151,6 +144,21 @@ export async function adminPaymentOverview() {
     configured: keys.every((key) => Boolean(process.env[key]?.trim())),
   }));
 
+  const catalog = products.map((product) => ({
+    code: product.code,
+    name: product.name,
+    price: Number(product.price) / 100,
+    currency: product.currency,
+    durationDays: product.durationDays,
+    deviceLimit: product.deviceLimit,
+    userLimit: 1,
+    category: product.code.startsWith('wg-') ? 'wireguard' : 'general',
+    capacityPolicy: product.code === 'general-free'
+      ? 'Free capacity: 100 concurrent/served users within a 1-hour operating window; inactive connections are disconnected and capacity is released.'
+      : product.code.startsWith('wg-')
+        ? 'Production WireGuard nodes with health, load, capacity and queue control.'
+        : 'Production General Nodes with health, load, capacity and queue control.',
+  }));
   return { payments, subscriptions, products, providerStatus, catalog };
 }
 
