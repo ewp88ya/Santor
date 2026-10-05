@@ -85,8 +85,18 @@ jobs:
           git commit -m "fix(ci): format admin changes"
           git push
 
-      - name: Prettier check
-        run: pnpm exec prettier --check .
+      - name: Format and verify
+        run: |
+          pnpm exec prettier --write .
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "fix(ci): normalize formatting"
+          git push
+          pnpm exec prettier --check .
 
       - name: API typecheck
         run: pnpm --filter @santor/api typecheck
