@@ -380,6 +380,21 @@ model BypassRule {
   @@index([matchType, pattern])
 }
 
+model AdminFinancialExpense {
+  id          String   @id @default(uuid())
+  category    String
+  description String?
+  amount      Int
+  currency    String
+  expenseDate DateTime @default(now())
+  recurring   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expenseDate])
+  @@index([currency, expenseDate])
+}
+
 model AdminBillingConfig {
   id       String   @id
   topology Json
