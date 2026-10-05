@@ -25,9 +25,21 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   trustLine: 'Secure by design. Built for everyday privacy and reliable access.',
   primaryColor: '#6d5dfc',
   services: [
-    { title: 'Santor VPN', description: 'Private network access with WireGuard clients and device management.', label: 'VPN' },
-    { title: 'Secure Tunnel', description: 'Flexible proxy and tunnel access for supported clients and platforms.', label: 'Proxy' },
-    { title: 'Santor AI', description: 'Authenticated AI assistance through the customer dashboard and Telegram.', label: 'AI' },
+    {
+      title: 'Santor VPN',
+      description: 'Private network access with WireGuard clients and device management.',
+      label: 'VPN',
+    },
+    {
+      title: 'Secure Tunnel',
+      description: 'Flexible proxy and tunnel access for supported clients and platforms.',
+      label: 'Proxy',
+    },
+    {
+      title: 'Santor AI',
+      description: 'Authenticated AI assistance through the customer dashboard and Telegram.',
+      label: 'AI',
+    },
   ],
 };
 

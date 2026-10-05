@@ -5,9 +5,7 @@
 .public-site {
   min-height: 100vh;
   color: #f7f7fb;
-  background:
-    radial-gradient(circle at 70% 8%, rgba(109, 93, 252, 0.22), transparent 32%),
-    #08080d;
+  background: radial-gradient(circle at 70% 8%, rgba(109, 93, 252, 0.22), transparent 32%), #08080d;
 }
 
 .public-nav {
@@ -140,7 +138,13 @@
   width: 330px;
   height: 330px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #9d94ff, #6d5dfc 40%, #241e66 72%, transparent 73%);
+  background: radial-gradient(
+    circle at 35% 30%,
+    #9d94ff,
+    #6d5dfc 40%,
+    #241e66 72%,
+    transparent 73%
+  );
   filter: blur(2px);
   opacity: 0.72;
   box-shadow: 0 0 120px rgba(109, 93, 252, 0.35);
@@ -150,11 +154,11 @@
   position: absolute;
   width: min(330px, 80%);
   padding: 26px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 22px;
   background: rgba(16, 16, 25, 0.82);
   backdrop-filter: blur(20px);
-  box-shadow: 0 30px 100px rgba(0,0,0,0.45);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.45);
 }
 
 .hero-panel-card span {
@@ -642,3 +646,88 @@
     margin-left: 0;
   }
 }
+<<<<<<< HEAD
+=======
+
+.admin-roadmap {
+  margin-top: 28px;
+}
+.roadmap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.roadmap-legend span {
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #fff;
+}
+.roadmap-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0 16px;
+}
+.roadmap-phase {
+  border: 1px solid #e3e3e8;
+  border-radius: 14px;
+  background: #fff;
+  margin: 10px 0;
+  overflow: hidden;
+}
+.roadmap-phase summary {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 18px;
+  list-style: none;
+}
+.roadmap-phase summary::-webkit-details-marker {
+  display: none;
+}
+.roadmap-phase summary span {
+  font-size: 12px;
+  opacity: 0.65;
+}
+.roadmap-summary {
+  padding: 0 18px;
+  color: #666;
+}
+.roadmap-items {
+  padding: 0 14px 14px;
+}
+.roadmap-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.5fr) 190px minmax(180px, 1fr);
+  gap: 8px;
+  padding: 7px 0;
+  border-top: 1px solid #eee;
+}
+.roadmap-item input,
+.roadmap-item select {
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 9px;
+  background: #fff;
+}
+.roadmap-title {
+  font-weight: 600;
+}
+.roadmap-note {
+  color: #666;
+}
+@media (max-width: 800px) {
+  .roadmap-item {
+    grid-template-columns: 1fr;
+  }
+  .roadmap-toolbar {
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+>>>>>>> d841946 (style: format admin and roadmap files)
