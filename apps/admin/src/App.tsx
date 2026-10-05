@@ -1483,7 +1483,7 @@ function App() {
                     amount: Math.round(priceDraft.amount * 100),
                     active: priceDraft.active,
                   };
-                  const saved = await api(priceDraft.id ? '/api/v1/admin/product-prices/' + priceDraft.id : '/api/v1/admin/product-prices', {
+                  await api(priceDraft.id ? '/api/v1/admin/product-prices/' + priceDraft.id : '/api/v1/admin/product-prices', {
                     method: priceDraft.id ? 'PUT' : 'POST',
                     body: JSON.stringify(payload),
                   });
