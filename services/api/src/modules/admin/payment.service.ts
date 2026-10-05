@@ -306,3 +306,52 @@ export async function updateAdminPayment(
     include: { subscription: { include: { user: true, product: true } } },
   });
 }
+
+
+const defaultBillingTopology = {
+  generalFree: {
+    maxConcurrentUsers: 100,
+    operatingWindowHours: 1,
+    disconnectInactive: true,
+    releaseCapacity: true,
+    queueEnabled: true,
+    routeLabel: 'Free Server',
+    description: 'Active usage/device checks, automatic disconnect of inactive connections, capacity release and queue-aware reconnection.',
+  },
+  generalPro: {
+    target: 'Production General Nodes',
+    smartVpn: true,
+    smartVproxy: true,
+    health: true,
+    load: true,
+    capacity: true,
+    queue: true,
+  },
+  wireguard: {
+    target: 'Production WireGuard Nodes',
+    health: true,
+    load: true,
+    capacity: true,
+    queue: true,
+  },
+};
+
+export async function adminBillingTopology() {
+  const config = await prisma.adminBillingConfig.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: { id: 'default', topology: defaultBillingTopology },
+  });
+  return config.topology;
+}
+
+export async function updateAdminBillingTopology(topology: unknown) {
+  const value = topology as typeof defaultBillingTopology;
+  return (
+    await prisma.adminBillingConfig.upsert({
+      where: { id: 'default' },
+      update: { topology: value },
+      create: { id: 'default', topology: value },
+    })
+  ).topology;
+}
