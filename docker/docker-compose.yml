@@ -64,7 +64,7 @@ services:
     ports:
       - '127.0.0.1:3000:3000'
     extra_hosts:
-      - "host.docker.internal:172.16.1.1"
+      - 'host.docker.internal:172.16.1.1'
     networks: [santor-network]
 
 volumes:

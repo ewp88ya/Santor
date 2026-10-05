@@ -10,10 +10,7 @@ const PROXY_PATH = '/xray';
 
 function uuidV5(name: string) {
   const namespace = Buffer.from(UUID_NAMESPACE.replace(/-/g, ''), 'hex');
-  const hash = createHash('sha1')
-    .update(namespace)
-    .update(Buffer.from(name))
-    .digest();
+  const hash = createHash('sha1').update(namespace).update(Buffer.from(name)).digest();
   hash[6] = (hash[6] & 0x0f) | 0x50;
   hash[8] = (hash[8] & 0x3f) | 0x80;
   const hex = hash.subarray(0, 16).toString('hex');
