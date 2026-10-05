@@ -399,6 +399,19 @@ function App() {
     void run();
   }, [token]);
 
+  useEffect(() => {
+    if (!token) return;
+    const refreshMonitoring = async () => {
+      try {
+        setMonitoring(await api('/api/v1/admin/monitoring'));
+      } catch {
+        // Keep the last successful monitoring snapshot visible.
+      }
+    };
+    const timer = window.setInterval(() => void refreshMonitoring(), 30000);
+    return () => window.clearInterval(timer);
+  }, [token]);
+
   const login = async (event: FormEvent) => {
     event.preventDefault();
     setLoginError('');
@@ -734,6 +747,10 @@ function App() {
                 <div>
                   <span>Internet latency</span>
                   <strong>{monitoring ? `${monitoring.internet.latencyMs} ms` : '—'}</strong>
+                </div>
+                <div>
+                  <span>Internet speed</span>
+                  <strong>{monitoring?.internet.speedMbps != null ? `${monitoring.internet.speedMbps} Mbps` : '—'}</strong>
                 </div>
                 <div>
                   <span>Memory</span>
