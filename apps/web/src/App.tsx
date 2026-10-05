@@ -36,6 +36,11 @@ type AdminOverview = {
   stats: { users: number; subscriptions: number; activeProducts: number };
 };
 
+type RoadmapStatus = 'validation' | 'implemented' | 'partial' | 'pending' | 'complete';
+type RoadmapItem = { id: string; title: string; status: RoadmapStatus; note?: string };
+type RoadmapPhase = { id: string; title: string; summary?: string; items: RoadmapItem[] };
+type Roadmap = { version: number; title: string; statuses: Array<{ id: RoadmapStatus; label: string; description: string }>; phases: RoadmapPhase[] };
+
 const API_URL = (import.meta.env.VITE_API_URL ?? 'https://api.santor.app').replace(/\/$/, '');
 const hostname = window.location.hostname;
 const isAdminHost = hostname === 'admin.santor.app';
@@ -360,6 +365,9 @@ function AdminDashboard() {
   const [site, setSite] = useState<SiteConfig>(fallbackSite);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
+  const [roadmapSaved, setRoadmapSaved] = useState(false);
+  const [roadmapError, setRoadmapError] = useState('');
   const [loading, setLoading] = useState(Boolean(token));
 
 
@@ -369,13 +377,14 @@ function AdminDashboard() {
     Promise.all([
       fetch(`${API_URL}/api/v1/admin/overview`, { headers }),
       fetch(`${API_URL}/api/v1/admin/site-config`, { headers }),
+      fetch(`${API_URL}/api/v1/admin/roadmap`, { headers }),
     ])
-      .then(async ([overviewResponse, siteResponse]) => {
+      .then(async ([overviewResponse, siteResponse, roadmapResponse]) => {
         if (overviewResponse.status === 401 || overviewResponse.status === 403) throw new Error('Admin access denied.');
-        if (!overviewResponse.ok || !siteResponse.ok) throw new Error('Unable to load admin workspace.');
-        return [await overviewResponse.json(), await siteResponse.json()] as [AdminOverview, SiteConfig];
+        if (!overviewResponse.ok || !siteResponse.ok || !roadmapResponse.ok) throw new Error('Unable to load admin workspace.');
+        return [await overviewResponse.json(), await siteResponse.json(), await roadmapResponse.json()] as [AdminOverview, SiteConfig, Roadmap];
       })
-      .then(([nextOverview, nextSite]) => { setOverview(nextOverview); setSite(nextSite); })
+      .then(([nextOverview, nextSite, nextRoadmap]) => { setOverview(nextOverview); setSite(nextSite); setRoadmap(nextRoadmap); })
       .catch((err: Error) => { setError(err.message); localStorage.removeItem('santor_admin_token'); setToken(null); })
       .finally(() => setLoading(false));
   }, [token]);
@@ -396,6 +405,23 @@ function AdminDashboard() {
       if (!response.ok) throw new Error(data?.error?.message ?? data?.message ?? 'Unable to save website settings');
       setSite(data); setSaved(true);
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to save website settings'); }
+  };
+
+  const saveRoadmap = async () => {
+    if (!token || !roadmap) return;
+    setRoadmapSaved(false); setRoadmapError('');
+    try {
+      const response = await fetch(`${API_URL}/api/v1/admin/roadmap`, { method: 'PUT', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(roadmap) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error?.message ?? data?.message ?? 'Unable to save roadmap');
+      setRoadmap(data); setRoadmapSaved(true);
+    } catch (err) { setRoadmapError(err instanceof Error ? err.message : 'Unable to save roadmap'); }
+  };
+
+  const updateRoadmapItem = (phaseIndex: number, itemIndex: number, patch: Partial<RoadmapItem>) => {
+    if (!roadmap) return;
+    const phases = roadmap.phases.map((phase, pi) => pi !== phaseIndex ? phase : { ...phase, items: phase.items.map((item, ii) => ii !== itemIndex ? item : { ...item, ...patch }) });
+    setRoadmap({ ...roadmap, phases });
   };
 
   if (!token) return <AuthScreen admin onAuthenticated={(newToken) => { setLoading(true); setToken(newToken); }} />;
@@ -430,6 +456,37 @@ function AdminDashboard() {
           <div className="editor-actions"><Button type="submit">Save website design</Button>{saved && <span className="save-ok">Saved</span>}</div>
           {error && <p className="auth-error" role="alert">{error}</p>}
         </form>
+      </section>
+
+      <section className="admin-roadmap">
+        <div className="section-heading">
+          <span className="eyebrow">Project roadmap</span>
+          <h2>Production roadmap control</h2>
+          <p>Manually update every roadmap item, its status and implementation note. This is an internal workspace; customers never see it.</p>
+        </div>
+        {roadmap?.statuses && <div className="roadmap-legend">{roadmap.statuses.map((status) => <span key={status.id} title={status.description}>{status.label}</span>)}</div>}
+        <div className="roadmap-toolbar">
+          <strong>{roadmap?.phases.length ?? 0} phases</strong>
+          <Button onClick={saveRoadmap} disabled={!roadmap}>{roadmapSaved ? 'Saved' : 'Save roadmap'}</Button>
+        </div>
+        {roadmap?.phases.map((phase, phaseIndex) => (
+          <details className="roadmap-phase" key={phase.id} open={phaseIndex < 2}>
+            <summary><strong>{phase.title}</strong><span>{phase.items.filter((i) => i.status === 'complete').length}/{phase.items.length} complete</span></summary>
+            {phase.summary && <p className="roadmap-summary">{phase.summary}</p>}
+            <div className="roadmap-items">
+              {phase.items.map((roadmapItem, itemIndex) => (
+                <div className="roadmap-item" key={roadmapItem.id}>
+                  <input className="roadmap-title" value={roadmapItem.title} onChange={(e) => updateRoadmapItem(phaseIndex, itemIndex, { title: e.target.value })} />
+                  <select value={roadmapItem.status} onChange={(e) => updateRoadmapItem(phaseIndex, itemIndex, { status: e.target.value as RoadmapStatus })}>
+                    {roadmap.statuses.map((status) => <option key={status.id} value={status.id}>{status.label}</option>)}
+                  </select>
+                  <input className="roadmap-note" value={roadmapItem.note ?? ''} onChange={(e) => updateRoadmapItem(phaseIndex, itemIndex, { note: e.target.value })} placeholder="Implementation / verification note" />
+                </div>
+              ))}
+            </div>
+          </details>
+        ))}
+        {roadmapError && <p className="auth-error" role="alert">{roadmapError}</p>}
       </section>
 
       <section className="admin-preview">
