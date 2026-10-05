@@ -12,6 +12,10 @@ type Ad = {
   channel: string; status: string; startAt: string | null; endAt: string | null; publishedAt: string | null;
 };
 type Phase = { id: string; phase: number; title: string; status: string; note: string | null };
+type Tunnel = { id:string; name:string; protocol:string; nodeId:string|null; endpoint:string|null; port:number|null; enabled:boolean; config:Record<string,unknown> };
+type ClientProfile = { id:string; name:string; client:string; tunnelId:string|null; enabled:boolean; config:Record<string,unknown> };
+type BypassRule = { id:string; name:string; matchType:string; pattern:string; action:string; enabled:boolean; priority:number; notes:string|null };
+type NetworkData = { supportedClients:string[]; tunnels:Tunnel[]; profiles:ClientProfile[]; bypass:BypassRule[] };
 
 const apiBase = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const tokenKey = 'santor_token';
@@ -52,12 +56,14 @@ function App() {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [message, setMessage] = useState('');
   const [adDraft, setAdDraft] = useState<Partial<Ad> | null>(null);
+  const [network, setNetwork] = useState<NetworkData>({ supportedClients: [], tunnels: [], profiles: [], bypass: [] });
+  const [networkDraft, setNetworkDraft] = useState<any>(null);
 
   const load = async () => {
-    const [overview, config, adList, roadmap] = await Promise.all([
-      api('/api/v1/admin/overview'), api('/api/v1/admin/site-config'), api('/api/v1/admin/ads'), api('/api/v1/admin/roadmap'),
+    const [overview, config, adList, roadmap, networkData] = await Promise.all([
+      api('/api/v1/admin/overview'), api('/api/v1/admin/site-config'), api('/api/v1/admin/ads'), api('/api/v1/admin/roadmap'), api('/api/v1/admin/network'),
     ]);
-    setStats(overview.stats); setSite(config); setAds(adList); setPhases(roadmap);
+    setStats(overview.stats); setSite(config); setAds(adList); setPhases(roadmap); setNetwork(networkData);
   };
 
   useEffect(() => {
@@ -111,7 +117,7 @@ function App() {
   }
 
   const nav = [
-    ['overview', 'Control Center'], ['website', 'Website & Marketing'], ['ads', 'Ads'], ['roadmap', 'Roadmap'],
+    ['overview', 'Control Center'], ['website', 'Website & Marketing'], ['ads', 'Ads'], ['network', 'Tunnels & Clients'], ['roadmap', 'Roadmap'],
   ];
 
   return <div className="admin-shell">
@@ -136,9 +142,19 @@ function App() {
         <div className="ad-list">{ads.map((ad) => <article className="ad-row" key={ad.id}><div><span className={`status ${ad.status}`}>{ad.status}</span><h3>{ad.name}</h3><p>{ad.title}</p><small>{ad.channel}{ad.productCode ? ` · ${ad.productCode}` : ''}</small></div><div className="row-actions"><button onClick={() => setAdDraft(ad)}>Edit</button>{ad.status === 'published' ? <button onClick={async()=>{const x=await api(`/api/v1/admin/ads/${ad.id}/unpublish`,{method:'POST'});setAds(ads.map(a=>a.id===x.id?x:a));}}>Unpublish</button> : <button onClick={async()=>{const x=await api(`/api/v1/admin/ads/${ad.id}/publish`,{method:'POST'});setAds(ads.map(a=>a.id===x.id?x:a));}}>Publish</button>}<button className="danger" onClick={async()=>{await api(`/api/v1/admin/ads/${ad.id}`,{method:'DELETE'});setAds(ads.filter(a=>a.id!==ad.id));}}>Delete</button></div></article>)}</div>
       </section>}
 
-      {section === 'roadmap' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Project context</p><h2>Roadmap status</h2><p>Only phase status and operational notes are editable here. Detailed implementation remains in the repository roadmap.</p></div></div><div className="roadmap">{phases.map((phase) => <div className="roadmap-row" key={phase.id}><div className="phase-no">P{phase.phase}</div><div className="phase-title"><strong>{phase.title}</strong><textarea defaultValue={phase.note ?? ''} onBlur={(e) => updatePhase(phase, (e.currentTarget.parentElement?.previousElementSibling as HTMLElement)?.dataset?.status ?? phase.status, e.currentTarget.value)} /></div><select value={phase.status} data-status={phase.status} onChange={(e) => updatePhase(phase, e.target.value, phase.note ?? '')}><option value="validation">⚠️ Validation</option><option value="complete">✅ Complete</option><option value="foundation">🟢 Foundation</option><option value="partial">🟡 Partial / Hardening</option><option value="pending">⏳ Not completed</option></select></div>)}</div></section>}
+      {section === 'network' && <section className="panel">
+        <div className="panel-head"><div><p className="eyebrow">Network control</p><h2>Tunnels, clients & bypass</h2><p>One operational control plane for WireGuard, proxy tunnels and client profiles.</p></div><button className="primary" onClick={() => setNetworkDraft({type:'tunnel',name:'',protocol:'wireguard',endpoint:'',port:51820,enabled:true})}>New tunnel</button></div>
+        <div className="network-grid">
+          <div><h3>Tunnel profiles</h3>{network.tunnels.map(t => <article className="network-row" key={t.id}><div><span className={t.enabled?'status published':'status'}>{t.enabled?'enabled':'disabled'}</span><strong>{t.name}</strong><small>{t.protocol} · {t.endpoint ?? 'no endpoint'}{t.port ? ':'+t.port : ''}</small></div><div className="row-actions"><button onClick={()=>setNetworkDraft({...t,type:'tunnel'})}>Edit</button><button className="danger" onClick={async()=>{await api('/api/v1/admin/network/tunnel/'+t.id,{method:'DELETE'});setNetwork({...network,tunnels:network.tunnels.filter(x=>x.id!==t.id)});}}>Delete</button></div></article>)}</div>
+          <div><h3>Client profiles</h3><p className="muted">Provisioning targets supported by Santor.</p>{network.supportedClients.map(client => <button className="client-chip" key={client} onClick={()=>setNetworkDraft({type:'client',name:client+' profile',client,tunnelId:network.tunnels[0]?.id ?? '',enabled:true})}>{client}</button>)}</div>
+        </div>
+        <div className="network-grid bypass-section"><div><div className="panel-head"><h3>Bypass rules</h3><button onClick={()=>setNetworkDraft({type:'bypass',name:'',matchType:'domain',pattern:'',action:'direct',priority:100,enabled:true})}>Add rule</button></div>{network.bypass.map(rule=><article className="network-row" key={rule.id}><div><strong>{rule.name}</strong><small>{rule.matchType}: {rule.pattern} → {rule.action}</small></div><div className="row-actions"><button onClick={()=>setNetworkDraft({...rule,type:'bypass'})}>Edit</button><button className="danger" onClick={async()=>{await api('/api/v1/admin/network/bypass/'+rule.id,{method:'DELETE'});setNetwork({...network,bypass:network.bypass.filter(x=>x.id!==rule.id)});}}>Delete</button></div></article>)}</div><div className="panel soft"><p className="eyebrow">Bypass policy</p><h3>Direct apps stay direct</h3><p>Rules can route matching domains, IPs, CIDRs or app identifiers directly instead of through the selected tunnel.</p></div></div>
+      </section>}      {section === 'roadmap' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Project context</p><h2>Roadmap status</h2><p>Only phase status and operational notes are editable here. Detailed implementation remains in the repository roadmap.</p></div></div><div className="roadmap">{phases.map((phase) => <div className="roadmap-row" key={phase.id}><div className="phase-no">P{phase.phase}</div><div className="phase-title"><strong>{phase.title}</strong><textarea defaultValue={phase.note ?? ''} onBlur={(e) => updatePhase(phase, (e.currentTarget.parentElement?.previousElementSibling as HTMLElement)?.dataset?.status ?? phase.status, e.currentTarget.value)} /></div><select value={phase.status} data-status={phase.status} onChange={(e) => updatePhase(phase, e.target.value, phase.note ?? '')}><option value="validation">⚠️ Validation</option><option value="complete">✅ Complete</option><option value="foundation">🟢 Foundation</option><option value="partial">🟡 Partial / Hardening</option><option value="pending">⏳ Not completed</option></select></div>)}</div></section>}
     </main>
-    {adDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Ad campaign</p><h2>{adDraft.id ? 'Edit ad' : 'New ad'}</h2></div><button onClick={() => setAdDraft(null)}>Close</button></div><div className="form-grid">{(['name','title','body','imageUrl','ctaLabel','landingUrl','productCode','channel'] as const).map((key) => <label key={key}>{key}{key==='body'?<textarea rows={5} value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>:<input value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>}</label>)}</div><div className="modal-actions"><button onClick={()=>setAdDraft(null)}>Cancel</button><button className="primary" onClick={saveAd}>Save draft</button></div></section></div>}
+    {networkDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Network control</p><h2>Edit {networkDraft.type}</h2></div><button onClick={()=>setNetworkDraft(null)}>Close</button></div>
+      <div className="form-grid">{(networkDraft.type==='tunnel'?['name','protocol','endpoint','port']:networkDraft.type==='client'?['name','client','tunnelId']:['name','matchType','pattern','action','priority','notes']).map((key:string)=><label key={key}>{key}{key==='notes'?<textarea value={String(networkDraft[key]??'')} onChange={e=>setNetworkDraft({...networkDraft,[key]:e.target.value})}/>:<input value={String(networkDraft[key]??'')} onChange={e=>setNetworkDraft({...networkDraft,[key]:e.target.value})}/>}</label>)}</div>
+      <div className="modal-actions"><button onClick={()=>setNetworkDraft(null)}>Cancel</button><button className="primary" onClick={async()=>{const d={...networkDraft};delete d.type;const kind=networkDraft.type;const id=networkDraft.id;delete d.id;const path=kind==='tunnel'?'tunnels':kind==='client'?'clients':'bypass';const saved=await api('/api/v1/admin/network/'+path+(id?'/'+id:''),{method:id?'PUT':'POST',body:JSON.stringify(d)});setNetwork(kind==='tunnel'?{...network,tunnels:id?network.tunnels.map(x=>x.id===saved.id?saved:x):[saved,...network.tunnels]}:kind==='client'?{...network,profiles:id?network.profiles.map(x=>x.id===saved.id?saved:x):[saved,...network.profiles]}:{...network,bypass:id?network.bypass.map(x=>x.id===saved.id?saved:x):[saved,...network.bypass]});setNetworkDraft(null);}}>Save</button></div>
+    </section></div>    {adDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Ad campaign</p><h2>{adDraft.id ? 'Edit ad' : 'New ad'}</h2></div><button onClick={() => setAdDraft(null)}>Close</button></div><div className="form-grid">{(['name','title','body','imageUrl','ctaLabel','landingUrl','productCode','channel'] as const).map((key) => <label key={key}>{key}{key==='body'?<textarea rows={5} value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>:<input value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>}</label>)}</div><div className="modal-actions"><button onClick={()=>setAdDraft(null)}>Cancel</button><button className="primary" onClick={saveAd}>Save draft</button></div></section></div>}
   </div>;
 }
 
