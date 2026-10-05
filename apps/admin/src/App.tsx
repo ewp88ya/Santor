@@ -168,7 +168,7 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [section, setSection] = useState('overview');
+  const [section, setSection] = useState(() => localStorage.getItem('santor_admin_section') ?? 'overview');
   const [stats, setStats] = useState({ users: 0, subscriptions: 0, activeProducts: 0 });
   const [site, setSite] = useState<SiteConfig>(defaultSite);
   const [ads, setAds] = useState<Ad[]>([]);
@@ -189,6 +189,40 @@ function App() {
     catalog: [],
   });
   const [networkDraft, setNetworkDraft] = useState<NetworkDraft | null>(null);
+  const [adminPrefs, setAdminPrefs] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('santor_admin_preferences') ??
+          JSON.stringify({
+            accent: '#6d5dfc',
+            surface: '#ffffff',
+            background: '#f5f7fb',
+            density: 'comfortable',
+            sidebar: '240px',
+            radius: '14px',
+            defaultSection: 'overview',
+          }),
+      ) as {
+        accent: string;
+        surface: string;
+        background: string;
+        density: 'comfortable' | 'compact';
+        sidebar: '220px' | '240px' | '280px';
+        radius: '10px' | '14px' | '18px';
+        defaultSection: string;
+      };
+    } catch {
+      return {
+        accent: '#6d5dfc',
+        surface: '#ffffff',
+        background: '#f5f7fb',
+        density: 'comfortable',
+        sidebar: '240px',
+        radius: '14px',
+        defaultSection: 'overview',
+      };
+    }
+  });
 
   const load = async () => {
     const [overview, config, adList, roadmap, networkData, paymentData] = await Promise.all([
@@ -206,6 +240,16 @@ function App() {
     setNetwork(networkData);
     setPayments(paymentData);
   };
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--admin-accent', adminPrefs.accent);
+    document.documentElement.style.setProperty('--admin-surface', adminPrefs.surface);
+    document.documentElement.style.setProperty('--admin-background', adminPrefs.background);
+    document.documentElement.style.setProperty('--admin-sidebar', adminPrefs.sidebar);
+    document.documentElement.style.setProperty('--admin-radius', adminPrefs.radius);
+    document.documentElement.dataset.density = adminPrefs.density;
+    localStorage.setItem('santor_admin_preferences', JSON.stringify(adminPrefs));
+  }, [adminPrefs]);
 
   useEffect(() => {
     if (!token) return;
@@ -309,11 +353,13 @@ function App() {
 
   const nav = [
     ['overview', 'Control Center'],
-    ['website', 'Website & Marketing'],
-    ['ads', 'Ads'],
-    ['network', 'Tunnels & Clients'],
+    ['customers', 'Customers'],
     ['payments', 'Payments & Billing'],
+    ['network', 'Network & Clients'],
+    ['website', 'Website & Marketing'],
+    ['ads', 'Ads & Campaigns'],
     ['roadmap', 'Roadmap'],
+    ['settings', 'Admin Settings'],
   ];
 
   return (
@@ -323,20 +369,77 @@ function App() {
           <span>S</span>
           <div>
             <strong>Santor</strong>
-            <small>Admin</small>
+            <small>Operations</small>
           </div>
         </div>
+        <div className="sidebar-label">COMMAND</div>
         <nav>
-          {nav.map(([id, label]) => (
+          {nav.slice(0, 2).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
-              onClick={() => setSection(id)}
+              onClick={() => {
+                setSection(id);
+                localStorage.setItem('santor_admin_section', id);
+              }}
             >
+              <span className="nav-dot" />
               {label}
             </button>
           ))}
         </nav>
+        <div className="sidebar-label">OPERATIONS</div>
+        <nav>
+          {nav.slice(2, 4).map(([id, label]) => (
+            <button
+              key={id}
+              className={section === id ? 'active' : ''}
+              onClick={() => {
+                setSection(id);
+                localStorage.setItem('santor_admin_section', id);
+              }}
+            >
+              <span className="nav-dot" />
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-label">CONTENT</div>
+        <nav>
+          {nav.slice(4, 6).map(([id, label]) => (
+            <button
+              key={id}
+              className={section === id ? 'active' : ''}
+              onClick={() => {
+                setSection(id);
+                localStorage.setItem('santor_admin_section', id);
+              }}
+            >
+              <span className="nav-dot" />
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-label">PROJECT</div>
+        <nav>
+          {nav.slice(6).map(([id, label]) => (
+            <button
+              key={id}
+              className={section === id ? 'active' : ''}
+              onClick={() => {
+                setSection(id);
+                localStorage.setItem('santor_admin_section', id);
+              }}
+            >
+              <span className="nav-dot" />
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-footer">
+          <span className="health-dot" />
+          <div><strong>Control plane</strong><small>Admin session active</small></div>
+        </div>
         <button
           className="logout"
           onClick={() => {
@@ -360,44 +463,83 @@ function App() {
         {message && <div className="notice">{message}</div>}
         {section === 'overview' && (
           <>
-            <section className="stats">
+            <section className="hero-panel">
               <div>
-                <span>Customers</span>
-                <strong>{stats.users}</strong>
+                <p className="eyebrow">Santor operations</p>
+                <h2>One control plane for the whole service.</h2>
+                <p>Customers, billing, VPN clients, content and roadmap are managed here. Customer-facing website data remains isolated behind the existing marketing API.</p>
               </div>
-              <div>
-                <span>Subscriptions</span>
-                <strong>{stats.subscriptions}</strong>
-              </div>
-              <div>
-                <span>Active products</span>
-                <strong>{stats.activeProducts}</strong>
-              </div>
-              <div>
-                <span>Published ads</span>
-                <strong>{ads.filter((ad) => ad.status === 'published').length}</strong>
+              <div className="hero-meta">
+                <span className="status published">CORE ONLINE</span>
+                <small>Admin API connected</small>
               </div>
             </section>
-            <section className="grid-two">
+            <section className="stats ops-stats">
+              <div><span>Customers</span><strong>{stats.users}</strong><small>registered accounts</small></div>
+              <div><span>Subscriptions</span><strong>{stats.subscriptions}</strong><small>commercial entitlements</small></div>
+              <div><span>Active products</span><strong>{stats.activeProducts}</strong><small>plans available</small></div>
+              <div><span>Published campaigns</span><strong>{ads.filter((ad) => ad.status === 'published').length}</strong><small>public content</small></div>
+              <div><span>VPN tunnels</span><strong>{network.tunnels.length}</strong><small>configured control paths</small></div>
+              <div><span>Client profiles</span><strong>{network.profiles.length}</strong><small>provisioning definitions</small></div>
+              <div><span>Bypass rules</span><strong>{network.bypass.length}</strong><small>direct-routing rules</small></div>
+              <div><span>Roadmap complete</span><strong>{phases.filter((p) => p.status === 'complete').length}/{phases.length}</strong><small>phase status</small></div>
+            </section>
+            <section className="operation-grid">
               <div className="panel">
-                <p className="eyebrow">Operating model</p>
-                <h2>Manage what actually changes.</h2>
-                <p>
-                  Website copy, products, campaigns and roadmap status stay editable here. The
-                  roadmap is context and control, not a giant CMS form.
-                </p>
+                <div className="panel-head"><div><p className="eyebrow">Service health</p><h3>Operational domains</h3></div><span className="status published">READY</span></div>
+                <div className="health-list">
+                  <div><span><i className="health-dot" />Santor Core</span><strong>Connected</strong></div>
+                  <div><span><i className="health-dot" />Billing & catalog</span><strong>{payments.providerStatus.filter((p) => p.configured).length}/{payments.providerStatus.length || 0} providers configured</strong></div>
+                  <div><span><i className="health-dot" />Network control</span><strong>{network.tunnels.length} tunnels · {network.profiles.length} profiles</strong></div>
+                  <div><span><i className="health-dot" />Project control</span><strong>{phases.filter((p) => p.status === 'complete').length} phases complete</strong></div>
+                </div>
               </div>
               <div className="panel">
-                <p className="eyebrow">Publishing</p>
-                <h2>Draft → Preview → Publish</h2>
-                <p>
-                  Marketing changes can be prepared and published without touching application
-                  source code.
-                </p>
+                <div className="panel-head"><div><p className="eyebrow">Quick actions</p><h3>Operate without leaving Control Center</h3></div></div>
+                <div className="quick-actions">
+                  <button onClick={() => setSection('customers')}>View customers</button>
+                  <button onClick={() => setSection('network')}>Manage VPN & clients</button>
+                  <button onClick={() => setSection('payments')}>Manage plans & billing</button>
+                  <button onClick={() => setSection('settings')}>Customize admin UI</button>
+                </div>
+              </div>
+            </section>
+            <section className="panel">
+              <div className="panel-head"><div><p className="eyebrow">Operating lifecycle</p><h3>Customer → entitlement → access</h3></div></div>
+              <div className="lifecycle">
+                {['Customer','Subscription','VPN entitlement','Provision','Client profile','Download / config','Revoke'].map((item, i) => <div key={item}><span>{i + 1}</span><strong>{item}</strong></div>)}
               </div>
             </section>
           </>
         )}
+        {section === 'customers' && (
+          <section className="panel">
+            <div className="panel-head">
+              <div><p className="eyebrow">Customer operations</p><h2>Customers</h2><p>Operational visibility from the existing customer, subscription and billing data.</p></div>
+              <span className="status published">READ / OPERATE</span>
+            </div>
+            <div className="customer-summary">
+              <div><span>Total customers</span><strong>{stats.users}</strong></div>
+              <div><span>Subscriptions</span><strong>{stats.subscriptions}</strong></div>
+              <div><span>Active plans</span><strong>{stats.activeProducts}</strong></div>
+            </div>
+            <div className="customer-list">
+              {payments.subscriptions.length ? payments.subscriptions.map((subscription) => (
+                <article className="customer-row" key={subscription.id}>
+                  <div><strong>{subscription.user.email}</strong><small>{subscription.product.name}</small></div>
+                  <span className={subscription.status === 'active' ? 'status published' : 'status'}>{subscription.status}</span>
+                  <small>{subscription.startDate ? new Date(subscription.startDate).toLocaleDateString() : '—'} → {subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : '—'}</small>
+                </article>
+              )) : <div className="empty-state">No subscriptions are available yet.</div>}
+            </div>
+            <div className="panel soft">
+              <p className="eyebrow">Boundary</p>
+              <h3>Customer website stays untouched</h3>
+              <p>This panel only consumes existing authenticated Admin APIs. It does not edit public-site configuration unless you explicitly use Website & Marketing.</p>
+            </div>
+          </section>
+        )}
+
         {section === 'website' && (
           <section className="panel publisher-workspace">
             <div className="panel-head">
@@ -991,6 +1133,42 @@ function App() {
             </div>
           </section>
         )}
+        {section === 'settings' && (
+          <section className="panel settings-workspace">
+            <div className="panel-head">
+              <div><p className="eyebrow">Workspace configuration</p><h2>Admin Settings</h2><p>Customize the internal Control Center layout, colors and density. These settings are private to the admin workspace and never modify the customer website.</p></div>
+              <span className="status published">ADMIN ONLY</span>
+            </div>
+            <div className="settings-grid">
+              <div className="editor-group">
+                <h3>Appearance</h3>
+                <div className="form-grid">
+                  <label>Accent color<input type="color" value={adminPrefs.accent} onChange={(e) => setAdminPrefs({ ...adminPrefs, accent: e.target.value })} /></label>
+                  <label>Surface<input type="color" value={adminPrefs.surface} onChange={(e) => setAdminPrefs({ ...adminPrefs, surface: e.target.value })} /></label>
+                  <label>Workspace background<input type="color" value={adminPrefs.background} onChange={(e) => setAdminPrefs({ ...adminPrefs, background: e.target.value })} /></label>
+                  <label>Density<select value={adminPrefs.density} onChange={(e) => setAdminPrefs({ ...adminPrefs, density: e.target.value as 'comfortable' | 'compact' })}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+                  <label>Sidebar width<select value={adminPrefs.sidebar} onChange={(e) => setAdminPrefs({ ...adminPrefs, sidebar: e.target.value as '220px' | '240px' | '280px' })}><option value="220px">220 px</option><option value="240px">240 px</option><option value="280px">280 px</option></select></label>
+                  <label>Corner radius<select value={adminPrefs.radius} onChange={(e) => setAdminPrefs({ ...adminPrefs, radius: e.target.value as '10px' | '14px' | '18px' })}><option value="10px">Small</option><option value="14px">Medium</option><option value="18px">Large</option></select></label>
+                  <label>Default section<select value={adminPrefs.defaultSection} onChange={(e) => setAdminPrefs({ ...adminPrefs, defaultSection: e.target.value })}><option value="overview">Control Center</option><option value="customers">Customers</option><option value="payments">Payments & Billing</option><option value="network">Network & Clients</option><option value="website">Website & Marketing</option><option value="roadmap">Roadmap</option></select></label>
+                </div>
+                <button className="primary" onClick={() => { localStorage.setItem('santor_admin_section', adminPrefs.defaultSection); setSection(adminPrefs.defaultSection); setMessage('Admin workspace preferences saved.'); }}>Save workspace preferences</button>
+              </div>
+              <div className="settings-preview">
+                <p className="eyebrow">Live preview</p>
+                <h3>Control Center</h3>
+                <p>Accent, surface, background, sidebar width and density update immediately in this workspace.</p>
+                <div className="preview-swatch"><span style={{ background: adminPrefs.accent }} /><span style={{ background: adminPrefs.surface }} /><span style={{ background: adminPrefs.background }} /></div>
+                <ul><li>Admin-only visual settings</li><li>No customer website mutation</li><li>Persisted locally per browser</li></ul>
+              </div>
+            </div>
+            <div className="panel soft">
+              <p className="eyebrow">Safety boundary</p>
+              <h3>Public website controls remain separate</h3>
+              <p>Customer-facing brand, hero copy and public primary color continue to live under Website & Marketing and the existing <code>/api/v1/admin/site-config</code> API.</p>
+            </div>
+          </section>
+        )}
+
         {section === 'roadmap' && (
           <section className="panel">
             <div className="panel-head">
