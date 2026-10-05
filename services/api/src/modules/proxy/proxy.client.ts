@@ -32,10 +32,10 @@ export async function provisionProxyUser(uuid: string, email: string) {
 export async function revokeProxyUser(uuid: string) {
   let response: Response;
   try {
-    response = await fetch(`${env.PROXY_PROVISIONER_URL}/v1/users/${encodeURIComponent(uuid)}`, {
-      method: 'DELETE',
-      headers: headers(),
-    });
+    response = await fetch(
+      `${env.PROXY_PROVISIONER_URL}/v1/users/${encodeURIComponent(uuid)}`,
+      { method: 'DELETE', headers: headers() },
+    );
   } catch {
     throw createError(503, 'Proxy gateway provisioning unavailable');
   }
