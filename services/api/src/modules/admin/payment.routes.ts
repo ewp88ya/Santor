@@ -9,11 +9,15 @@ import {
   updateAdminPaymentController,
   updateAdminProductController,
   updateAdminProductPriceController,
+  adminBillingTopologyController,
+  updateAdminBillingTopologyController,
 } from './payment.controller.js';
 
 export default async function paymentAdminRoutes(app: FastifyInstance) {
   const guard = [authMiddleware, requireRole('ADMIN')];
   app.get('/payments', { preHandler: guard }, adminPayments);
+  app.get('/billing-topology', { preHandler: guard }, adminBillingTopologyController);
+  app.put('/billing-topology', { preHandler: guard }, updateAdminBillingTopologyController);
   app.post('/products', { preHandler: guard }, createAdminProductController);
   app.put<{ Params: { id: string } }>(
     '/products/:id',
