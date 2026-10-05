@@ -2,7 +2,6 @@ import type { FastifyRequest } from 'fastify';
 import {
   adminPaymentOverview,
   createAdminProductPrice,
-  updateAdminPaymentStatus,
   updateAdminProduct,
 } from './payment.service.js';
 
@@ -18,11 +17,4 @@ export async function updateAdminProductController(
 
 export async function createAdminProductPriceController(request: FastifyRequest) {
   return createAdminProductPrice(request.body as any);
-}
-
-export async function updateAdminPaymentStatusController(
-  request: FastifyRequest<{ Params: { id: string } }>,
-) {
-  const body = request.body as { status: string };
-  return updateAdminPaymentStatus(request.params.id, body.status);
 }
