@@ -55,3 +55,11 @@ export async function adminBillingTopologyController() {
 export async function updateAdminBillingTopologyController(request: FastifyRequest) {
   return updateAdminBillingTopology(request.body);
 }
+
+export async function adminBillingTopologyController() {
+  return adminBillingTopology();
+}
+
+export async function updateAdminBillingTopologyController(request: FastifyRequest) {
+  return updateAdminBillingTopology(request.body);
+}
