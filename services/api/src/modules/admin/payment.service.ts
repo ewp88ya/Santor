@@ -9,7 +9,45 @@ const providerEnv: Record<string, string[]> = {
   wechat: ['WECHAT_PAY_APP_ID', 'WECHAT_PAY_MCH_ID', 'WECHAT_PAY_API_KEY'],
 };
 
+const catalog = [
+  { code: 'general-free', name: 'General Free', price: 0, currency: 'USD', durationDays: 3, deviceLimit: 1, userLimit: 1, category: 'general', capacityPolicy: '100 concurrent/served users within a 1-hour operating window; active-usage/device checks; automatic disconnect of inactive connections; reconnection subject to current capacity and queue conditions.' },
+  { code: 'general-pro-1m', name: 'General Pro 1M', price: 1.99, currency: 'USD', durationDays: 30, deviceLimit: 3, userLimit: 1, category: 'general', capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.' },
+  { code: 'general-pro-6m', name: 'General Pro 6M', price: 9.99, currency: 'USD', durationDays: 180, deviceLimit: 3, userLimit: 1, category: 'general', capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.' },
+  { code: 'general-pro-12m', name: 'General Pro 12M', price: 14.99, currency: 'USD', durationDays: 365, deviceLimit: 3, userLimit: 1, category: 'general', capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.' },
+  { code: 'wg-1m', name: 'WG-1M', price: 4.99, currency: 'USD', durationDays: 30, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
+  { code: 'wg-3m', name: 'WG-3M', price: 12.99, currency: 'USD', durationDays: 90, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
+  { code: 'wg-6m', name: 'WG-6M', price: 22.99, currency: 'USD', durationDays: 180, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
+  { code: 'wg-12m', name: 'WG-12M', price: 39.99, currency: 'USD', durationDays: 365, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
+];
+
+export async function ensureProductCatalog() {
+  for (const item of catalog) {
+    await prisma.product.upsert({
+      where: { code: item.code },
+      update: {
+        name: item.name,
+        price: Math.round(item.price * 100),
+        currency: item.currency,
+        durationDays: item.durationDays,
+        deviceLimit: item.deviceLimit,
+        active: true,
+      },
+      create: {
+        name: item.name,
+        code: item.code,
+        price: Math.round(item.price * 100),
+        currency: item.currency,
+        durationDays: item.durationDays,
+        deviceLimit: item.deviceLimit,
+        active: true,
+      },
+    });
+  }
+  return prisma.product.findMany({ include: { prices: true }, orderBy: { createdAt: 'asc' } });
+}
+
 export async function adminPaymentOverview() {
+  await ensureProductCatalog();
   const [payments, subscriptions, products] = await Promise.all([
     prisma.payment.findMany({
       include: { subscription: { include: { user: true, product: true } } },
@@ -32,7 +70,7 @@ export async function adminPaymentOverview() {
     configured: keys.every((key) => Boolean(process.env[key]?.trim())),
   }));
 
-  return { payments, subscriptions, products, providerStatus };
+  return { payments, subscriptions, products, providerStatus, catalog };
 }
 
 export async function updateAdminProduct(
