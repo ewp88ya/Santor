@@ -80,6 +80,28 @@ async function timedFetch(url: string, timeoutMs = 5000) {
   }
 }
 
+async function measureDownloadMbps() {
+  const started = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch('https://speed.cloudflare.com/__down?bytes=1000000', {
+      method: 'GET',
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    if (!response.ok || !response.body) return null;
+    let bytes = 0;
+    for await (const chunk of response.body as any) bytes += Buffer.byteLength(chunk);
+    const seconds = Math.max((Date.now() - started) / 1000, 0.001);
+    return Number(((bytes * 8) / seconds / 1_000_000).toFixed(2));
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function diskStats() {
   try {
     const statfs = await fs.statfs('/');
@@ -104,8 +126,9 @@ export async function getInfrastructureMonitoring() {
   const loadPercent = clamp((load[0] / cpuCount) * 100);
   const disk = await diskStats();
 
-  const [internet, domains] = await Promise.all([
+  const [internet, speedMbps, domains] = await Promise.all([
     timedFetch('https://www.cloudflare.com/cdn-cgi/trace', 6000),
+    measureDownloadMbps(),
     Promise.all(
       ['https://santor.app/', 'https://admin.santor.app/', 'https://mcp.santor.app/health'].map(async (url) => ({
         url,
@@ -141,8 +164,8 @@ export async function getInfrastructureMonitoring() {
     internet: {
       status: internet.ok ? 'online' : 'degraded',
       latencyMs: internet.latencyMs,
-      speedMbps: null,
-      note: 'Latency is measured from the monitored VPS. Throughput measurement will be added to the regional probe worker.',
+      speedMbps,
+      note: 'Latency and throughput are measured from the monitored VPS. Regional probes can be added as additional nodes without changing the dashboard model.',
     },
     domains: domains.map((item) => ({
       ...item,
