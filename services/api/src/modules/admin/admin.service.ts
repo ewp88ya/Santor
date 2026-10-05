@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import os from 'node:os';
+import net from 'node:net';
 import fs from 'node:fs/promises';
 import { prisma } from '../../config/database.js';
 import { DEFAULT_SITE_CONFIG, SITE_CONFIG_ID, type SiteConfigPayload } from './admin.constants.js';
@@ -117,6 +118,20 @@ function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
 }
 
+async function tcpProbe(host: string, port: number, timeoutMs = 3000) {
+  const started = Date.now();
+  return await new Promise<{ ok: boolean; latencyMs: number }>((resolve) => {
+    const socket = net.createConnection({ host, port });
+    const finish = (ok: boolean) => {
+      socket.destroy();
+      resolve({ ok, latencyMs: Date.now() - started });
+    };
+    socket.setTimeout(timeoutMs, () => finish(false));
+    socket.once('connect', () => finish(true));
+    socket.once('error', () => finish(false));
+  });
+}
+
 export async function getInfrastructureMonitoring() {
   const memoryTotal = os.totalmem();
   const memoryFree = os.freemem();
@@ -126,7 +141,7 @@ export async function getInfrastructureMonitoring() {
   const loadPercent = clamp((load[0] / cpuCount) * 100);
   const disk = await diskStats();
 
-  const [internet, speedMbps, domains] = await Promise.all([
+  const [internet, speedMbps, domains, tunnels] = await Promise.all([
     timedFetch('https://www.cloudflare.com/cdn-cgi/trace', 6000),
     measureDownloadMbps(),
     Promise.all(
@@ -135,6 +150,7 @@ export async function getInfrastructureMonitoring() {
         ...(await timedFetch(url, 6000)),
       })),
     ),
+    prisma.tunnelProfile.findMany({ where: { enabled: true }, orderBy: { updatedAt: 'desc' } }),
   ]);
 
   const resourceScore =
@@ -181,6 +197,22 @@ export async function getInfrastructureMonitoring() {
         stabilityIndex,
         latencyMs: internet.latencyMs,
       },
+      ...(await Promise.all(
+        tunnels.map(async (tunnel) => {
+          const endpoint = typeof tunnel.endpoint === 'string' ? tunnel.endpoint.trim() : '';
+          const port = tunnel.port ? Number(tunnel.port) : 0;
+          const probe = endpoint && port ? await tcpProbe(endpoint, port) : { ok: false, latencyMs: 0 };
+          const stability = probe.ok ? 100 : 35;
+          return {
+            country: 'Configured',
+            city: tunnel.name,
+            nodeId: tunnel.nodeId || tunnel.id,
+            status: probe.ok ? 'online' : 'degraded',
+            stabilityIndex: stability,
+            latencyMs: probe.latencyMs,
+          };
+        }),
+      )),
     ],
   };
 }
