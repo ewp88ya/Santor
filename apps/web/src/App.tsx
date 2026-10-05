@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Button, Card } from '@santor/ui';
 import '@santor/ui/styles.css';
 import './App.css';
@@ -99,7 +99,7 @@ function App() {
       return <main className="dashboard"><Card><h1>Loading Santor...</h1></Card></main>;
     }
     return (
-      <main className="marketing-site" style={{ '--marketing-accent': marketing.primaryColor } as React.CSSProperties}>
+      <main className="marketing-site" style={{ '--marketing-accent': marketing.primaryColor } as CSSProperties}>
         <header className="marketing-nav"><strong>{marketing.brand}</strong><Button onClick={() => { window.location.href = '/login'; }}>{marketing.secondaryCta}</Button></header>
         <section className="marketing-hero"><p className="eyebrow">{marketing.trustLine}</p><h1>{marketing.heroTitle}</h1><p>{marketing.heroSubtitle}</p><Button onClick={() => { window.location.href = '/register'; }}>{marketing.primaryCta}</Button></section>
         <section className="marketing-services">{marketing.services.map((service) => <Card key={service.label}><p className="eyebrow">{service.label}</p><h2>{service.title}</h2><p>{service.description}</p></Card>)}</section>
