@@ -7,6 +7,8 @@ import {
   updateAdminPayment,
   updateAdminProduct,
   updateAdminProductPrice,
+  adminBillingTopology,
+  updateAdminBillingTopology,
 } from './payment.service.js';
 
 export async function adminPayments() {
@@ -43,4 +45,13 @@ export async function updateAdminPaymentController(
 
 export async function createAdminProductPriceController(request: FastifyRequest) {
   return createAdminProductPrice(request.body as any);
+}
+
+
+export async function adminBillingTopologyController() {
+  return adminBillingTopology();
+}
+
+export async function updateAdminBillingTopologyController(request: FastifyRequest) {
+  return updateAdminBillingTopology(request.body);
 }
