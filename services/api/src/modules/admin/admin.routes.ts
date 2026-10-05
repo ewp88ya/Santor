@@ -10,6 +10,7 @@ import {
   unpublishAdminAd,
   updateAdminAd,
 } from './ads.controller.js';
+import { adminRoadmap, updateAdminRoadmapPhase } from './roadmap.controller.js';
 
 export default async function adminRoutes(app: FastifyInstance) {
   const guard = [authMiddleware, requireRole('ADMIN')];
@@ -22,4 +23,6 @@ export default async function adminRoutes(app: FastifyInstance) {
   app.delete('/ads/:id', { preHandler: guard }, deleteAdminAd);
   app.post('/ads/:id/publish', { preHandler: guard }, publishAdminAd);
   app.post('/ads/:id/unpublish', { preHandler: guard }, unpublishAdminAd);
+  app.get('/roadmap', { preHandler: guard }, adminRoadmap);
+  app.put('/roadmap/:id', { preHandler: guard }, updateAdminRoadmapPhase);
 }
