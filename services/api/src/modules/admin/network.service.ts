@@ -2,6 +2,12 @@ import { prisma } from '../../config/database.js';
 
 const clients = ['WireGuard','Hiddify','v2RayTun','Happ','Proxy Gateway'];
 
+export const productionTopology = {
+  generalFree: { servers: 'Free Server', capacity: '100 users / 1h', policy: 'active usage/device check → continue active users; inactive → automatic disconnect → capacity released → reconnect subject to capacity + queue' },
+  generalPro: { servers: 'Smart VPN / Smart VProxy', tier: 'Production General Nodes', controls: ['health', 'load', 'capacity', 'queue'] },
+  wireguard: { servers: 'WireGuard', tier: 'Production WG Nodes', controls: ['health', 'load', 'capacity', 'queue'] },
+};
+
 export async function networkOverview() {
   const [tunnels, profiles, bypass] = await Promise.all([
     prisma.tunnelProfile.findMany({ orderBy: { updatedAt: 'desc' } }),
