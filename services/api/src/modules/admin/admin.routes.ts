@@ -1,7 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/permission.middleware.js';
-import { adminInfrastructureMonitoring, adminOperationalEvents, adminOverview, adminSiteConfig, updateAdminSiteConfig, updateAdminOperationalEvent } from './admin.controller.js';
+import {
+  adminInfrastructureMonitoring,
+  adminOperationalEvents,
+  adminOverview,
+  adminSiteConfig,
+  updateAdminSiteConfig,
+  updateAdminOperationalEvent,
+} from './admin.controller.js';
 import {
   adminAds,
   createAdminAd,
@@ -21,7 +28,11 @@ export default async function adminRoutes(app: FastifyInstance) {
   app.get('/overview', { preHandler: guard }, adminOverview);
   app.get('/monitoring', { preHandler: guard }, adminInfrastructureMonitoring);
   app.get('/operations/events', { preHandler: guard }, adminOperationalEvents);
-  app.put<{ Params: { id: string } }>('/operations/events/:id', { preHandler: guard }, updateAdminOperationalEvent);
+  app.put<{ Params: { id: string } }>(
+    '/operations/events/:id',
+    { preHandler: guard },
+    updateAdminOperationalEvent,
+  );
   app.get('/site-config', { preHandler: guard }, adminSiteConfig);
   app.put('/site-config', { preHandler: guard }, updateAdminSiteConfig);
   app.get('/ads', { preHandler: guard }, adminAds);

@@ -4,8 +4,21 @@ type Monitoring = {
   generatedAt?: string;
   node?: { id: string; status: string; stabilityIndex: number; country: string; city: string };
   internet?: { status: string; latencyMs: number; speedMbps: number | null };
-  domains?: Array<{ url: string; ok: boolean; httpStatus: number | null; latencyMs: number; status: string }>;
-  regions?: Array<{ nodeId: string; country: string; city: string; status: string; stabilityIndex: number; latencyMs: number }>;
+  domains?: Array<{
+    url: string;
+    ok: boolean;
+    httpStatus: number | null;
+    latencyMs: number;
+    status: string;
+  }>;
+  regions?: Array<{
+    nodeId: string;
+    country: string;
+    city: string;
+    status: string;
+    stabilityIndex: number;
+    latencyMs: number;
+  }>;
 };
 
 type Event = {
@@ -60,7 +73,10 @@ export default function OperationsAlerts({ monitoring }: { monitoring: Monitorin
     const response = await fetch(`/api/v1/admin/operations/events/${id}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, acknowledgedBy: status === 'acknowledged' ? 'admin' : undefined }),
+      body: JSON.stringify({
+        status,
+        acknowledgedBy: status === 'acknowledged' ? 'admin' : undefined,
+      }),
     });
     if (!response.ok) {
       setError('Unable to update operational event');
@@ -90,28 +106,42 @@ export default function OperationsAlerts({ monitoring }: { monitoring: Monitorin
       </div>
       <div className="tabs">
         {tabs.map(([id, label]) => (
-          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>{label}</button>
+          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
+            {label}
+          </button>
         ))}
       </div>
       {error && <div className="empty">{error}</div>}
       <div className="list">
-        {visible.length ? visible.map((event) => (
-          <div className="list-row" key={event.id}>
-            <div>
-              <strong>{event.title}</strong>
-              <small>{event.message} · {event.source} · {new Date(event.createdAt).toLocaleString()}</small>
+        {visible.length ? (
+          visible.map((event) => (
+            <div className="list-row" key={event.id}>
+              <div>
+                <strong>{event.title}</strong>
+                <small>
+                  {event.message} · {event.source} · {new Date(event.createdAt).toLocaleString()}
+                </small>
+              </div>
+              <div>
+                <span
+                  className={event.severity === 'critical' ? 'status degraded' : 'status draft'}
+                >
+                  {event.severity}
+                </span>
+                {event.status !== 'resolved' && (
+                  <>
+                    <button onClick={() => void updateEvent(event.id, 'acknowledged')}>
+                      Acknowledge
+                    </button>
+                    <button onClick={() => void updateEvent(event.id, 'resolved')}>Resolve</button>
+                  </>
+                )}
+              </div>
             </div>
-            <div>
-              <span className={event.severity === 'critical' ? 'status degraded' : 'status draft'}>{event.severity}</span>
-              {event.status !== 'resolved' && (
-                <>
-                  <button onClick={() => void updateEvent(event.id, 'acknowledged')}>Acknowledge</button>
-                  <button onClick={() => void updateEvent(event.id, 'resolved')}>Resolve</button>
-                </>
-              )}
-            </div>
-          </div>
-        )) : <div className="empty">No events in this view.</div>}
+          ))
+        ) : (
+          <div className="empty">No events in this view.</div>
+        )}
       </div>
     </section>
   );

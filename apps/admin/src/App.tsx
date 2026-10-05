@@ -76,8 +76,21 @@ type InfrastructureMonitoring = {
     disk: { totalBytes: number | null; freeBytes: number | null; usedPercent: number | null };
   };
   internet: { status: string; latencyMs: number; speedMbps: number | null; note: string };
-  domains: Array<{ url: string; ok: boolean; httpStatus: number | null; latencyMs: number; status: string }>;
-  regions: Array<{ country: string; city: string; nodeId: string; status: string; stabilityIndex: number; latencyMs: number }>;
+  domains: Array<{
+    url: string;
+    ok: boolean;
+    httpStatus: number | null;
+    latencyMs: number;
+    status: string;
+  }>;
+  regions: Array<{
+    country: string;
+    city: string;
+    nodeId: string;
+    status: string;
+    stabilityIndex: number;
+    latencyMs: number;
+  }>;
 };
 
 type NetworkData = {
@@ -753,7 +766,11 @@ function App() {
                 </div>
                 <div>
                   <span>Internet speed</span>
-                  <strong>{monitoring?.internet.speedMbps != null ? `${monitoring.internet.speedMbps} Mbps` : '—'}</strong>
+                  <strong>
+                    {monitoring?.internet.speedMbps != null
+                      ? `${monitoring.internet.speedMbps} Mbps`
+                      : '—'}
+                  </strong>
                 </div>
                 <div>
                   <span>Memory</span>
@@ -761,7 +778,11 @@ function App() {
                 </div>
                 <div>
                   <span>Disk</span>
-                  <strong>{monitoring?.node.disk.usedPercent != null ? `${monitoring.node.disk.usedPercent}%` : '—'}</strong>
+                  <strong>
+                    {monitoring?.node.disk.usedPercent != null
+                      ? `${monitoring.node.disk.usedPercent}%`
+                      : '—'}
+                  </strong>
                 </div>
                 <div>
                   <span>VPS index</span>
@@ -775,7 +796,9 @@ function App() {
                       <i className="health-dot" />
                       {region.country} · {region.city}
                     </span>
-                    <strong>{region.stabilityIndex}/100 · {region.latencyMs} ms</strong>
+                    <strong>
+                      {region.stabilityIndex}/100 · {region.latencyMs} ms
+                    </strong>
                   </div>
                 ))}
                 {(monitoring?.domains ?? []).map((domain) => (
@@ -784,7 +807,9 @@ function App() {
                       <i className="health-dot" />
                       {domain.url.replace(/^https?:\/\//, '').replace(/\/.*$/, '')}
                     </span>
-                    <strong>{domain.status} · {domain.latencyMs} ms</strong>
+                    <strong>
+                      {domain.status} · {domain.latencyMs} ms
+                    </strong>
                   </div>
                 ))}
               </div>

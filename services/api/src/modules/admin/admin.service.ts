@@ -108,7 +108,11 @@ async function diskStats() {
     const statfs = await fs.statfs('/');
     const total = Number(statfs.blocks) * Number(statfs.bsize);
     const free = Number(statfs.bavail) * Number(statfs.bsize);
-    return { totalBytes: total, freeBytes: free, usedPercent: total ? Math.round(((total - free) / total) * 100) : null };
+    return {
+      totalBytes: total,
+      freeBytes: free,
+      usedPercent: total ? Math.round(((total - free) / total) * 100) : null,
+    };
   } catch {
     return { totalBytes: null, freeBytes: null, usedPercent: null };
   }
@@ -132,23 +136,77 @@ async function tcpProbe(host: string, port: number, timeoutMs = 3000) {
   });
 }
 
-
 async function syncInfrastructureEvents(monitoring: {
   node: { id: string; status: string; stabilityIndex: number };
   internet: { status: string; latencyMs: number };
   domains: Array<{ url: string; ok: boolean; httpStatus: number | null; latencyMs: number }>;
   regions: Array<{ nodeId: string; city: string; country: string; status: string }>;
 }) {
-  const detected: Array<{ severity: string; source: string; category: string; title: string; message: string; metadata: Record<string, unknown> }> = [];
-  if (monitoring.node.status !== 'online') detected.push({ severity: 'critical', source: 'vps', category: 'alarms', title: 'VPS offline', message: monitoring.node.id, metadata: { nodeId: monitoring.node.id } });
-  if (monitoring.node.stabilityIndex < 70) detected.push({ severity: 'warning', source: 'vps', category: 'problems', title: 'VPS stability degraded', message: `Stability index ${monitoring.node.stabilityIndex}/100`, metadata: { nodeId: monitoring.node.id } });
-  if (monitoring.internet.status !== 'online') detected.push({ severity: 'critical', source: 'internet', category: 'alarms', title: 'Internet connectivity degraded', message: `Latency ${monitoring.internet.latencyMs} ms`, metadata: {} });
+  const detected: Array<{
+    severity: string;
+    source: string;
+    category: string;
+    title: string;
+    message: string;
+    metadata: Record<string, unknown>;
+  }> = [];
+  if (monitoring.node.status !== 'online')
+    detected.push({
+      severity: 'critical',
+      source: 'vps',
+      category: 'alarms',
+      title: 'VPS offline',
+      message: monitoring.node.id,
+      metadata: { nodeId: monitoring.node.id },
+    });
+  if (monitoring.node.stabilityIndex < 70)
+    detected.push({
+      severity: 'warning',
+      source: 'vps',
+      category: 'problems',
+      title: 'VPS stability degraded',
+      message: `Stability index ${monitoring.node.stabilityIndex}/100`,
+      metadata: { nodeId: monitoring.node.id },
+    });
+  if (monitoring.internet.status !== 'online')
+    detected.push({
+      severity: 'critical',
+      source: 'internet',
+      category: 'alarms',
+      title: 'Internet connectivity degraded',
+      message: `Latency ${monitoring.internet.latencyMs} ms`,
+      metadata: {},
+    });
   for (const domain of monitoring.domains) {
-    if (!domain.ok) detected.push({ severity: 'critical', source: 'domain', category: 'problems', title: 'Domain/website problem', message: `${domain.url} returned ${domain.httpStatus ?? 'no response'}`, metadata: { url: domain.url } });
-    else if (domain.latencyMs > 1500) detected.push({ severity: 'warning', source: 'domain', category: 'problems', title: 'Domain latency high', message: `${domain.url} — ${domain.latencyMs} ms`, metadata: { url: domain.url, latencyMs: domain.latencyMs } });
+    if (!domain.ok)
+      detected.push({
+        severity: 'critical',
+        source: 'domain',
+        category: 'problems',
+        title: 'Domain/website problem',
+        message: `${domain.url} returned ${domain.httpStatus ?? 'no response'}`,
+        metadata: { url: domain.url },
+      });
+    else if (domain.latencyMs > 1500)
+      detected.push({
+        severity: 'warning',
+        source: 'domain',
+        category: 'problems',
+        title: 'Domain latency high',
+        message: `${domain.url} — ${domain.latencyMs} ms`,
+        metadata: { url: domain.url, latencyMs: domain.latencyMs },
+      });
   }
   for (const region of monitoring.regions) {
-    if (region.status !== 'online') detected.push({ severity: 'critical', source: 'regional-vps', category: 'problems', title: 'Regional VPS problem', message: `${region.nodeId} — ${region.city}, ${region.country}`, metadata: { nodeId: region.nodeId } });
+    if (region.status !== 'online')
+      detected.push({
+        severity: 'critical',
+        source: 'regional-vps',
+        category: 'problems',
+        title: 'Regional VPS problem',
+        message: `${region.nodeId} — ${region.city}, ${region.country}`,
+        metadata: { nodeId: region.nodeId },
+      });
   }
   for (const item of detected) {
     const existing = await prisma.adminOperationalEvent.findFirst({
@@ -161,7 +219,9 @@ async function syncInfrastructureEvents(monitoring: {
 export async function getInfrastructureMonitoring() {
   const memoryTotal = os.totalmem();
   const memoryFree = os.freemem();
-  const memoryUsedPercent = memoryTotal ? Math.round(((memoryTotal - memoryFree) / memoryTotal) * 100) : 0;
+  const memoryUsedPercent = memoryTotal
+    ? Math.round(((memoryTotal - memoryFree) / memoryTotal) * 100)
+    : 0;
   const cpuCount = os.cpus().length || 1;
   const load = os.loadavg();
   const loadPercent = clamp((load[0] / cpuCount) * 100);
@@ -171,10 +231,12 @@ export async function getInfrastructureMonitoring() {
     timedFetch('https://www.cloudflare.com/cdn-cgi/trace', 6000),
     measureDownloadMbps(),
     Promise.all(
-      ['https://santor.app/', 'https://admin.santor.app/', 'https://mcp.santor.app/health'].map(async (url) => ({
-        url,
-        ...(await timedFetch(url, 6000)),
-      })),
+      ['https://santor.app/', 'https://admin.santor.app/', 'https://mcp.santor.app/health'].map(
+        async (url) => ({
+          url,
+          ...(await timedFetch(url, 6000)),
+        }),
+      ),
     ),
     prisma.tunnelProfile.findMany({ where: { enabled: true }, orderBy: { updatedAt: 'desc' } }),
   ]);
@@ -227,7 +289,8 @@ export async function getInfrastructureMonitoring() {
         tunnels.map(async (tunnel) => {
           const endpoint = typeof tunnel.endpoint === 'string' ? tunnel.endpoint.trim() : '';
           const port = tunnel.port ? Number(tunnel.port) : 0;
-          const probe = endpoint && port ? await tcpProbe(endpoint, port) : { ok: false, latencyMs: 0 };
+          const probe =
+            endpoint && port ? await tcpProbe(endpoint, port) : { ok: false, latencyMs: 0 };
           const stability = probe.ok ? 100 : 35;
           return {
             country: 'Configured',
@@ -263,7 +326,6 @@ export async function updateSiteConfig(input: unknown) {
   });
   return output(saved);
 }
-
 
 export async function getOperationalEvents(query: { status?: string; category?: string } = {}) {
   return prisma.adminOperationalEvent.findMany({

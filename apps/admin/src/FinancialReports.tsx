@@ -56,7 +56,9 @@ function FinancialReports({ api }: { api: Api }) {
   const load = async () => setReport(await api('/api/v1/admin/financial-report'));
 
   useEffect(() => {
-    void load().catch((error) => setMessage(error instanceof Error ? error.message : 'Unable to load financial report'));
+    void load().catch((error) =>
+      setMessage(error instanceof Error ? error.message : 'Unable to load financial report'),
+    );
   }, []);
 
   const addExpense = async () => {
@@ -113,7 +115,11 @@ function FinancialReports({ api }: { api: Api }) {
           </div>
         ))}
         {!report.totals.length && (
-          <div><span>Revenue</span><strong>0.00</strong><small>No successful sales yet</small></div>
+          <div>
+            <span>Revenue</span>
+            <strong>0.00</strong>
+            <small>No successful sales yet</small>
+          </div>
         )}
       </div>
 
@@ -124,7 +130,10 @@ function FinancialReports({ api }: { api: Api }) {
           <div className="ad-list">
             {report.daily.slice(-14).map((row) => (
               <article className="ad-row" key={row.period}>
-                <div><strong>{row.period}</strong><small>{row.amounts.map((a) => money(a.amount, a.currency)).join(' · ')}</small></div>
+                <div>
+                  <strong>{row.period}</strong>
+                  <small>{row.amounts.map((a) => money(a.amount, a.currency)).join(' · ')}</small>
+                </div>
               </article>
             ))}
             {!report.daily.length && <p className="muted">No daily sales yet.</p>}
@@ -136,7 +145,10 @@ function FinancialReports({ api }: { api: Api }) {
           <div className="ad-list">
             {report.monthly.slice(-12).map((row) => (
               <article className="ad-row" key={row.period}>
-                <div><strong>{row.period}</strong><small>{row.amounts.map((a) => money(a.amount, a.currency)).join(' · ')}</small></div>
+                <div>
+                  <strong>{row.period}</strong>
+                  <small>{row.amounts.map((a) => money(a.amount, a.currency)).join(' · ')}</small>
+                </div>
               </article>
             ))}
             {!report.monthly.length && <p className="muted">No monthly sales yet.</p>}
@@ -151,7 +163,10 @@ function FinancialReports({ api }: { api: Api }) {
           <div className="ad-list">
             {report.yearly.map((row) => (
               <article className="ad-row" key={row.period}>
-                <div><strong>{row.period}</strong><small>{row.amounts.map((a) => money(a.amount, a.currency)).join(' · ')}</small></div>
+                <div>
+                  <strong>{row.period}</strong>
+                  <small>{row.amounts.map((a) => money(a.amount, a.currency)).join(' · ')}</small>
+                </div>
               </article>
             ))}
             {!report.yearly.length && <p className="muted">No yearly sales yet.</p>}
@@ -162,11 +177,26 @@ function FinancialReports({ api }: { api: Api }) {
           <h3>Gross → refunds → net → profit</h3>
           {report.totals.map((t) => (
             <div className="health-list" key={t.currency}>
-              <div><span>Gross sales · {t.currency}</span><strong>{money(t.grossRevenue, t.currency)}</strong></div>
-              <div><span>Refunds · {t.currency}</span><strong>{money(t.refunds, t.currency)}</strong></div>
-              <div><span>Net revenue · {t.currency}</span><strong>{money(t.netRevenue, t.currency)}</strong></div>
-              <div><span>Operating expenses · {t.currency}</span><strong>{money(t.expenses, t.currency)}</strong></div>
-              <div><span>Profit · {t.currency}</span><strong>{money(t.profit, t.currency)}</strong></div>
+              <div>
+                <span>Gross sales · {t.currency}</span>
+                <strong>{money(t.grossRevenue, t.currency)}</strong>
+              </div>
+              <div>
+                <span>Refunds · {t.currency}</span>
+                <strong>{money(t.refunds, t.currency)}</strong>
+              </div>
+              <div>
+                <span>Net revenue · {t.currency}</span>
+                <strong>{money(t.netRevenue, t.currency)}</strong>
+              </div>
+              <div>
+                <span>Operating expenses · {t.currency}</span>
+                <strong>{money(t.expenses, t.currency)}</strong>
+              </div>
+              <div>
+                <span>Profit · {t.currency}</span>
+                <strong>{money(t.profit, t.currency)}</strong>
+              </div>
             </div>
           ))}
         </div>
@@ -181,23 +211,75 @@ function FinancialReports({ api }: { api: Api }) {
           </div>
         </div>
         <div className="form-grid">
-          <label>Category<input value={expense.category} onChange={(e) => setExpense({ ...expense, category: e.target.value })} placeholder="Hosting, payment fees, operations..." /></label>
-          <label>Description<input value={expense.description} onChange={(e) => setExpense({ ...expense, description: e.target.value })} /></label>
-          <label>Amount<input type="number" min="0" step="0.01" value={expense.amount} onChange={(e) => setExpense({ ...expense, amount: Number(e.target.value) })} /></label>
-          <label>Currency<input value={expense.currency} onChange={(e) => setExpense({ ...expense, currency: e.target.value.toUpperCase() })} /></label>
-          <label>Date<input type="date" value={expense.expenseDate} onChange={(e) => setExpense({ ...expense, expenseDate: e.target.value })} /></label>
-          <label className="inline-check">Recurring<input type="checkbox" checked={expense.recurring} onChange={(e) => setExpense({ ...expense, recurring: e.target.checked })} /></label>
+          <label>
+            Category
+            <input
+              value={expense.category}
+              onChange={(e) => setExpense({ ...expense, category: e.target.value })}
+              placeholder="Hosting, payment fees, operations..."
+            />
+          </label>
+          <label>
+            Description
+            <input
+              value={expense.description}
+              onChange={(e) => setExpense({ ...expense, description: e.target.value })}
+            />
+          </label>
+          <label>
+            Amount
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={expense.amount}
+              onChange={(e) => setExpense({ ...expense, amount: Number(e.target.value) })}
+            />
+          </label>
+          <label>
+            Currency
+            <input
+              value={expense.currency}
+              onChange={(e) => setExpense({ ...expense, currency: e.target.value.toUpperCase() })}
+            />
+          </label>
+          <label>
+            Date
+            <input
+              type="date"
+              value={expense.expenseDate}
+              onChange={(e) => setExpense({ ...expense, expenseDate: e.target.value })}
+            />
+          </label>
+          <label className="inline-check">
+            Recurring
+            <input
+              type="checkbox"
+              checked={expense.recurring}
+              onChange={(e) => setExpense({ ...expense, recurring: e.target.checked })}
+            />
+          </label>
         </div>
-        <div className="row-actions"><button className="primary" onClick={addExpense}>Add expense</button></div>
+        <div className="row-actions">
+          <button className="primary" onClick={addExpense}>
+            Add expense
+          </button>
+        </div>
         <div className="ad-list">
           {report.expenses.map((item) => (
             <article className="ad-row" key={item.id}>
               <div>
                 <strong>{item.category}</strong>
                 <p>{item.description ?? 'No description'}</p>
-                <small>{money(item.amount, item.currency)} · {new Date(item.expenseDate).toLocaleDateString()}{item.recurring ? ' · recurring' : ''}</small>
+                <small>
+                  {money(item.amount, item.currency)} ·{' '}
+                  {new Date(item.expenseDate).toLocaleDateString()}
+                  {item.recurring ? ' · recurring' : ''}
+                </small>
               </div>
-              <button className="danger" onClick={() => void deleteExpense(item.id)}>Delete</button>
+              <button className="danger" onClick={() => void deleteExpense(item.id)}>
+                Delete
+              </button>
             </article>
           ))}
         </div>
