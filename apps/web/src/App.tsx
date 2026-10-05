@@ -3,6 +3,24 @@ import { Button, Card } from '@santor/ui';
 import '@santor/ui/styles.css';
 import './App.css';
 
+type Marketing = {
+  brand: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  primaryCta: string;
+  secondaryCta: string;
+  trustLine: string;
+  primaryColor: string;
+  services: Array<{ label: string; title: string; description: string }>;
+};
+type MarketingAd = {
+  id: string;
+  title: string;
+  body: string;
+  imageUrl: string | null;
+  ctaLabel: string | null;
+  landingUrl: string | null;
+};
 type Dashboard = {
   user: {
     name: string | null;
@@ -42,6 +60,8 @@ type Dashboard = {
 
 function App() {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [marketing, setMarketing] = useState<Marketing | null>(null);
+  const [marketingAds, setMarketingAds] = useState<MarketingAd[]>([]);
   const [error, setError] = useState('');
   const [aiMessage, setAiMessage] = useState('');
   const [aiReply, setAiReply] = useState('');
@@ -51,37 +71,39 @@ function App() {
   const token = localStorage.getItem('santor_token');
 
   useEffect(() => {
+    const apiUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
     if (!token) {
+      Promise.all([
+        fetch(`${apiUrl}/api/v1/marketing/site-config`).then((response) => response.json()),
+        fetch(`${apiUrl}/api/v1/marketing/ads`).then((response) => response.json()),
+      ])
+        .then(([config, ads]) => { setMarketing(config); setMarketingAds(ads); })
+        .catch(() => setError('Unable to load Santor website'));
       return;
     }
 
-    const apiUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-
     fetch(`${apiUrl}/api/v1/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Unable to load dashboard');
-        }
-
+        if (!response.ok) throw new Error('Unable to load dashboard');
         return response.json();
       })
       .then(setDashboard)
-      .catch((err: Error) => {
-        setError(err.message);
-      });
+      .catch((err: Error) => setError(err.message));
   }, [token]);
 
   if (!token) {
+    if (!marketing) {
+      return <main className="dashboard"><Card><h1>Loading Santor...</h1></Card></main>;
+    }
     return (
-      <main className="dashboard">
-        <Card>
-          <h1>Santor</h1>
-          <p>Please log in to access your dashboard.</p>
-        </Card>
+      <main className="marketing-site" style={{ '--marketing-accent': marketing.primaryColor } as React.CSSProperties}>
+        <header className="marketing-nav"><strong>{marketing.brand}</strong><Button onClick={() => { window.location.href = '/login'; }}>{marketing.secondaryCta}</Button></header>
+        <section className="marketing-hero"><p className="eyebrow">{marketing.trustLine}</p><h1>{marketing.heroTitle}</h1><p>{marketing.heroSubtitle}</p><Button onClick={() => { window.location.href = '/register'; }}>{marketing.primaryCta}</Button></section>
+        <section className="marketing-services">{marketing.services.map((service) => <Card key={service.label}><p className="eyebrow">{service.label}</p><h2>{service.title}</h2><p>{service.description}</p></Card>)}</section>
+        {marketingAds.length > 0 && <section className="marketing-ads"><p className="eyebrow">Featured</p>{marketingAds.map((ad) => <Card key={ad.id}>{ad.imageUrl && <img src={ad.imageUrl} alt="" />}<h2>{ad.title}</h2><p>{ad.body}</p>{ad.landingUrl && <Button onClick={() => { window.location.href = ad.landingUrl!; }}>{ad.ctaLabel ?? marketing.primaryCta}</Button>}</Card>)}</section>}
       </main>
     );
   }
