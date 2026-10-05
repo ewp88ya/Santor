@@ -1407,6 +1407,145 @@ function App() {
           </section>
         </div>
       )}
+      {productDraft && (
+        <div className="modal-backdrop">
+          <section className="modal">
+            <div className="panel-head"><div><p className="eyebrow">Service plan</p><h2>{productDraft.id ? 'Edit plan' : 'New plan'}</h2></div><button onClick={() => setProductDraft(null)}>Close</button></div>
+            <div className="form-grid">
+              <label>Plan name<input value={productDraft.name} onChange={(e) => setProductDraft({ ...productDraft, name: e.target.value })} /></label>
+              <label>Plan code<input value={productDraft.code} onChange={(e) => setProductDraft({ ...productDraft, code: e.target.value })} disabled={Boolean(productDraft.id)} /></label>
+              <label>Base price<input type="number" min="0" step="0.01" value={productDraft.price} onChange={(e) => setProductDraft({ ...productDraft, price: Number(e.target.value) })} /></label>
+              <label>Currency<input value={productDraft.currency} onChange={(e) => setProductDraft({ ...productDraft, currency: e.target.value.toUpperCase() })} /></label>
+              <label>Duration (days)<input type="number" min="1" value={productDraft.durationDays} onChange={(e) => setProductDraft({ ...productDraft, durationDays: Number(e.target.value) })} /></label>
+              <label>Device limit<input type="number" min="1" value={productDraft.deviceLimit} onChange={(e) => setProductDraft({ ...productDraft, deviceLimit: Number(e.target.value) })} /></label>
+              <label className="inline-check">Active<input type="checkbox" checked={productDraft.active} onChange={(e) => setProductDraft({ ...productDraft, active: e.target.checked })} /></label>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setProductDraft(null)}>Cancel</button>
+              <button className="primary" onClick={async () => {
+                try {
+                  const payload = {
+                    name: productDraft.name,
+                    code: productDraft.code,
+                    price: Math.round(productDraft.price * 100),
+                    currency: productDraft.currency,
+                    durationDays: productDraft.durationDays,
+                    deviceLimit: productDraft.deviceLimit,
+                    active: productDraft.active,
+                  };
+                  const saved = await api(productDraft.id ? '/api/v1/admin/products/' + productDraft.id : '/api/v1/admin/products', {
+                    method: productDraft.id ? 'PUT' : 'POST',
+                    body: JSON.stringify(payload),
+                  });
+                  setPayments({
+                    ...payments,
+                    products: productDraft.id
+                      ? payments.products.map((x) => x.id === saved.id ? saved : x)
+                      : [...payments.products, saved],
+                  });
+                  setProductDraft(null);
+                  setMessage('Service plan saved.');
+                  await load();
+                } catch (error) {
+                  setMessage(error instanceof Error ? error.message : 'Unable to save plan');
+                }
+              }}>Save plan</button>
+            </div>
+          </section>
+        </div>
+      )}
+      {priceDraft && (
+        <div className="modal-backdrop">
+          <section className="modal">
+            <div className="panel-head"><div><p className="eyebrow">Regional pricing</p><h2>{priceDraft.id ? 'Edit regional price' : 'Add regional price'}</h2></div><button onClick={() => setPriceDraft(null)}>Close</button></div>
+            <div className="form-grid">
+              <label>Country code<input placeholder="RU, ID, NL..." value={priceDraft.country} onChange={(e) => setPriceDraft({ ...priceDraft, country: e.target.value.toUpperCase() })} /></label>
+              <label>Currency<input value={priceDraft.currency} onChange={(e) => setPriceDraft({ ...priceDraft, currency: e.target.value.toUpperCase() })} /></label>
+              <label>Amount<input type="number" min="0" step="0.01" value={priceDraft.amount} onChange={(e) => setPriceDraft({ ...priceDraft, amount: Number(e.target.value) })} /></label>
+              <label className="inline-check">Active<input type="checkbox" checked={priceDraft.active} onChange={(e) => setPriceDraft({ ...priceDraft, active: e.target.checked })} /></label>
+            </div>
+            <div className="modal-actions">
+              {priceDraft.id && <button onClick={async () => {
+                try {
+                  await api('/api/v1/admin/product-prices/' + priceDraft.id, { method: 'DELETE' });
+                  await load();
+                  setPriceDraft(null);
+                  setMessage('Regional price removed.');
+                } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to remove price'); }
+              }}>Delete</button>}
+              <button onClick={() => setPriceDraft(null)}>Cancel</button>
+              <button className="primary" onClick={async () => {
+                try {
+                  const payload = {
+                    productId: priceDraft.productId,
+                    country: priceDraft.country || null,
+                    currency: priceDraft.currency,
+                    amount: Math.round(priceDraft.amount * 100),
+                    active: priceDraft.active,
+                  };
+                  const saved = await api(priceDraft.id ? '/api/v1/admin/product-prices/' + priceDraft.id : '/api/v1/admin/product-prices', {
+                    method: priceDraft.id ? 'PUT' : 'POST',
+                    body: JSON.stringify(payload),
+                  });
+                  setPriceDraft(null);
+                  setMessage('Regional price saved.');
+                  await load();
+                } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save regional price'); }
+              }}>Save price</button>
+            </div>
+          </section>
+        </div>
+      )}
+      {paymentDraft && (
+        <div className="modal-backdrop">
+          <section className="modal">
+            <div className="panel-head"><div><p className="eyebrow">Payment record</p><h2>Edit payment</h2></div><button onClick={() => setPaymentDraft(null)}>Close</button></div>
+            <div className="form-grid">
+              <label>Provider<input value={paymentDraft.provider} onChange={(e) => setPaymentDraft({ ...paymentDraft, provider: e.target.value })} /></label>
+              <label>Country<input value={paymentDraft.country} onChange={(e) => setPaymentDraft({ ...paymentDraft, country: e.target.value.toUpperCase() })} /></label>
+              <label>Currency<input value={paymentDraft.currency} onChange={(e) => setPaymentDraft({ ...paymentDraft, currency: e.target.value.toUpperCase() })} /></label>
+              <label>Amount<input type="number" min="0" step="0.01" value={paymentDraft.amount} onChange={(e) => setPaymentDraft({ ...paymentDraft, amount: Number(e.target.value) })} /></label>
+              <label>Payment method<input value={paymentDraft.paymentMethod} onChange={(e) => setPaymentDraft({ ...paymentDraft, paymentMethod: e.target.value })} /></label>
+              <label>Status<select value={paymentDraft.status} onChange={(e) => setPaymentDraft({ ...paymentDraft, status: e.target.value })}><option value="pending">Pending</option><option value="success">Success</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
+              <label>Transaction ID<input value={paymentDraft.transactionId} onChange={(e) => setPaymentDraft({ ...paymentDraft, transactionId: e.target.value })} /></label>
+              <label>Settlement currency<input value={paymentDraft.settlementCurrency} onChange={(e) => setPaymentDraft({ ...paymentDraft, settlementCurrency: e.target.value.toUpperCase() })} /></label>
+              <label>Type<select value={paymentDraft.type} onChange={(e) => setPaymentDraft({ ...paymentDraft, type: e.target.value })}><option value="one_time">One time</option><option value="recurring">Recurring</option></select></label>
+              <label className="inline-check">Auto debit<input type="checkbox" checked={paymentDraft.autoDebit} onChange={(e) => setPaymentDraft({ ...paymentDraft, autoDebit: e.target.checked })} /></label>
+              <label>Provider payment ID<input value={paymentDraft.providerPaymentId} onChange={(e) => setPaymentDraft({ ...paymentDraft, providerPaymentId: e.target.value })} /></label>
+              <label>Refund ID<input value={paymentDraft.refundId} onChange={(e) => setPaymentDraft({ ...paymentDraft, refundId: e.target.value })} /></label>
+              <label>Refund reason<textarea value={paymentDraft.refundReason} onChange={(e) => setPaymentDraft({ ...paymentDraft, refundReason: e.target.value })} /></label>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setPaymentDraft(null)}>Cancel</button>
+              <button className="primary" onClick={async () => {
+                try {
+                  const saved = await api('/api/v1/admin/payments/' + paymentDraft.id, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                      provider: paymentDraft.provider,
+                      country: paymentDraft.country || null,
+                      currency: paymentDraft.currency,
+                      paymentMethod: paymentDraft.paymentMethod || null,
+                      amount: Math.round(paymentDraft.amount * 100),
+                      settlementCurrency: paymentDraft.settlementCurrency || null,
+                      status: paymentDraft.status,
+                      transactionId: paymentDraft.transactionId || null,
+                      type: paymentDraft.type,
+                      autoDebit: paymentDraft.autoDebit,
+                      providerPaymentId: paymentDraft.providerPaymentId || null,
+                      refundId: paymentDraft.refundId || null,
+                      refundReason: paymentDraft.refundReason || null,
+                    }),
+                  });
+                  setPayments({ ...payments, payments: payments.payments.map((x) => x.id === saved.id ? saved : x) });
+                  setPaymentDraft(null);
+                  setMessage('Payment record saved.');
+                } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save payment'); }
+              }}>Save payment</button>
+            </div>
+          </section>
+        </div>
+      )}
       {adDraft && (
         <div className="modal-backdrop">
           <section className="modal">
