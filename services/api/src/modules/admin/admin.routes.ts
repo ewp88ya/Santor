@@ -14,6 +14,7 @@ import { adminRoadmap, updateAdminRoadmapPhase } from './roadmap.controller.js';
 import networkRoutes from './network.routes.js';
 import paymentAdminRoutes from './payment.routes.js';
 import customerAdminRoutes from './customers.routes.js';
+import controlPlaneRoutes from './control-plane.routes.js';
 
 export default async function adminRoutes(app: FastifyInstance) {
   const guard = [authMiddleware, requireRole('ADMIN')];
@@ -39,4 +40,5 @@ export default async function adminRoutes(app: FastifyInstance) {
   await networkRoutes(app);
   await paymentAdminRoutes(app);
   await customerAdminRoutes(app);
+  await controlPlaneRoutes(app);
 }
