@@ -10,14 +10,95 @@ const providerEnv: Record<string, string[]> = {
 };
 
 const catalog = [
-  { code: 'general-free', name: 'General Free', price: 0, currency: 'USD', durationDays: 3, deviceLimit: 1, userLimit: 1, category: 'general', capacityPolicy: '100 concurrent/served users within a 1-hour operating window; active-usage/device checks; automatic disconnect of inactive connections; reconnection subject to current capacity and queue conditions.' },
-  { code: 'general-pro-1m', name: 'General Pro 1M', price: 1.99, currency: 'USD', durationDays: 30, deviceLimit: 3, userLimit: 1, category: 'general', capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.' },
-  { code: 'general-pro-6m', name: 'General Pro 6M', price: 9.99, currency: 'USD', durationDays: 180, deviceLimit: 3, userLimit: 1, category: 'general', capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.' },
-  { code: 'general-pro-12m', name: 'General Pro 12M', price: 14.99, currency: 'USD', durationDays: 365, deviceLimit: 3, userLimit: 1, category: 'general', capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.' },
-  { code: 'wg-1m', name: 'WG-1M', price: 4.99, currency: 'USD', durationDays: 30, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
-  { code: 'wg-3m', name: 'WG-3M', price: 12.99, currency: 'USD', durationDays: 90, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
-  { code: 'wg-6m', name: 'WG-6M', price: 22.99, currency: 'USD', durationDays: 180, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
-  { code: 'wg-12m', name: 'WG-12M', price: 39.99, currency: 'USD', durationDays: 365, deviceLimit: 5, userLimit: 1, category: 'wireguard', capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.' },
+  {
+    code: 'general-free',
+    name: 'General Free',
+    price: 0,
+    currency: 'USD',
+    durationDays: 3,
+    deviceLimit: 1,
+    userLimit: 1,
+    category: 'general',
+    capacityPolicy:
+      '100 concurrent/served users within a 1-hour operating window; active-usage/device checks; automatic disconnect of inactive connections; reconnection subject to current capacity and queue conditions.',
+  },
+  {
+    code: 'general-pro-1m',
+    name: 'General Pro 1M',
+    price: 1.99,
+    currency: 'USD',
+    durationDays: 30,
+    deviceLimit: 3,
+    userLimit: 1,
+    category: 'general',
+    capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.',
+  },
+  {
+    code: 'general-pro-6m',
+    name: 'General Pro 6M',
+    price: 9.99,
+    currency: 'USD',
+    durationDays: 180,
+    deviceLimit: 3,
+    userLimit: 1,
+    category: 'general',
+    capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.',
+  },
+  {
+    code: 'general-pro-12m',
+    name: 'General Pro 12M',
+    price: 14.99,
+    currency: 'USD',
+    durationDays: 365,
+    deviceLimit: 3,
+    userLimit: 1,
+    category: 'general',
+    capacityPolicy: 'Production General Nodes with health, load, capacity and queue control.',
+  },
+  {
+    code: 'wg-1m',
+    name: 'WG-1M',
+    price: 4.99,
+    currency: 'USD',
+    durationDays: 30,
+    deviceLimit: 5,
+    userLimit: 1,
+    category: 'wireguard',
+    capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.',
+  },
+  {
+    code: 'wg-3m',
+    name: 'WG-3M',
+    price: 12.99,
+    currency: 'USD',
+    durationDays: 90,
+    deviceLimit: 5,
+    userLimit: 1,
+    category: 'wireguard',
+    capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.',
+  },
+  {
+    code: 'wg-6m',
+    name: 'WG-6M',
+    price: 22.99,
+    currency: 'USD',
+    durationDays: 180,
+    deviceLimit: 5,
+    userLimit: 1,
+    category: 'wireguard',
+    capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.',
+  },
+  {
+    code: 'wg-12m',
+    name: 'WG-12M',
+    price: 39.99,
+    currency: 'USD',
+    durationDays: 365,
+    deviceLimit: 5,
+    userLimit: 1,
+    category: 'wireguard',
+    capacityPolicy: 'Production WireGuard nodes with health, load, capacity and queue control.',
+  },
 ];
 
 export async function ensureProductCatalog() {
@@ -75,7 +156,15 @@ export async function adminPaymentOverview() {
 
 export async function updateAdminProduct(
   id: string,
-  data: { name?: string; code?: string; price?: number; currency?: string; durationDays?: number; deviceLimit?: number; active?: boolean },
+  data: {
+    name?: string;
+    code?: string;
+    price?: number;
+    currency?: string;
+    durationDays?: number;
+    deviceLimit?: number;
+    active?: boolean;
+  },
 ) {
   return prisma.product.update({
     where: { id },
@@ -92,9 +181,13 @@ export async function updateAdminProduct(
   });
 }
 
-export async function createAdminProductPrice(
-  data: { productId: string; country?: string | null; currency: string; amount: number; active?: boolean },
-) {
+export async function createAdminProductPrice(data: {
+  productId: string;
+  country?: string | null;
+  currency: string;
+  amount: number;
+  active?: boolean;
+}) {
   return prisma.productPrice.upsert({
     where: {
       productId_country_currency: {
@@ -113,4 +206,3 @@ export async function createAdminProductPrice(
     },
   });
 }
- 

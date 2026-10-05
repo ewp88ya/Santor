@@ -17,5 +17,9 @@ export default async function adminAdsRoutes(app: FastifyInstance) {
   app.put<{ Params: { id: string } }>('/ads/:id', { preHandler: guard }, updateAdminAd);
   app.delete<{ Params: { id: string } }>('/ads/:id', { preHandler: guard }, deleteAdminAd);
   app.post<{ Params: { id: string } }>('/ads/:id/publish', { preHandler: guard }, publishAdminAd);
-  app.post<{ Params: { id: string } }>('/ads/:id/unpublish', { preHandler: guard }, unpublishAdminAd);
+  app.post<{ Params: { id: string } }>(
+    '/ads/:id/unpublish',
+    { preHandler: guard },
+    unpublishAdminAd,
+  );
 }

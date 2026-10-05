@@ -24,9 +24,17 @@ export default async function adminRoutes(app: FastifyInstance) {
   app.put<{ Params: { id: string } }>('/ads/:id', { preHandler: guard }, updateAdminAd);
   app.delete<{ Params: { id: string } }>('/ads/:id', { preHandler: guard }, deleteAdminAd);
   app.post<{ Params: { id: string } }>('/ads/:id/publish', { preHandler: guard }, publishAdminAd);
-  app.post<{ Params: { id: string } }>('/ads/:id/unpublish', { preHandler: guard }, unpublishAdminAd);
+  app.post<{ Params: { id: string } }>(
+    '/ads/:id/unpublish',
+    { preHandler: guard },
+    unpublishAdminAd,
+  );
   app.get('/roadmap', { preHandler: guard }, adminRoadmap);
-  app.put<{ Params: { id: string } }>('/roadmap/:id', { preHandler: guard }, updateAdminRoadmapPhase);
+  app.put<{ Params: { id: string } }>(
+    '/roadmap/:id',
+    { preHandler: guard },
+    updateAdminRoadmapPhase,
+  );
   await networkRoutes(app);
   await paymentAdminRoutes(app);
 }

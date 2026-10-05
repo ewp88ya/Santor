@@ -40,8 +40,12 @@ export async function listRoadmap() {
 export async function updateRoadmapPhase(id: string, input: unknown) {
   const value = input as Record<string, unknown>;
   const allowed = ['validation', 'complete', 'foundation', 'partial', 'pending'];
-  const status = typeof value.status === 'string' && allowed.includes(value.status) ? value.status : undefined;
+  const status =
+    typeof value.status === 'string' && allowed.includes(value.status) ? value.status : undefined;
   const note = typeof value.note === 'string' ? value.note.trim() || null : undefined;
   if (!status && note === undefined) throw new Error('Invalid roadmap update');
-  return prisma.roadmapPhase.update({ where: { id }, data: { ...(status ? { status } : {}), ...(note !== undefined ? { note } : {}) } });
+  return prisma.roadmapPhase.update({
+    where: { id },
+    data: { ...(status ? { status } : {}), ...(note !== undefined ? { note } : {}) },
+  });
 }
