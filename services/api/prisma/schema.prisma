@@ -387,6 +387,13 @@ model AdminBillingConfig {
   updatedAt DateTime @updatedAt
 }
 
+model AdminBillingConfig {
+  id        String   @id
+  topology  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model RoadmapPhase {
   id        String   @id @default(uuid())
   phase     Int      @unique
