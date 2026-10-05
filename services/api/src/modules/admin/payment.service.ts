@@ -355,3 +355,129 @@ export async function updateAdminBillingTopology(topology: unknown) {
     })
   ).topology;
 }
+
+
+type FinancialBucket = {
+  currency: string;
+  grossRevenue: number;
+  refunds: number;
+  netRevenue: number;
+  expenses: number;
+  profit: number;
+};
+
+function addAmount(map: Map<string, number>, currency: string, amount: number) {
+  map.set(currency, (map.get(currency) ?? 0) + amount);
+}
+
+function buildFinancialBuckets(
+  payments: Array<{ amount: number; currency: string; status: string; createdAt: Date }>,
+  expenses: Array<{ amount: number; currency: string; expenseDate: Date }>,
+) {
+  const currencies = new Set<string>();
+  const gross = new Map<string, number>();
+  const refunds = new Map<string, number>();
+  const expenseTotals = new Map<string, number>();
+
+  for (const payment of payments) {
+    const currency = payment.currency.toUpperCase();
+    currencies.add(currency);
+    if (payment.status === 'success') addAmount(gross, currency, payment.amount);
+    if (payment.status === 'refunded') addAmount(refunds, currency, payment.amount);
+  }
+  for (const expense of expenses) {
+    const currency = expense.currency.toUpperCase();
+    currencies.add(currency);
+    addAmount(expenseTotals, currency, expense.amount);
+  }
+
+  return [...currencies].sort().map((currency): FinancialBucket => {
+    const grossRevenue = gross.get(currency) ?? 0;
+    const refundsAmount = refunds.get(currency) ?? 0;
+    const netRevenue = grossRevenue - refundsAmount;
+    const expenseAmount = expenseTotals.get(currency) ?? 0;
+    return {
+      currency,
+      grossRevenue,
+      refunds: refundsAmount,
+      netRevenue,
+      expenses: expenseAmount,
+      profit: netRevenue - expenseAmount,
+    };
+  });
+}
+
+function periodKey(date: Date, period: 'day' | 'month' | 'year') {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  if (period === 'year') return String(year);
+  if (period === 'month') return `${year}-${month}`;
+  return date.toISOString().slice(0, 10);
+}
+
+function buildRevenueSeries(
+  payments: Array<{ amount: number; currency: string; status: string; createdAt: Date }>,
+  period: 'day' | 'month' | 'year',
+) {
+  const buckets = new Map<string, Map<string, number>>();
+  for (const payment of payments) {
+    if (payment.status !== 'success') continue;
+    const key = periodKey(payment.createdAt, period);
+    const currency = payment.currency.toUpperCase();
+    if (!buckets.has(key)) buckets.set(key, new Map());
+    addAmount(buckets.get(key)!, currency, payment.amount);
+  }
+  return [...buckets.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([periodKeyValue, values]) => ({
+      period: periodKeyValue,
+      amounts: [...values.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([currency, amount]) => ({ currency, amount })),
+    }));
+}
+
+export async function adminFinancialReport() {
+  const [payments, expenses] = await Promise.all([
+    prisma.payment.findMany({
+      select: { amount: true, currency: true, status: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.adminFinancialExpense.findMany({
+      select: { id: true, category: true, description: true, amount: true, currency: true, expenseDate: true, recurring: true, createdAt: true },
+      orderBy: { expenseDate: 'desc' },
+      take: 200,
+    }),
+  ]);
+
+  return {
+    totals: buildFinancialBuckets(payments, expenses),
+    daily: buildRevenueSeries(payments, 'day'),
+    monthly: buildRevenueSeries(payments, 'month'),
+    yearly: buildRevenueSeries(payments, 'year'),
+    expenses,
+    note: 'Revenue is based on successful payments. Refunds are deducted from net revenue. Profit is net revenue minus recorded operating expenses, grouped by currency.',
+  };
+}
+
+export async function createAdminFinancialExpense(data: {
+  category: string;
+  description?: string | null;
+  amount: number;
+  currency: string;
+  expenseDate?: string | null;
+  recurring?: boolean;
+}) {
+  return prisma.adminFinancialExpense.create({
+    data: {
+      category: data.category.trim(),
+      description: data.description?.trim() || null,
+      amount: Number(data.amount),
+      currency: data.currency.trim().toUpperCase(),
+      expenseDate: data.expenseDate ? new Date(data.expenseDate) : new Date(),
+      recurring: Boolean(data.recurring),
+    },
+  });
+}
+
+export async function deleteAdminFinancialExpense(id: string) {
+  return prisma.adminFinancialExpense.delete({ where: { id } });
+}
