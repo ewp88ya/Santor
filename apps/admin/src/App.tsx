@@ -819,24 +819,55 @@ function App() {
               </div>
               <div>
                 <h3>Client profiles</h3>
-                <p className="muted">Provisioning targets supported by Santor.</p>
-                {network.supportedClients.map((client) => (
-                  <button
-                    className="client-chip"
-                    key={client}
-                    onClick={() =>
-                      setNetworkDraft({
-                        type: 'client',
-                        name: client + ' profile',
-                        client,
-                        tunnelId: network.tunnels[0]?.id ?? '',
-                        enabled: true,
-                      })
-                    }
-                  >
-                    {client}
-                  </button>
-                ))}
+                <p className="muted">Create and manage the actual provisioning profiles used by supported clients.</p>
+                <div className="client-chip-list">
+                  {network.supportedClients.map((client) => (
+                    <button
+                      className="client-chip"
+                      key={client}
+                      onClick={() =>
+                        setNetworkDraft({
+                          type: 'client',
+                          name: client + ' profile',
+                          client,
+                          tunnelId: network.tunnels[0]?.id ?? '',
+                          enabled: true,
+                          config: {},
+                        })
+                      }
+                    >
+                      + {client}
+                    </button>
+                  ))}
+                </div>
+                <div className="profile-list">
+                  {network.profiles.length ? network.profiles.map((profile) => (
+                    <article className="network-row" key={profile.id}>
+                      <div>
+                        <span className={profile.enabled ? 'status published' : 'status'}>
+                          {profile.enabled ? 'enabled' : 'disabled'}
+                        </span>
+                        <strong>{profile.name}</strong>
+                        <small>{profile.client} · {profile.tunnelId ? 'tunnel linked' : 'no tunnel'}</small>
+                      </div>
+                      <div className="row-actions">
+                        <button onClick={() => setNetworkDraft({ ...profile, type: 'client' })}>Edit</button>
+                        <button
+                          className="danger"
+                          onClick={async () => {
+                            await api('/api/v1/admin/network/client/' + profile.id, { method: 'DELETE' });
+                            setNetwork({
+                              ...network,
+                              profiles: network.profiles.filter((x) => x.id !== profile.id),
+                            });
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  )) : <div className="empty-state">No client profiles configured yet.</div>}
+                </div>
               </div>
             </div>
             <div className="network-grid bypass-section">
@@ -1228,22 +1259,39 @@ function App() {
             </div>
             <div className="form-grid">
               {(networkDraft.type === 'tunnel'
-                ? ['name', 'protocol', 'endpoint', 'port']
+                ? ['name', 'protocol', 'nodeId', 'endpoint', 'port', 'config', 'enabled']
                 : networkDraft.type === 'client'
-                  ? ['name', 'client', 'tunnelId']
-                  : ['name', 'matchType', 'pattern', 'action', 'priority', 'notes']
+                  ? ['name', 'client', 'tunnelId', 'config', 'enabled']
+                  : ['name', 'matchType', 'pattern', 'action', 'priority', 'notes', 'enabled']
               ).map((key: string) => (
                 <label key={key}>
                   {key}
-                  {key === 'notes' ? (
+                  {key === 'enabled' ? (
+                    <input
+                      type="checkbox"
+                      checked={networkDraft[key] !== false}
+                      onChange={(e) => setNetworkDraft({ ...networkDraft, [key]: e.target.checked })}
+                    />
+                  ) : key === 'notes' || key === 'config' ? (
                     <textarea
-                      value={String(networkDraft[key] ?? '')}
+                      rows={key === 'config' ? 5 : 3}
+                      value={key === 'config'
+                        ? typeof networkDraft[key] === 'string'
+                          ? String(networkDraft[key])
+                          : JSON.stringify(networkDraft[key] ?? {}, null, 2)
+                        : String(networkDraft[key] ?? '')}
                       onChange={(e) => setNetworkDraft({ ...networkDraft, [key]: e.target.value })}
                     />
                   ) : (
                     <input
+                      type={key === 'port' || key === 'priority' ? 'number' : 'text'}
                       value={String(networkDraft[key] ?? '')}
-                      onChange={(e) => setNetworkDraft({ ...networkDraft, [key]: e.target.value })}
+                      onChange={(e) =>
+                        setNetworkDraft({
+                          ...networkDraft,
+                          [key]: key === 'port' || key === 'priority' ? Number(e.target.value) : e.target.value,
+                        })
+                      }
                     />
                   )}
                 </label>
@@ -1257,6 +1305,14 @@ function App() {
                   const d = { ...networkDraft };
                   delete d.type;
                   const kind = networkDraft.type;
+                  if (typeof d.config === 'string') {
+                    try {
+                      d.config = d.config.trim() ? JSON.parse(d.config) : {};
+                    } catch {
+                      setMessage('Config must be valid JSON.');
+                      return;
+                    }
+                  }
                   const id = networkDraft.id;
                   delete d.id;
                   const path =
