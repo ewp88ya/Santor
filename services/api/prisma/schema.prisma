@@ -335,6 +335,51 @@ model AdCampaign {
   @@index([startAt, endAt])
 }
 
+model TunnelProfile {
+  id          String   @id @default(uuid())
+  name        String
+  protocol    String
+  nodeId      String?
+  endpoint    String?
+  port        Int?
+  enabled     Boolean  @default(true)
+  config      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([protocol, enabled])
+  @@index([nodeId])
+}
+
+model ClientProfile {
+  id          String   @id @default(uuid())
+  name        String
+  client      String
+  tunnelId    String?
+  config      Json
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([client, enabled])
+}
+
+model BypassRule {
+  id          String   @id @default(uuid())
+  name        String
+  matchType   String
+  pattern     String
+  action      String   @default("direct")
+  enabled     Boolean  @default(true)
+  priority    Int       @default(100)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([enabled, priority])
+  @@index([matchType, pattern])
+}
+
 model RoadmapPhase {
   id        String   @id @default(uuid())
   phase     Int      @unique
