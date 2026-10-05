@@ -136,6 +136,30 @@ type BillingTopology = {
   };
 };
 
+type FinancialReport = {
+  totals: Array<{
+    currency: string;
+    grossRevenue: number;
+    refunds: number;
+    netRevenue: number;
+    expenses: number;
+    profit: number;
+  }>;
+  daily: Array<{ period: string; amounts: Array<{ currency: string; amount: number }> }>;
+  monthly: Array<{ period: string; amounts: Array<{ currency: string; amount: number }> }>;
+  yearly: Array<{ period: string; amounts: Array<{ currency: string; amount: number }> }>;
+  expenses: Array<{
+    id: string;
+    category: string;
+    description: string | null;
+    amount: number;
+    currency: string;
+    expenseDate: string;
+    recurring: boolean;
+  }>;
+  note: string;
+};
+
 type PaymentData = {
   payments: Array<{
     id: string;
@@ -267,6 +291,8 @@ function App() {
     bypass: [],
   });
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [financialReport, setFinancialReport] = useState<FinancialReport>({ totals: [], daily: [], monthly: [], yearly: [], expenses: [], note: '' });
+  const [expenseDraft, setExpenseDraft] = useState({ category: '', description: '', amount: 0, currency: 'USD', expenseDate: new Date().toISOString().slice(0, 10), recurring: false });
   const [payments, setPayments] = useState<PaymentData>({
     payments: [],
     subscriptions: [],
@@ -311,7 +337,7 @@ function App() {
   });
 
   const load = async () => {
-    const [overview, config, adList, roadmap, networkData, paymentData, customerData, topologyData] = await Promise.all([
+    const [overview, config, adList, roadmap, networkData, paymentData, customerData, topologyData, financialData] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
       api('/api/v1/admin/ads'),
@@ -320,6 +346,7 @@ function App() {
       api('/api/v1/admin/payments'),
       api('/api/v1/admin/customers'),
       api('/api/v1/admin/billing-topology'),
+      api('/api/v1/admin/financial-report'),
     ]);
     setStats(overview.stats);
     setSite(config);
@@ -329,6 +356,7 @@ function App() {
     setPayments(paymentData);
     setCustomers(customerData);
     setBillingTopology(topologyData);
+    setFinancialReport(financialData);
   };
 
   useEffect(() => {
@@ -1065,6 +1093,116 @@ function App() {
             </div>
             <div className="stats">
               <div><span>Payments</span><strong>{payments.payments.length}</strong></div><div><span>Successful</span><strong>{payments.payments.filter((p) => p.status === 'success').length}</strong></div><div><span>Subscriptions</span><strong>{payments.subscriptions.length}</strong></div><div><span>Active plans</span><strong>{payments.products.filter((p) => p.active).length}</strong></div>
+            </div>
+            <div className="billing-section">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Financial intelligence</p>
+                  <h3>Revenue, profit & sales summary</h3>
+                  <p className="muted">Accumulated revenue is calculated from successful payments. Values stay separated by currency so currencies are never incorrectly added together.</p>
+                </div>
+              </div>
+              <div className="stats">
+                {financialReport.totals.map((t) => (
+                  <div key={t.currency}>
+                    <span>{t.currency} net revenue</span>
+                    <strong>{(t.netRevenue / 100).toFixed(2)}</strong>
+                    <small>profit {(t.profit / 100).toFixed(2)} · expenses {(t.expenses / 100).toFixed(2)}</small>
+                  </div>
+                ))}
+                {!financialReport.totals.length && <div><span>Revenue</span><strong>0.00</strong><small>No successful payments yet</small></div>}
+              </div>
+              <div className="grid-two">
+                <div className="panel soft">
+                  <p className="eyebrow">Daily</p>
+                  <h3>Daily revenue</h3>
+                  <div className="ad-list">
+                    {financialReport.daily.slice(-14).map((row) => (
+                      <article className="ad-row" key={row.period}>
+                        <div><strong>{row.period}</strong><small>{row.amounts.map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`).join(' · ')}</small></div>
+                      </article>
+                    ))}
+                    {!financialReport.daily.length && <p className="muted">No daily sales yet.</p>}
+                  </div>
+                </div>
+                <div className="panel soft">
+                  <p className="eyebrow">Monthly</p>
+                  <h3>Monthly revenue</h3>
+                  <div className="ad-list">
+                    {financialReport.monthly.slice(-12).map((row) => (
+                      <article className="ad-row" key={row.period}>
+                        <div><strong>{row.period}</strong><small>{row.amounts.map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`).join(' · ')}</small></div>
+                      </article>
+                    ))}
+                    {!financialReport.monthly.length && <p className="muted">No monthly sales yet.</p>}
+                  </div>
+                </div>
+              </div>
+              <div className="grid-two">
+                <div className="panel soft">
+                  <p className="eyebrow">Annual</p>
+                  <h3>Yearly revenue</h3>
+                  <div className="ad-list">
+                    {financialReport.yearly.map((row) => (
+                      <article className="ad-row" key={row.period}>
+                        <div><strong>{row.period}</strong><small>{row.amounts.map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`).join(' · ')}</small></div>
+                      </article>
+                    ))}
+                    {!financialReport.yearly.length && <p className="muted">No yearly sales yet.</p>}
+                  </div>
+                </div>
+                <div className="panel soft">
+                  <p className="eyebrow">Sales summary</p>
+                  <h3>Gross → refunds → net → profit</h3>
+                  {financialReport.totals.map((t) => (
+                    <div className="health-list" key={t.currency}>
+                      <div><span>Gross sales · {t.currency}</span><strong>{(t.grossRevenue / 100).toFixed(2)}</strong></div>
+                      <div><span>Refunds · {t.currency}</span><strong>{(t.refunds / 100).toFixed(2)}</strong></div>
+                      <div><span>Net revenue · {t.currency}</span><strong>{(t.netRevenue / 100).toFixed(2)}</strong></div>
+                      <div><span>Operating expenses · {t.currency}</span><strong>{(t.expenses / 100).toFixed(2)}</strong></div>
+                      <div><span>Profit · {t.currency}</span><strong>{(t.profit / 100).toFixed(2)}</strong></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="panel soft">
+                <div className="panel-head">
+                  <div><p className="eyebrow">Profit & loss</p><h3>Operating expenses</h3><p className="muted">{financialReport.note}</p></div>
+                </div>
+                <div className="form-grid">
+                  <label>Category<input value={expenseDraft.category} onChange={(e) => setExpenseDraft({ ...expenseDraft, category: e.target.value })} placeholder="Hosting, payment fees, operations..." /></label>
+                  <label>Description<input value={expenseDraft.description} onChange={(e) => setExpenseDraft({ ...expenseDraft, description: e.target.value })} /></label>
+                  <label>Amount<input type="number" min="0" step="0.01" value={expenseDraft.amount} onChange={(e) => setExpenseDraft({ ...expenseDraft, amount: Number(e.target.value) })} /></label>
+                  <label>Currency<input value={expenseDraft.currency} onChange={(e) => setExpenseDraft({ ...expenseDraft, currency: e.target.value.toUpperCase() })} /></label>
+                  <label>Date<input type="date" value={expenseDraft.expenseDate} onChange={(e) => setExpenseDraft({ ...expenseDraft, expenseDate: e.target.value })} /></label>
+                  <label className="inline-check">Recurring<input type="checkbox" checked={expenseDraft.recurring} onChange={(e) => setExpenseDraft({ ...expenseDraft, recurring: e.target.checked })} /></label>
+                </div>
+                <div className="row-actions">
+                  <button className="primary" onClick={async () => {
+                    try {
+                      await api('/api/v1/admin/financial-expenses', {
+                        method: 'POST',
+                        body: JSON.stringify({ ...expenseDraft, amount: Math.round(expenseDraft.amount * 100) }),
+                      });
+                      const report = await api('/api/v1/admin/financial-report');
+                      setFinancialReport(report);
+                      setExpenseDraft({ category: '', description: '', amount: 0, currency: 'USD', expenseDate: new Date().toISOString().slice(0, 10), recurring: false });
+                      setMessage('Operating expense recorded.');
+                    } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to record expense'); }
+                  }}>Add expense</button>
+                </div>
+                <div className="ad-list">
+                  {financialReport.expenses.map((expense) => (
+                    <article className="ad-row" key={expense.id}>
+                      <div><strong>{expense.category}</strong><p>{expense.description ?? 'No description'}</p><small>{(expense.amount / 100).toFixed(2)} {expense.currency} · {new Date(expense.expenseDate).toLocaleDateString()}{expense.recurring ? ' · recurring' : ''}</small></div>
+                      <button className="danger" onClick={async () => {
+                        await api('/api/v1/admin/financial-expenses/' + expense.id, { method: 'DELETE' });
+                        setFinancialReport(await api('/api/v1/admin/financial-report'));
+                      }}>Delete</button>
+                    </article>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="billing-grid">
               <div><h3>Payment providers</h3><div className="provider-list">{payments.providerStatus.map((p) => <div className="provider-row" key={p.name}><strong>{p.name}</strong><span className={p.configured ? 'status published' : 'status'}>{p.configured ? 'configured' : 'not configured'}</span></div>)}</div></div>
