@@ -115,6 +115,34 @@ type AdminCustomer = {
   }>;
 };
 
+type BillingTopology = {
+  generalFree: {
+    maxConcurrentUsers: number;
+    operatingWindowHours: number;
+    disconnectInactive: boolean;
+    releaseCapacity: boolean;
+    queueEnabled: boolean;
+    routeLabel: string;
+    description: string;
+  };
+  generalPro: {
+    target: string;
+    smartVpn: boolean;
+    smartVproxy: boolean;
+    health: boolean;
+    load: boolean;
+    capacity: boolean;
+    queue: boolean;
+  };
+  wireguard: {
+    target: string;
+    health: boolean;
+    load: boolean;
+    capacity: boolean;
+    queue: boolean;
+  };
+};
+
 type PaymentData = {
   payments: Array<{
     id: string;
@@ -238,6 +266,8 @@ function App() {
   const [productDraft, setProductDraft] = useState<ProductDraft | null>(null);
   const [priceDraft, setPriceDraft] = useState<PriceDraft | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
+  const [billingTopology, setBillingTopology] = useState<BillingTopology | null>(null);
+  const [topologyDraft, setTopologyDraft] = useState<BillingTopology | null>(null);
   const [network, setNetwork] = useState<NetworkData>({
     supportedClients: [],
     tunnels: [],
@@ -289,7 +319,7 @@ function App() {
   });
 
   const load = async () => {
-    const [overview, config, adList, roadmap, networkData, paymentData, customerData] = await Promise.all([
+    const [overview, config, adList, roadmap, networkData, paymentData, customerData, topologyData] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
       api('/api/v1/admin/ads'),
@@ -297,6 +327,7 @@ function App() {
       api('/api/v1/admin/network'),
       api('/api/v1/admin/payments'),
       api('/api/v1/admin/customers'),
+      api('/api/v1/admin/billing-topology'),
     ]);
     setStats(overview.stats);
     setSite(config);
@@ -305,6 +336,7 @@ function App() {
     setNetwork(networkData);
     setPayments(paymentData);
     setCustomers(customerData);
+    setBillingTopology(topologyData);
   };
 
   useEffect(() => {
@@ -1071,7 +1103,12 @@ function App() {
               </div>
             </div>
             <div className="billing-section"><div className="panel-head"><div><h3>Product catalog & capacity</h3><p className="muted">Operational view of how each plan is served.</p></div></div><div className="ad-list">{payments.catalog.map((p) => <article className="ad-row" key={p.code}><div><span className="status published">{p.category}</span><h3>{p.name}</h3><p>{p.price === 0 ? 'Free' : p.price.toFixed(2) + ' ' + p.currency} · {p.durationDays} days · {p.userLimit} user · {p.deviceLimit} device{p.deviceLimit === 1 ? '' : 's'}</p><small>{p.capacityPolicy}</small></div></article>)}</div></div>
-            <div className="billing-section"><div className="panel-head"><div><h3>Production VPN topology</h3><p className="muted">Operational policies for General and WireGuard service classes.</p></div></div><div className="grid-two"><div className="panel soft"><h3>General Free</h3><p>Free Server · maximum 100 concurrent/served users within a 1-hour operating window.</p><p>Active usage/device check → inactive connections automatically disconnected → capacity released → reconnect according to current capacity and queue.</p></div><div className="panel soft"><h3>General Pro</h3><p>Smart VPN / Smart VProxy → Production General Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div><div className="panel soft"><h3>WireGuard</h3><p>Production WireGuard Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div></div></div>
+            <div className="billing-section"><div className="panel-head"><div><h3>Production VPN topology</h3><p className="muted">Kebijakan operasional ini sekarang tersimpan di database dan bisa diubah langsung dari website Admin.</p></div><button className="primary" onClick={() => billingTopology && setTopologyDraft(JSON.parse(JSON.stringify(billingTopology)))}>Edit topology</button></div>
+              {billingTopology && <div className="grid-two">
+                <div className="panel soft"><h3>General Free</h3><p>{billingTopology.generalFree.routeLabel} · maximum {billingTopology.generalFree.maxConcurrentUsers} concurrent/served users within a {billingTopology.generalFree.operatingWindowHours}-hour operating window.</p><p>{billingTopology.generalFree.description}</p></div>
+                <div className="panel soft"><h3>General Pro</h3><p>{billingTopology.generalPro.smartVpn ? 'Smart VPN' : ''}{billingTopology.generalPro.smartVpn && billingTopology.generalPro.smartVproxy ? ' / ' : ''}{billingTopology.generalPro.smartVproxy ? 'Smart VProxy' : ''} → {billingTopology.generalPro.target}.</p><p>Health: {billingTopology.generalPro.health ? 'on' : 'off'} · Load: {billingTopology.generalPro.load ? 'on' : 'off'} · Capacity: {billingTopology.generalPro.capacity ? 'on' : 'off'} · Queue: {billingTopology.generalPro.queue ? 'on' : 'off'}.</p></div>
+                <div className="panel soft"><h3>WireGuard</h3><p>{billingTopology.wireguard.target}.</p><p>Health: {billingTopology.wireguard.health ? 'on' : 'off'} · Load: {billingTopology.wireguard.load ? 'on' : 'off'} · Capacity: {billingTopology.wireguard.capacity ? 'on' : 'off'} · Queue: {billingTopology.wireguard.queue ? 'on' : 'off'}.</p></div>
+              </div>}
             <div className="billing-section"><div className="panel-head"><div><h3>Recent payments</h3><p className="muted">Edit operational payment metadata and status without exposing provider credentials.</p></div></div><div className="ad-list">
               {payments.payments.length === 0 && <p className="muted">No payments yet.</p>}
               {payments.payments.map((p) => <article className="ad-row" key={p.id}><div><span className={`status ${p.status === 'success' ? 'published' : ''}`}>{p.status}</span><h3>{p.subscription.product.name}</h3><p>{p.subscription.user.email} · {(p.amount / 100).toFixed(2)} {p.currency}</p><small>{p.provider}{p.country ? ' · ' + p.country : ''} · {new Date(p.createdAt).toLocaleString()}</small></div><div className="row-actions"><button onClick={() => setPaymentDraft({ id: p.id, provider: p.provider, country: p.country ?? '', currency: p.currency, paymentMethod: '', amount: p.amount / 100, settlementCurrency: '', status: p.status, transactionId: p.transactionId ?? '', type: 'one_time', autoDebit: false, providerPaymentId: '', refundId: '', refundReason: '' })}>Edit payment</button></div></article>)}
@@ -1162,6 +1199,49 @@ function App() {
           </section>
         )}
       </main>
+      {topologyDraft && (
+        <div className="modal-backdrop">
+          <section className="modal">
+            <div className="panel-head"><div><p className="eyebrow">Production topology</p><h2>Edit VPN topology</h2></div><button onClick={() => setTopologyDraft(null)}>Close</button></div>
+            <div className="editor-group">
+              <h3>General Free</h3>
+              <div className="form-grid">
+                <label>Route label<input value={topologyDraft.generalFree.routeLabel} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, routeLabel: e.target.value } })} /></label>
+                <label>Max concurrent users<input type="number" min="1" value={topologyDraft.generalFree.maxConcurrentUsers} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, maxConcurrentUsers: Number(e.target.value) } })} /></label>
+                <label>Operating window (hours)<input type="number" min="1" value={topologyDraft.generalFree.operatingWindowHours} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, operatingWindowHours: Number(e.target.value) } })} /></label>
+                <label className="inline-check">Disconnect inactive<input type="checkbox" checked={topologyDraft.generalFree.disconnectInactive} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, disconnectInactive: e.target.checked } })} /></label>
+                <label className="inline-check">Release capacity<input type="checkbox" checked={topologyDraft.generalFree.releaseCapacity} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, releaseCapacity: e.target.checked } })} /></label>
+                <label className="inline-check">Queue enabled<input type="checkbox" checked={topologyDraft.generalFree.queueEnabled} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, queueEnabled: e.target.checked } })} /></label>
+                <label className="full">Description<textarea rows={3} value={topologyDraft.generalFree.description} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, description: e.target.value } })} /></label>
+              </div>
+            </div>
+            <div className="editor-group">
+              <h3>General Pro</h3>
+              <div className="form-grid">
+                <label>Target nodes<input value={topologyDraft.generalPro.target} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, target: e.target.value } })} /></label>
+                <label className="inline-check">Smart VPN<input type="checkbox" checked={topologyDraft.generalPro.smartVpn} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, smartVpn: e.target.checked } })} /></label>
+                <label className="inline-check">Smart VProxy<input type="checkbox" checked={topologyDraft.generalPro.smartVproxy} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, smartVproxy: e.target.checked } })} /></label>
+                <label className="inline-check">Health control<input type="checkbox" checked={topologyDraft.generalPro.health} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, health: e.target.checked } })} /></label>
+                <label className="inline-check">Load control<input type="checkbox" checked={topologyDraft.generalPro.load} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, load: e.target.checked } })} /></label>
+                <label className="inline-check">Capacity control<input type="checkbox" checked={topologyDraft.generalPro.capacity} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, capacity: e.target.checked } })} /></label>
+                <label className="inline-check">Queue control<input type="checkbox" checked={topologyDraft.generalPro.queue} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, queue: e.target.checked } })} /></label>
+              </div>
+            </div>
+            <div className="editor-group">
+              <h3>WireGuard</h3>
+              <div className="form-grid">
+                <label>Target nodes<input value={topologyDraft.wireguard.target} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, target: e.target.value } })} /></label>
+                <label className="inline-check">Health control<input type="checkbox" checked={topologyDraft.wireguard.health} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, health: e.target.checked } })} /></label>
+                <label className="inline-check">Load control<input type="checkbox" checked={topologyDraft.wireguard.load} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, load: e.target.checked } })} /></label>
+                <label className="inline-check">Capacity control<input type="checkbox" checked={topologyDraft.wireguard.capacity} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, capacity: e.target.checked } })} /></label>
+                <label className="inline-check">Queue control<input type="checkbox" checked={topologyDraft.wireguard.queue} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, queue: e.target.checked } })} /></label>
+              </div>
+            </div>
+            <div className="modal-actions"><button onClick={() => setTopologyDraft(null)}>Cancel</button><button className="primary" onClick={async () => { try { const saved = await api('/api/v1/admin/billing-topology', { method: 'PUT', body: JSON.stringify(topologyDraft) }); setBillingTopology(saved); setTopologyDraft(null); setMessage('Production VPN topology saved.'); } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save topology'); } }}>Save topology</button></div>
+          </section>
+        </div>
+      )}
+
       {networkDraft && (
         <div className="modal-backdrop">
           <section className="modal">
