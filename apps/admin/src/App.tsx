@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import './App.css';
+import ControlPlane from './ControlPlane';
 
 type SiteService = { label: string; title: string; description: string };
 type SiteConfig = {
@@ -442,6 +443,7 @@ function App() {
 
   const nav = [
     ['overview', 'Control Center'],
+    ['control', 'Service Control'],
     ['customers', 'Customers'],
     ['payments', 'Payments & Billing'],
     ['network', 'Network & Clients'],
@@ -479,7 +481,7 @@ function App() {
         </nav>
         <div className="sidebar-label">OPERATIONS</div>
         <nav>
-          {nav.slice(2, 4).map(([id, label]) => (
+          {nav.slice(2, 5).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -495,7 +497,7 @@ function App() {
         </nav>
         <div className="sidebar-label">CONTENT</div>
         <nav>
-          {nav.slice(4, 6).map(([id, label]) => (
+          {nav.slice(5, 7).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -511,7 +513,7 @@ function App() {
         </nav>
         <div className="sidebar-label">PROJECT</div>
         <nav>
-          {nav.slice(6).map(([id, label]) => (
+          {nav.slice(7).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -550,6 +552,7 @@ function App() {
           </a>
         </header>
         {message && <div className="notice">{message}</div>}
+        {section === 'control' && <ControlPlane />}
         {section === 'overview' && (
           <>
             <section className="hero-panel">
