@@ -1,26 +1,7 @@
-import { randomUUID } from 'node:crypto';
+import { generateWireGuardKeyPair } from './wireguard.crypto.js';
 
-export function generateWireGuardConfig() {
-  const privateKey = randomUUID().replaceAll('-', '');
-
-  const publicKey = randomUUID().replaceAll('-', '');
-
-  const config = `
-[Interface]
-PrivateKey = ${privateKey}
-Address = 10.0.0.2/32
-DNS = 1.1.1.1
-
-[Peer]
-PublicKey = ${publicKey}
-Endpoint = node-1.santor.app:51820
-AllowedIPs = 0.0.0.0/0
-PersistentKeepalive = 25
-`;
-
-  return {
-    privateKey,
-    publicKey,
-    config,
-  };
+export function generateWireGuardConfig(address = '10.66.0.2/32', endpoint = '187.126.113.168:51820', serverPublicKey = '') {
+  const { privateKey, publicKey } = generateWireGuardKeyPair();
+  const config = `[Interface]\nPrivateKey = ${privateKey}\nAddress = ${address}\nDNS = 1.1.1.1\n\n[Peer]\nPublicKey = ${serverPublicKey}\nEndpoint = ${endpoint}\nAllowedIPs = 0.0.0.0/0\nPersistentKeepalive = 25`;
+  return { privateKey, publicKey, config };
 }

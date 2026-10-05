@@ -1,4 +1,5 @@
 import argon2 from 'argon2';
+import createError from 'http-errors';
 
 import { prisma } from '../../config/database.js';
 
@@ -13,7 +14,7 @@ export async function register(email: string, password: string, name?: string) {
   const existing = await findUserByEmail(email);
 
   if (existing) {
-    throw new Error('Email already registered');
+    throw createError(409, 'Email already registered');
   }
 
   const hashedPassword = await argon2.hash(password);
@@ -24,7 +25,6 @@ export async function register(email: string, password: string, name?: string) {
     passwordHash: hashedPassword,
   });
 
-  // Auto create GENERAL-FREE subscription
   const freeProduct = await prisma.product.findUnique({
     where: {
       code: 'GENERAL-FREE',
@@ -32,7 +32,7 @@ export async function register(email: string, password: string, name?: string) {
   });
 
   if (!freeProduct) {
-    throw new Error('Free product not found');
+    throw createError(500, 'Free product not found');
   }
 
   const subscription = await prisma.subscription.create({
@@ -45,20 +45,14 @@ export async function register(email: string, password: string, name?: string) {
     },
   });
 
-  // Auto create License + VPN Access
   await generateLicense(subscription.id);
-
-  // Activate GENERAL-FREE entitlement
   await activateEntitlement(subscription.id);
 
   return {
     id: user.id,
-
     email: user.email,
-
     token: signToken({
       id: user.id,
-
       email: user.email,
     }),
   };
@@ -68,23 +62,24 @@ export async function login(email: string, password: string) {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    throw new Error('Invalid credentials');
+    throw createError(401, 'Invalid credentials');
   }
 
   const valid = await argon2.verify(user.passwordHash, password);
 
   if (!valid) {
-    throw new Error('Invalid credentials');
+    throw createError(401, 'Invalid credentials');
+  }
+
+  if (user.status !== 'active') {
+    throw createError(403, 'User account is inactive');
   }
 
   return {
     id: user.id,
-
     email: user.email,
-
     token: signToken({
       id: user.id,
-
       email: user.email,
     }),
   };

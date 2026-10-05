@@ -238,7 +238,7 @@ model WireGuardPeer {
   privateKey String
   publicKey  String
 
-  address String
+  address String @unique
 
   endpoint String?
 
@@ -296,4 +296,19 @@ model AuditLog {
   @@index([resource, resourceId])
   @@index([action])
   @@index([createdAt])
+}
+
+
+model SiteConfig {
+  id            String   @id
+  brand         String
+  heroTitle     String
+  heroSubtitle  String
+  primaryCta    String
+  secondaryCta  String
+  trustLine     String
+  primaryColor  String
+  services      Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

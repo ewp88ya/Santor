@@ -14,8 +14,21 @@ import {
   revokeWireGuardPeer as revokeProvisionedWireGuardPeer,
 } from '../vpn-provisioning/vpn-provisioning.client.js';
 
-function generateAddress() {
-  return `10.0.0.${Math.floor(Math.random() * 200) + 2}/32`;
+async function generateAddress() {
+  const peers = await prisma.wireGuardPeer.findMany({
+    select: { address: true },
+  });
+
+  const used = new Set(peers.map((peer) => peer.address));
+
+  for (let host = 9; host <= 254; host += 1) {
+    const address = `10.66.0.${host}/32`;
+    if (!used.has(address)) {
+      return address;
+    }
+  }
+
+  throw createError(503, 'WireGuard address pool exhausted');
 }
 
 async function getDeviceWithNode(deviceId: string) {
@@ -78,7 +91,7 @@ export async function generateWireGuardPeer(deviceId: string) {
   validateNode(node);
 
   const { privateKey, publicKey } = generateWireGuardKeyPair();
-  const address = generateAddress();
+  const address = await generateAddress();
 
   const provisioning = await provisionWireGuardPeer(node.provisioningUrl!, node.provisioningKey!, {
     publicKey,
@@ -163,7 +176,7 @@ export async function regenerateWireGuardConfig(userId: string, deviceId: string
   );
 
   const { privateKey, publicKey } = generateWireGuardKeyPair();
-  const address = generateAddress();
+  const address = await generateAddress();
 
   const provisioning = await provisionWireGuardPeer(node.provisioningUrl!, node.provisioningKey!, {
     publicKey,
