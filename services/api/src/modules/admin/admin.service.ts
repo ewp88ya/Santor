@@ -169,6 +169,7 @@ export async function getInfrastructureMonitoring() {
     },
     domains: domains.map((item) => ({
       ...item,
+      httpStatus: item.status,
       status: item.ok ? 'online' : 'degraded',
     })),
     regions: [
