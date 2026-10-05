@@ -235,3 +235,29 @@ export async function updateSiteConfig(input: unknown) {
   });
   return output(saved);
 }
+
+
+export async function getOperationalEvents(query: { status?: string; category?: string } = {}) {
+  return prisma.adminOperationalEvent.findMany({
+    where: {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.category ? { category: query.category } : {}),
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 200,
+  });
+}
+
+export async function updateOperationalEvent(id: string, input: any) {
+  const data: Record<string, unknown> = {};
+  if (typeof input?.status === 'string') {
+    data.status = input.status;
+    if (input.status === 'resolved') data.resolvedAt = new Date();
+  }
+  if (typeof input?.acknowledgedBy === 'string') {
+    data.acknowledgedBy = input.acknowledgedBy;
+    data.acknowledgedAt = new Date();
+  }
+  if (typeof input?.assignedTo === 'string') data.assignedTo = input.assignedTo;
+  return prisma.adminOperationalEvent.update({ where: { id }, data });
+}
