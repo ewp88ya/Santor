@@ -9,6 +9,9 @@ import {
   updateAdminProductPrice,
   adminBillingTopology,
   updateAdminBillingTopology,
+  adminFinancialReport,
+  createAdminFinancialExpense,
+  deleteAdminFinancialExpense,
 } from './payment.service.js';
 
 export async function adminPayments() {
@@ -47,6 +50,20 @@ export async function createAdminProductPriceController(request: FastifyRequest)
   return createAdminProductPrice(request.body as any);
 }
 
+
+export async function adminFinancialReportController() {
+  return adminFinancialReport();
+}
+
+export async function createAdminFinancialExpenseController(request: FastifyRequest) {
+  return createAdminFinancialExpense(request.body as any);
+}
+
+export async function deleteAdminFinancialExpenseController(
+  request: FastifyRequest<{ Params: { id: string } }>,
+) {
+  return deleteAdminFinancialExpense(request.params.id);
+}
 
 export async function adminBillingTopologyController() {
   return adminBillingTopology();
