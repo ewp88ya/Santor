@@ -425,3 +425,27 @@ model RoadmapPhase {
   @@index([status])
   @@index([sortOrder])
 }
+
+
+model AdminOperationalEvent {
+  id           String   @id @default(uuid())
+  severity     String
+  source       String
+  category     String
+  status       String   @default("open")
+  title        String
+  message      String
+  metadata     Json?
+  auto         Boolean  @default(true)
+  acknowledgedAt DateTime?
+  acknowledgedBy String?
+  assignedTo   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, severity])
+  @@index([category, createdAt])
+  @@index([source, createdAt])
+  @@index([createdAt])
+}
