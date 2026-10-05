@@ -16,6 +16,7 @@ import aiRoutes from '../../modules/ai/ai.routes.js';
 import telegramRoutes from '../../modules/ai/telegram.routes.js';
 import proxyRoutes from '../../modules/proxy/proxy.routes.js';
 import adminRoutes from '../../modules/admin/admin.routes.js';
+import publicMarketingRoutes from '../../modules/admin/public-marketing.routes.js';
 
 export default async function v1Routes(app: FastifyInstance) {
   await app.register(healthRoute);
@@ -57,5 +58,8 @@ export default async function v1Routes(app: FastifyInstance) {
   });
   await app.register(adminRoutes, {
     prefix: '/admin',
+  });
+  await app.register(publicMarketingRoutes, {
+    prefix: '/marketing',
   });
 }
