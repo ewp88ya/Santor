@@ -58,6 +58,27 @@ type BypassRule = {
   priority: number;
   notes: string | null;
 };
+type InfrastructureMonitoring = {
+  generatedAt: string;
+  node: {
+    id: string;
+    country: string;
+    city: string;
+    role: string;
+    status: string;
+    source: string;
+    stabilityIndex: number;
+    uptimeSeconds: number;
+    load: number[];
+    cpuCount: number;
+    memory: { totalBytes: number; freeBytes: number; usedPercent: number };
+    disk: { totalBytes: number | null; freeBytes: number | null; usedPercent: number | null };
+  };
+  internet: { status: string; latencyMs: number; speedMbps: number | null; note: string };
+  domains: Array<{ url: string; ok: boolean; status: number | null; latencyMs: number; status: string }>;
+  regions: Array<{ country: string; city: string; nodeId: string; status: string; stabilityIndex: number; latencyMs: number }>;
+};
+
 type NetworkData = {
   supportedClients: string[];
   tunnels: Tunnel[];
@@ -267,6 +288,7 @@ function App() {
   const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
   const [billingTopology, setBillingTopology] = useState<BillingTopology | null>(null);
   const [topologyDraft, setTopologyDraft] = useState<BillingTopology | null>(null);
+  const [monitoring, setMonitoring] = useState<InfrastructureMonitoring | null>(null);
   const [network, setNetwork] = useState<NetworkData>({
     supportedClients: [],
     tunnels: [],
@@ -327,6 +349,7 @@ function App() {
       paymentData,
       customerData,
       topologyData,
+      monitoringData,
     ] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
@@ -336,6 +359,7 @@ function App() {
       api('/api/v1/admin/payments'),
       api('/api/v1/admin/customers'),
       api('/api/v1/admin/billing-topology'),
+      api('/api/v1/admin/monitoring'),
     ]);
     setStats(overview.stats);
     setSite(config);
@@ -345,6 +369,7 @@ function App() {
     setPayments(paymentData);
     setCustomers(customerData);
     setBillingTopology(topologyData);
+    setMonitoring(monitoringData);
   };
 
   useEffect(() => {
@@ -626,11 +651,9 @@ function App() {
                 <small>direct-routing rules</small>
               </div>
               <div>
-                <span>Roadmap complete</span>
-                <strong>
-                  {phases.filter((p) => p.status === 'complete').length}/{phases.length}
-                </strong>
-                <small>phase status</small>
+                <span>VPS stability</span>
+                <strong>{monitoring ? `${monitoring.node.stabilityIndex}/100` : '—'}</strong>
+                <small>host health index</small>
               </div>
             </section>
             <section className="operation-grid">
@@ -672,10 +695,12 @@ function App() {
                   <div>
                     <span>
                       <i className="health-dot" />
-                      Project control
+                      VPS & internet
                     </span>
                     <strong>
-                      {phases.filter((p) => p.status === 'complete').length} phases complete
+                      {monitoring
+                        ? `${monitoring.node.city}, ${monitoring.node.country} · ${monitoring.internet.latencyMs} ms`
+                        : 'Monitoring unavailable'}
                     </strong>
                   </div>
                 </div>
@@ -693,6 +718,55 @@ function App() {
                   <button onClick={() => setSection('payments')}>Manage plans & billing</button>
                   <button onClick={() => setSection('settings')}>Customize admin UI</button>
                 </div>
+              </div>
+            </section>
+            <section className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Infrastructure monitoring</p>
+                  <h3>VPS, internet & regional quality</h3>
+                </div>
+                <span className="status published">
+                  {monitoring?.node.status === 'online' ? 'LIVE' : 'CHECKING'}
+                </span>
+              </div>
+              <div className="customer-summary">
+                <div>
+                  <span>Internet latency</span>
+                  <strong>{monitoring ? `${monitoring.internet.latencyMs} ms` : '—'}</strong>
+                </div>
+                <div>
+                  <span>Memory</span>
+                  <strong>{monitoring ? `${monitoring.node.memory.usedPercent}%` : '—'}</strong>
+                </div>
+                <div>
+                  <span>Disk</span>
+                  <strong>{monitoring?.node.disk.usedPercent != null ? `${monitoring.node.disk.usedPercent}%` : '—'}</strong>
+                </div>
+                <div>
+                  <span>VPS index</span>
+                  <strong>{monitoring ? `${monitoring.node.stabilityIndex}/100` : '—'}</strong>
+                </div>
+              </div>
+              <div className="health-list">
+                {(monitoring?.regions ?? []).map((region) => (
+                  <div key={region.nodeId}>
+                    <span>
+                      <i className="health-dot" />
+                      {region.country} · {region.city}
+                    </span>
+                    <strong>{region.stabilityIndex}/100 · {region.latencyMs} ms</strong>
+                  </div>
+                ))}
+                {(monitoring?.domains ?? []).map((domain) => (
+                  <div key={domain.url}>
+                    <span>
+                      <i className="health-dot" />
+                      {domain.url.replace(/^https?:\/\//, '').replace(/\/.*$/, '')}
+                    </span>
+                    <strong>{domain.status} · {domain.latencyMs} ms</strong>
+                  </div>
+                ))}
               </div>
             </section>
             <section className="panel">
