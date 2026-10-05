@@ -327,7 +327,6 @@ function App() {
       paymentData,
       customerData,
       topologyData,
-      financialData,
     ] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
