@@ -16,6 +16,12 @@ type Tunnel = { id:string; name:string; protocol:string; nodeId:string|null; end
 type ClientProfile = { id:string; name:string; client:string; tunnelId:string|null; enabled:boolean; config:Record<string,unknown> };
 type BypassRule = { id:string; name:string; matchType:string; pattern:string; action:string; enabled:boolean; priority:number; notes:string|null };
 type NetworkData = { supportedClients:string[]; tunnels:Tunnel[]; profiles:ClientProfile[]; bypass:BypassRule[] };
+type PaymentData = {
+  payments: Array<{ id:string; provider:string; country:string|null; currency:string; amount:number; status:string; transactionId:string|null; createdAt:string; subscription:{ product:{name:string}; user:{email:string} } }>;
+  subscriptions: Array<{ id:string; status:string; startDate:string|null; endDate:string|null; autoDebitEnabled:boolean; product:{name:string}; user:{email:string} }>;
+  products: Array<{ id:string; name:string; code:string; price:number; currency:string; durationDays:number; deviceLimit:number; active:boolean; prices:Array<{id:string;country:string|null;currency:string;amount:number;active:boolean}> }>;
+  providerStatus: Array<{name:string;configured:boolean}>;
+};
 
 const apiBase = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const tokenKey = 'santor_token';
@@ -57,13 +63,14 @@ function App() {
   const [message, setMessage] = useState('');
   const [adDraft, setAdDraft] = useState<Partial<Ad> | null>(null);
   const [network, setNetwork] = useState<NetworkData>({ supportedClients: [], tunnels: [], profiles: [], bypass: [] });
+  const [payments, setPayments] = useState<PaymentData>({ payments: [], subscriptions: [], products: [], providerStatus: [] });
   const [networkDraft, setNetworkDraft] = useState<any>(null);
 
   const load = async () => {
-    const [overview, config, adList, roadmap, networkData] = await Promise.all([
-      api('/api/v1/admin/overview'), api('/api/v1/admin/site-config'), api('/api/v1/admin/ads'), api('/api/v1/admin/roadmap'), api('/api/v1/admin/network'),
+    const [overview, config, adList, roadmap, networkData, paymentData] = await Promise.all([
+      api('/api/v1/admin/overview'), api('/api/v1/admin/site-config'), api('/api/v1/admin/ads'), api('/api/v1/admin/roadmap'), api('/api/v1/admin/network'), api('/api/v1/admin/payments'),
     ]);
-    setStats(overview.stats); setSite(config); setAds(adList); setPhases(roadmap); setNetwork(networkData);
+    setStats(overview.stats); setSite(config); setAds(adList); setPhases(roadmap); setNetwork(networkData); setPayments(paymentData);
   };
 
   useEffect(() => {
@@ -117,7 +124,7 @@ function App() {
   }
 
   const nav = [
-    ['overview', 'Control Center'], ['website', 'Website & Marketing'], ['ads', 'Ads'], ['network', 'Tunnels & Clients'], ['roadmap', 'Roadmap'],
+    ['overview', 'Control Center'], ['website', 'Website & Marketing'], ['ads', 'Ads'], ['network', 'Tunnels & Clients'], ['payments', 'Payments & Billing'], ['roadmap', 'Roadmap'],
   ];
 
   return <div className="admin-shell">
@@ -149,7 +156,33 @@ function App() {
           <div><h3>Client profiles</h3><p className="muted">Provisioning targets supported by Santor.</p>{network.supportedClients.map(client => <button className="client-chip" key={client} onClick={()=>setNetworkDraft({type:'client',name:client+' profile',client,tunnelId:network.tunnels[0]?.id ?? '',enabled:true})}>{client}</button>)}</div>
         </div>
         <div className="network-grid bypass-section"><div><div className="panel-head"><h3>Bypass rules</h3><button onClick={()=>setNetworkDraft({type:'bypass',name:'',matchType:'domain',pattern:'',action:'direct',priority:100,enabled:true})}>Add rule</button></div>{network.bypass.map(rule=><article className="network-row" key={rule.id}><div><strong>{rule.name}</strong><small>{rule.matchType}: {rule.pattern} → {rule.action}</small></div><div className="row-actions"><button onClick={()=>setNetworkDraft({...rule,type:'bypass'})}>Edit</button><button className="danger" onClick={async()=>{await api('/api/v1/admin/network/bypass/'+rule.id,{method:'DELETE'});setNetwork({...network,bypass:network.bypass.filter(x=>x.id!==rule.id)});}}>Delete</button></div></article>)}</div><div className="panel soft"><p className="eyebrow">Bypass policy</p><h3>Direct apps stay direct</h3><p>Rules can route matching domains, IPs, CIDRs or app identifiers directly instead of through the selected tunnel.</p></div></div>
-      </section>}      {section === 'roadmap' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Project context</p><h2>Roadmap status</h2><p>Only phase status and operational notes are editable here. Detailed implementation remains in the repository roadmap.</p></div></div><div className="roadmap">{phases.map((phase) => <div className="roadmap-row" key={phase.id}><div className="phase-no">P{phase.phase}</div><div className="phase-title"><strong>{phase.title}</strong><textarea defaultValue={phase.note ?? ''} onBlur={(e) => updatePhase(phase, (e.currentTarget.parentElement?.previousElementSibling as HTMLElement)?.dataset?.status ?? phase.status, e.currentTarget.value)} /></div><select value={phase.status} data-status={phase.status} onChange={(e) => updatePhase(phase, e.target.value, phase.note ?? '')}><option value="validation">⚠️ Validation</option><option value="complete">✅ Complete</option><option value="foundation">🟢 Foundation</option><option value="partial">🟡 Partial / Hardening</option><option value="pending">⏳ Not completed</option></select></div>)}</div></section>}
+      </section>}      {section === 'payments' && <section className="panel">
+        <div className="panel-head"><div><p className="eyebrow">Billing</p><h2>Payments & Billing</h2><p>Manage plans, regional prices, payment status and provider readiness. Provider secrets remain server-side.</p></div></div>
+        <div className="stats">
+          <div><span>Payments</span><strong>{payments.payments.length}</strong></div>
+          <div><span>Successful</span><strong>{payments.payments.filter(p=>p.status==='success').length}</strong></div>
+          <div><span>Subscriptions</span><strong>{payments.subscriptions.length}</strong></div>
+          <div><span>Active plans</span><strong>{payments.products.filter(p=>p.active).length}</strong></div>
+        </div>
+        <div className="billing-grid">
+          <div><h3>Payment providers</h3><div className="provider-list">{payments.providerStatus.map(p=><div className="provider-row" key={p.name}><strong>{p.name}</strong><span className={p.configured?'status published':'status'}>{p.configured?'configured':'not configured'}</span></div>)}</div></div>
+          <div className="panel soft"><p className="eyebrow">Security</p><h3>Credentials stay out of the CMS</h3><p>API keys, merchant secrets and signing keys are read from server environment configuration. The Admin UI controls operational data, not private credentials.</p></div>
+        </div>
+        <div className="billing-section"><div className="panel-head"><h3>Products & regional pricing</h3></div>
+          {payments.products.map(product=><article className="product-card" key={product.id}>
+            <div className="product-main">
+              <input value={product.name} onChange={e=>setPayments({...payments,products:payments.products.map(x=>x.id===product.id?{...x,name:e.target.value}:x)})}/>
+              <small>{product.code} · {product.durationDays} days · {product.deviceLimit} devices</small>
+              <label className="inline-check"><input type="checkbox" checked={product.active} onChange={e=>setPayments({...payments,products:payments.products.map(x=>x.id===product.id?{...x,active:e.target.checked}:x)})}/> Active</label>
+            </div>
+            <div className="product-price-edit"><label>Base amount<input type="number" value={product.price} onChange={e=>setPayments({...payments,products:payments.products.map(x=>x.id===product.id?{...x,price:Number(e.target.value)}:x)})}/></label><label>Currency<input value={product.currency} onChange={e=>setPayments({...payments,products:payments.products.map(x=>x.id===product.id?{...x,currency:e.target.value}:x)})}/></label><button className="primary" onClick={async()=>{const saved=await api('/api/v1/admin/products/'+product.id,{method:'PUT',body:JSON.stringify({name:product.name,price:product.price,currency:product.currency,active:product.active})});setPayments({...payments,products:payments.products.map(x=>x.id===saved.id?saved:x)});setMessage('Product saved.');}}>Save plan</button></div>
+            <div className="regional-prices">{product.prices.map(price=><span key={price.id} className="price-chip">{price.country||'GLOBAL'} · {price.amount} {price.currency}{price.active?'':' · off'}</span>)}</div>
+          </article>)}
+        </div>
+        <div className="billing-section"><div className="panel-head"><h3>Recent payments</h3></div><div className="ad-list">{payments.payments.map(p=><article className="ad-row" key={p.id}><div><span className={`status ${p.status==='success'?'published':''}`}>{p.status}</span><h3>{p.subscription.product.name}</h3><p>{p.subscription.user.email} · {p.amount} {p.currency}</p><small>{p.provider}{p.country?' · '+p.country:''}</small></div><div className="row-actions"><select value={p.status} onChange={async e=>{const saved=await api('/api/v1/admin/payments/'+p.id+'/status',{method:'PUT',body:JSON.stringify({status:e.target.value})});setPayments({...payments,payments:payments.payments.map(x=>x.id===saved.id?{...x,...saved}:x)});}}><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option><option value="refunded">refunded</option></select></div></article>)}</div></div>
+      </section>
+
+      {section === 'roadmap' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Project context</p><h2>Roadmap status</h2><p>Only phase status and operational notes are editable here. Detailed implementation remains in the repository roadmap.</p></div></div><div className="roadmap">{phases.map((phase) => <div className="roadmap-row" key={phase.id}><div className="phase-no">P{phase.phase}</div><div className="phase-title"><strong>{phase.title}</strong><textarea defaultValue={phase.note ?? ''} onBlur={(e) => updatePhase(phase, (e.currentTarget.parentElement?.previousElementSibling as HTMLElement)?.dataset?.status ?? phase.status, e.currentTarget.value)} /></div><select value={phase.status} data-status={phase.status} onChange={(e) => updatePhase(phase, e.target.value, phase.note ?? '')}><option value="validation">⚠️ Validation</option><option value="complete">✅ Complete</option><option value="foundation">🟢 Foundation</option><option value="partial">🟡 Partial / Hardening</option><option value="pending">⏳ Not completed</option></select></div>)}</div></section>}
     </main>
     {networkDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Network control</p><h2>Edit {networkDraft.type}</h2></div><button onClick={()=>setNetworkDraft(null)}>Close</button></div>
       <div className="form-grid">{(networkDraft.type==='tunnel'?['name','protocol','endpoint','port']:networkDraft.type==='client'?['name','client','tunnelId']:['name','matchType','pattern','action','priority','notes']).map((key:string)=><label key={key}>{key}{key==='notes'?<textarea value={String(networkDraft[key]??'')} onChange={e=>setNetworkDraft({...networkDraft,[key]:e.target.value})}/>:<input value={String(networkDraft[key]??'')} onChange={e=>setNetworkDraft({...networkDraft,[key]:e.target.value})}/>}</label>)}</div>
