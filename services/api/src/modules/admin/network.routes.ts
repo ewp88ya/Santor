@@ -7,10 +7,10 @@ export default async function networkRoutes(app: FastifyInstance) {
   const guard = [authMiddleware, requireRole('ADMIN')];
   app.get('/network', { preHandler: guard }, adminNetwork);
   app.post('/network/tunnels', { preHandler: guard }, createAdminTunnel);
-  app.put('/network/tunnels/:id', { preHandler: guard }, updateAdminTunnel);
+  app.put<{ Params: { id: string } }>('/network/tunnels/:id', { preHandler: guard }, updateAdminTunnel);
   app.post('/network/clients', { preHandler: guard }, createAdminClient);
-  app.put('/network/clients/:id', { preHandler: guard }, updateAdminClient);
+  app.put<{ Params: { id: string } }>('/network/clients/:id', { preHandler: guard }, updateAdminClient);
   app.post('/network/bypass', { preHandler: guard }, createAdminBypass);
-  app.put('/network/bypass/:id', { preHandler: guard }, updateAdminBypass);
-  app.delete('/network/:type/:id', { preHandler: guard }, deleteAdminNetworkItem);
+  app.put<{ Params: { id: string } }>('/network/bypass/:id', { preHandler: guard }, updateAdminBypass);
+  app.delete<{ Params: { type: string; id: string } }>('/network/:type/:id', { preHandler: guard }, deleteAdminNetworkItem);
 }

@@ -14,8 +14,8 @@ export default async function adminAdsRoutes(app: FastifyInstance) {
   const guard = [authMiddleware, requireRole('ADMIN')];
   app.get('/ads', { preHandler: guard }, adminAds);
   app.post('/ads', { preHandler: guard }, createAdminAd);
-  app.put('/ads/:id', { preHandler: guard }, updateAdminAd);
-  app.delete('/ads/:id', { preHandler: guard }, deleteAdminAd);
-  app.post('/ads/:id/publish', { preHandler: guard }, publishAdminAd);
-  app.post('/ads/:id/unpublish', { preHandler: guard }, unpublishAdminAd);
+  app.put<{ Params: { id: string } }>('/ads/:id', { preHandler: guard }, updateAdminAd);
+  app.delete<{ Params: { id: string } }>('/ads/:id', { preHandler: guard }, deleteAdminAd);
+  app.post<{ Params: { id: string } }>('/ads/:id/publish', { preHandler: guard }, publishAdminAd);
+  app.post<{ Params: { id: string } }>('/ads/:id/unpublish', { preHandler: guard }, unpublishAdminAd);
 }

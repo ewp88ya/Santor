@@ -15,6 +15,7 @@ const {
     },
     wireGuardPeer: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 
@@ -70,7 +71,7 @@ function buildPeer(overrides = {}) {
     deviceId: 'device-1',
     privateKey: 'private-key',
     publicKey: 'public-key',
-    address: '10.0.0.10/32',
+    address: '10.66.0.10/32',
     endpoint: 'vpn.example:51820',
     ...overrides,
   };
@@ -83,6 +84,8 @@ describe('WireGuard Service', () => {
     findPeerByDeviceMock.mockResolvedValue(null);
 
     prismaMock.device.findUnique.mockResolvedValue(buildDevice());
+
+    prismaMock.wireGuardPeer.findMany.mockResolvedValue([]);
 
     prismaMock.wireGuardPeer.findUnique.mockResolvedValue(
       buildPeer({
@@ -233,7 +236,7 @@ describe('WireGuard Service', () => {
 
       expect(provisioningCall[2]).toMatchObject({
         publicKey: expect.any(String),
-        address: expect.stringMatching(/^10\.0\.0\.\d+\/32$/),
+        address: expect.stringMatching(/^10\.66\.0\.\d+\/32$/),
       });
 
       expect(createWireGuardPeerMock).toHaveBeenCalledTimes(1);
@@ -242,7 +245,7 @@ describe('WireGuard Service', () => {
         deviceId: 'device-1',
         privateKey: expect.any(String),
         publicKey: expect.any(String),
-        address: expect.stringMatching(/^10\.0\.0\.\d+\/32$/),
+        address: expect.stringMatching(/^10\.66\.0\.\d+\/32$/),
         endpoint: 'vpn.example:51820',
       });
 
@@ -336,7 +339,7 @@ describe('WireGuard Service', () => {
       expect(updateWireGuardPeerMock).toHaveBeenCalledWith('peer-1', {
         privateKey: expect.any(String),
         publicKey: expect.any(String),
-        address: expect.stringMatching(/^10\.0\.0\.\d+\/32$/),
+        address: expect.stringMatching(/^10\.66\.0\.\d+\/32$/),
         endpoint: 'vpn.example:51820',
       });
 
@@ -433,7 +436,7 @@ describe('WireGuard Service', () => {
 
       expect(result).toContain('[Interface]');
       expect(result).toContain('PrivateKey = private-key');
-      expect(result).toContain('Address = 10.0.0.10/32');
+      expect(result).toContain('Address = 10.66.0.10/32');
       expect(result).toContain('DNS = 1.1.1.1');
       expect(result).toContain('[Peer]');
       expect(result).toContain('PublicKey = server-public-key');

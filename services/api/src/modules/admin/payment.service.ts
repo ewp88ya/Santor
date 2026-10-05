@@ -99,7 +99,7 @@ export async function createAdminProductPrice(
     where: {
       productId_country_currency: {
         productId: data.productId,
-        country: data.country?.trim().toUpperCase() || null,
+        country: (data.country?.trim().toUpperCase() || null) as string,
         currency: data.currency.trim().toUpperCase(),
       },
     },

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import './App.css';
 
 type SiteService = { label: string; title: string; description: string };
@@ -16,6 +16,7 @@ type Tunnel = { id:string; name:string; protocol:string; nodeId:string|null; end
 type ClientProfile = { id:string; name:string; client:string; tunnelId:string|null; enabled:boolean; config:Record<string,unknown> };
 type BypassRule = { id:string; name:string; matchType:string; pattern:string; action:string; enabled:boolean; priority:number; notes:string|null };
 type NetworkData = { supportedClients:string[]; tunnels:Tunnel[]; profiles:ClientProfile[]; bypass:BypassRule[] };
+type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'tunnel' | 'client' | 'bypass' };
 type PaymentData = {
   payments: Array<{ id:string; provider:string; country:string|null; currency:string; amount:number; status:string; transactionId:string|null; createdAt:string; subscription:{ product:{name:string}; user:{email:string} } }>;
   subscriptions: Array<{ id:string; status:string; startDate:string|null; endDate:string|null; autoDebitEnabled:boolean; product:{name:string}; user:{email:string} }>;
@@ -65,7 +66,7 @@ function App() {
   const [adDraft, setAdDraft] = useState<Partial<Ad> | null>(null);
   const [network, setNetwork] = useState<NetworkData>({ supportedClients: [], tunnels: [], profiles: [], bypass: [] });
   const [payments, setPayments] = useState<PaymentData>({ payments: [], subscriptions: [], products: [], providerStatus: [], catalog: [] });
-  const [networkDraft, setNetworkDraft] = useState<any>(null);
+  const [networkDraft, setNetworkDraft] = useState<NetworkDraft | null>(null);
 
   const load = async () => {
     const [overview, config, adList, roadmap, networkData, paymentData] = await Promise.all([
@@ -76,12 +77,19 @@ function App() {
 
   useEffect(() => {
     if (!token) return;
-    load().catch((error: Error) => {
-      setMessage(error.message);
-      if (/401|403|credentials/i.test(error.message)) {
-        localStorage.removeItem(tokenKey); setToken(null);
+    const run = async () => {
+      try {
+        await load();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setMessage(message);
+        if (/401|403|credentials/i.test(message)) {
+          localStorage.removeItem(tokenKey);
+          setToken(null);
+        }
       }
-    });
+    };
+    void run();
   }, [token]);
 
   const login = async (event: FormEvent) => {
@@ -166,7 +174,7 @@ function App() {
             <div className="preview-services">{site.services.map((s,i)=><article key={i}><small>{s.label}</small><h3>{s.title}</h3><p>{s.description}</p></article>)}</div>
           </div></div>
         </div>
-      </section>
+      </section>}
       {section === 'ads' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Marketing</p><h2>Ads & campaigns</h2></div><button className="primary" onClick={() => setAdDraft({ name:'', title:'', body:'', channel:'website', status:'draft' })}>New ad</button></div>
         <div className="ad-list">{ads.map((ad) => <article className="ad-row" key={ad.id}><div><span className={`status ${ad.status}`}>{ad.status}</span><h3>{ad.name}</h3><p>{ad.title}</p><small>{ad.channel}{ad.productCode ? ` · ${ad.productCode}` : ''}</small></div><div className="row-actions"><button onClick={() => setAdDraft(ad)}>Edit</button>{ad.status === 'published' ? <button onClick={async()=>{const x=await api(`/api/v1/admin/ads/${ad.id}/unpublish`,{method:'POST'});setAds(ads.map(a=>a.id===x.id?x:a));}}>Unpublish</button> : <button onClick={async()=>{const x=await api(`/api/v1/admin/ads/${ad.id}/publish`,{method:'POST'});setAds(ads.map(a=>a.id===x.id?x:a));}}>Publish</button>}<button className="danger" onClick={async()=>{await api(`/api/v1/admin/ads/${ad.id}`,{method:'DELETE'});setAds(ads.filter(a=>a.id!==ad.id));}}>Delete</button></div></article>)}</div>
       </section>}
@@ -204,14 +212,15 @@ function App() {
         <div className="billing-section"><div className="panel-head"><div><h3>Product Catalog</h3><p className="muted">Commercial plans and operational capacity policy.</p></div></div><div className="ad-list">{payments.catalog.map(p=><article className="ad-row" key={p.code}><div><span className="status published">{p.category}</span><h3>{p.name}</h3><p>{p.price===0?'Free':p.price+' '+p.currency} · {p.durationDays} days · 1 user · {p.deviceLimit} device{p.deviceLimit===1?'':'s'}</p><small>{p.capacityPolicy}</small></div></article>)}</div></div>
         <div className="billing-section"><div className="panel-head"><h3>Production VPN Topology</h3></div><div className="grid-two"><div className="panel soft"><h3>General Free</h3><p>Free Server · maximum 100 concurrent/served users within a 1-hour operating window.</p><p>Active usage/device check → inactive connections automatically disconnected → capacity released → reconnect according to current capacity and queue.</p></div><div className="panel soft"><h3>General Pro</h3><p>Smart VPN / Smart VProxy → Production General Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div><div className="panel soft"><h3>WireGuard</h3><p>Production WireGuard Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div></div></div>
         <div className="billing-section"><div className="panel-head"><h3>Recent payments</h3></div><div className="ad-list">{payments.payments.map(p=><article className="ad-row" key={p.id}><div><span className={`status ${p.status==='success'?'published':''}`}>{p.status}</span><h3>{p.subscription.product.name}</h3><p>{p.subscription.user.email} · {p.amount} {p.currency}</p><small>{p.provider}{p.country?' · '+p.country:''}</small></div><div className="row-actions"><span className="muted">Provider controlled</span></div></article>)}</div></div>
-      </section>
+      </section>}
 
       {section === 'roadmap' && <section className="panel"><div className="panel-head"><div><p className="eyebrow">Project context</p><h2>Roadmap status</h2><p>Only phase status and operational notes are editable here. Detailed implementation remains in the repository roadmap.</p></div></div><div className="roadmap">{phases.map((phase) => <div className="roadmap-row" key={phase.id}><div className="phase-no">P{phase.phase}</div><div className="phase-title"><strong>{phase.title}</strong><textarea defaultValue={phase.note ?? ''} onBlur={(e) => updatePhase(phase, (e.currentTarget.parentElement?.previousElementSibling as HTMLElement)?.dataset?.status ?? phase.status, e.currentTarget.value)} /></div><select value={phase.status} data-status={phase.status} onChange={(e) => updatePhase(phase, e.target.value, phase.note ?? '')}><option value="validation">⚠️ Validation</option><option value="complete">✅ Complete</option><option value="foundation">🟢 Foundation</option><option value="partial">🟡 Partial / Hardening</option><option value="pending">⏳ Not completed</option></select></div>)}</div></section>}
     </main>
     {networkDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Network control</p><h2>Edit {networkDraft.type}</h2></div><button onClick={()=>setNetworkDraft(null)}>Close</button></div>
       <div className="form-grid">{(networkDraft.type==='tunnel'?['name','protocol','endpoint','port']:networkDraft.type==='client'?['name','client','tunnelId']:['name','matchType','pattern','action','priority','notes']).map((key:string)=><label key={key}>{key}{key==='notes'?<textarea value={String(networkDraft[key]??'')} onChange={e=>setNetworkDraft({...networkDraft,[key]:e.target.value})}/>:<input value={String(networkDraft[key]??'')} onChange={e=>setNetworkDraft({...networkDraft,[key]:e.target.value})}/>}</label>)}</div>
       <div className="modal-actions"><button onClick={()=>setNetworkDraft(null)}>Cancel</button><button className="primary" onClick={async()=>{const d={...networkDraft};delete d.type;const kind=networkDraft.type;const id=networkDraft.id;delete d.id;const path=kind==='tunnel'?'tunnels':kind==='client'?'clients':'bypass';const saved=await api('/api/v1/admin/network/'+path+(id?'/'+id:''),{method:id?'PUT':'POST',body:JSON.stringify(d)});setNetwork(kind==='tunnel'?{...network,tunnels:id?network.tunnels.map(x=>x.id===saved.id?saved:x):[saved,...network.tunnels]}:kind==='client'?{...network,profiles:id?network.profiles.map(x=>x.id===saved.id?saved:x):[saved,...network.profiles]}:{...network,bypass:id?network.bypass.map(x=>x.id===saved.id?saved:x):[saved,...network.bypass]});setNetworkDraft(null);}}>Save</button></div>
-    </section></div>    {adDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Ad campaign</p><h2>{adDraft.id ? 'Edit ad' : 'New ad'}</h2></div><button onClick={() => setAdDraft(null)}>Close</button></div><div className="form-grid">{(['name','title','body','imageUrl','ctaLabel','landingUrl','productCode','channel'] as const).map((key) => <label key={key}>{key}{key==='body'?<textarea rows={5} value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>:<input value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>}</label>)}</div><div className="modal-actions"><button onClick={()=>setAdDraft(null)}>Cancel</button><button className="primary" onClick={saveAd}>Save draft</button></div></section></div>}
+    </section></div>}
+    {adDraft && <div className="modal-backdrop"><section className="modal"><div className="panel-head"><div><p className="eyebrow">Ad campaign</p><h2>{adDraft.id ? 'Edit ad' : 'New ad'}</h2></div><button onClick={() => setAdDraft(null)}>Close</button></div><div className="form-grid">{(['name','title','body','imageUrl','ctaLabel','landingUrl','productCode','channel'] as const).map((key) => <label key={key}>{key}{key==='body'?<textarea rows={5} value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>:<input value={String(adDraft[key]??'')} onChange={e=>setAdDraft({...adDraft,[key]:e.target.value})}/>}</label>)}</div><div className="modal-actions"><button onClick={()=>setAdDraft(null)}>Cancel</button><button className="primary" onClick={saveAd}>Save draft</button></div></section></div>}
   </div>;
 }
 

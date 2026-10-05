@@ -10,6 +10,6 @@ import {
 export default async function paymentAdminRoutes(app: FastifyInstance) {
   const guard = [authMiddleware, requireRole('ADMIN')];
   app.get('/payments', { preHandler: guard }, adminPayments);
-  app.put('/products/:id', { preHandler: guard }, updateAdminProductController);
+  app.put<{ Params: { id: string } }>('/products/:id', { preHandler: guard }, updateAdminProductController);
   app.post('/product-prices', { preHandler: guard }, createAdminProductPriceController);
 }
