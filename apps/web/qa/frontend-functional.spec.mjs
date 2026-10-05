@@ -42,8 +42,10 @@ const dashboard = {
 test('renders unauthenticated state', async ({ page }) => {
   await page.goto('http://127.0.0.1:4173');
 
-  await expect(page.getByRole('heading', { name: 'Santor' })).toBeVisible();
-  await expect(page.getByText('Please log in to access your dashboard.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await expect(
+    page.getByText('Sign in to manage your subscription, services and Santor AI.'),
+  ).toBeVisible();
 });
 
 test('loads active dashboard from API', async ({ page }) => {
@@ -96,9 +98,9 @@ test('renders expired subscription state and upgrade action', async ({ page }) =
 
   await page.goto('http://127.0.0.1:4173');
 
-  await expect(page.getByRole('heading', { name: 'Subscription expired' })).toBeVisible();
-  await expect(page.getByText('0 days remaining')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Upgrade' }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No active service' })).toBeVisible();
+  await expect(page.getByText('No active subscription')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choose service' })).toBeVisible();
 });
 
 test('sends authenticated dashboard message to AI service', async ({ page }) => {
