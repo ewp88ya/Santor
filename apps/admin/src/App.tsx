@@ -63,6 +63,40 @@ type NetworkData = {
   bypass: BypassRule[];
 };
 type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'tunnel' | 'client' | 'bypass' };
+type PriceDraft = {
+  id?: string;
+  productId: string;
+  country: string;
+  currency: string;
+  amount: number;
+  active: boolean;
+};
+type ProductDraft = {
+  id?: string;
+  name: string;
+  code: string;
+  price: number;
+  currency: string;
+  durationDays: number;
+  deviceLimit: number;
+  active: boolean;
+};
+type PaymentDraft = {
+  id: string;
+  provider: string;
+  country: string;
+  currency: string;
+  paymentMethod: string;
+  amount: number;
+  settlementCurrency: string;
+  status: string;
+  transactionId: string;
+  type: string;
+  autoDebit: boolean;
+  providerPaymentId: string;
+  refundId: string;
+  refundReason: string;
+};
 type AdminCustomer = {
   id: string;
   email: string;
@@ -177,7 +211,15 @@ async function api(path: string, options: RequestInit = {}) {
     headers: { ...authHeaders(), ...(options.headers ?? {}) },
   });
   const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.message ?? data?.error ?? 'Request failed');
+  if (!response.ok) {
+    const detail =
+      typeof data?.message === 'string'
+        ? data.message
+        : typeof data?.error === 'string'
+          ? data.error
+          : data?.error?.message ?? 'Request failed';
+    throw new Error(detail);
+  }
   return data;
 }
 
@@ -193,6 +235,9 @@ function App() {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [message, setMessage] = useState('');
   const [adDraft, setAdDraft] = useState<Partial<Ad> | null>(null);
+  const [productDraft, setProductDraft] = useState<ProductDraft | null>(null);
+  const [priceDraft, setPriceDraft] = useState<PriceDraft | null>(null);
+  const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
   const [network, setNetwork] = useState<NetworkData>({
     supportedClients: [],
     tunnels: [],
@@ -477,7 +522,7 @@ function App() {
             <p className="eyebrow">Internal workspace</p>
             <h1>{nav.find(([id]) => id === section)?.[1]}</h1>
           </div>
-          <a href="/" target="_blank" rel="noreferrer">
+          <a href="https://santor.app/" target="_blank" rel="noreferrer">
             Open customer website ↗
           </a>
         </header>
@@ -989,234 +1034,49 @@ function App() {
         {section === 'payments' && (
           <section className="panel">
             <div className="panel-head">
-              <div>
-                <p className="eyebrow">Billing</p>
-                <h2>Payments & Billing</h2>
-                <p>
-                  Manage plans, regional prices, payment status and provider readiness. Provider
-                  secrets remain server-side.
-                </p>
-              </div>
+              <div><p className="eyebrow">Billing</p><h2>Payments & Billing</h2><p>Kelola paket layanan, harga regional, batas perangkat, status langganan, pembayaran, dan kesiapan provider. Credential tetap server-side.</p></div>
+              <div className="row-actions"><button className="primary" onClick={() => setProductDraft({ name: '', code: '', price: 0, currency: 'USD', durationDays: 30, deviceLimit: 1, active: true })}>+ New service plan</button></div>
             </div>
             <div className="stats">
-              <div>
-                <span>Payments</span>
-                <strong>{payments.payments.length}</strong>
-              </div>
-              <div>
-                <span>Successful</span>
-                <strong>{payments.payments.filter((p) => p.status === 'success').length}</strong>
-              </div>
-              <div>
-                <span>Subscriptions</span>
-                <strong>{payments.subscriptions.length}</strong>
-              </div>
-              <div>
-                <span>Active plans</span>
-                <strong>{payments.products.filter((p) => p.active).length}</strong>
-              </div>
+              <div><span>Payments</span><strong>{payments.payments.length}</strong></div><div><span>Successful</span><strong>{payments.payments.filter((p) => p.status === 'success').length}</strong></div><div><span>Subscriptions</span><strong>{payments.subscriptions.length}</strong></div><div><span>Active plans</span><strong>{payments.products.filter((p) => p.active).length}</strong></div>
             </div>
             <div className="billing-grid">
-              <div>
-                <h3>Payment providers</h3>
-                <div className="provider-list">
-                  {payments.providerStatus.map((p) => (
-                    <div className="provider-row" key={p.name}>
-                      <strong>{p.name}</strong>
-                      <span className={p.configured ? 'status published' : 'status'}>
-                        {p.configured ? 'configured' : 'not configured'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="panel soft">
-                <p className="eyebrow">Security</p>
-                <h3>Credentials stay out of the CMS</h3>
-                <p>
-                  API keys, merchant secrets and signing keys are read from server environment
-                  configuration. The Admin UI controls operational data, not private credentials.
-                </p>
-              </div>
+              <div><h3>Payment providers</h3><div className="provider-list">{payments.providerStatus.map((p) => <div className="provider-row" key={p.name}><strong>{p.name}</strong><span className={p.configured ? 'status published' : 'status'}>{p.configured ? 'configured' : 'not configured'}</span></div>)}</div></div>
+              <div className="panel soft"><p className="eyebrow">Security</p><h3>Credentials stay out of the CMS</h3><p>API keys, merchant secrets and signing keys are read from server environment configuration. Admin controls operational billing data, never private credentials.</p></div>
             </div>
             <div className="billing-section">
-              <div className="panel-head">
-                <h3>Products & regional pricing</h3>
-              </div>
-              {payments.products.map((product) => (
-                <article className="product-card" key={product.id}>
-                  <div className="product-main">
-                    <input
-                      value={product.name}
-                      onChange={(e) =>
-                        setPayments({
-                          ...payments,
-                          products: payments.products.map((x) =>
-                            x.id === product.id ? { ...x, name: e.target.value } : x,
-                          ),
-                        })
-                      }
-                    />
-                    <small>
-                      {product.code} · {product.durationDays} days · {product.deviceLimit} devices
-                    </small>
-                    <label className="inline-check">
-                      <input
-                        type="checkbox"
-                        checked={product.active}
-                        onChange={(e) =>
-                          setPayments({
-                            ...payments,
-                            products: payments.products.map((x) =>
-                              x.id === product.id ? { ...x, active: e.target.checked } : x,
-                            ),
-                          })
-                        }
-                      />{' '}
-                      Active
-                    </label>
-                  </div>
-                  <div className="product-price-edit">
-                    <label>
-                      Base amount
-                      <input
-                        type="number"
-                        value={product.price}
-                        onChange={(e) =>
-                          setPayments({
-                            ...payments,
-                            products: payments.products.map((x) =>
-                              x.id === product.id ? { ...x, price: Number(e.target.value) } : x,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      Currency
-                      <input
-                        value={product.currency}
-                        onChange={(e) =>
-                          setPayments({
-                            ...payments,
-                            products: payments.products.map((x) =>
-                              x.id === product.id ? { ...x, currency: e.target.value } : x,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
-                    <button
-                      className="primary"
-                      onClick={async () => {
-                        const saved = await api('/api/v1/admin/products/' + product.id, {
-                          method: 'PUT',
-                          body: JSON.stringify({
-                            name: product.name,
-                            price: product.price,
-                            currency: product.currency,
-                            active: product.active,
-                          }),
-                        });
-                        setPayments({
-                          ...payments,
-                          products: payments.products.map((x) => (x.id === saved.id ? saved : x)),
-                        });
-                        setMessage('Product saved.');
-                      }}
-                    >
-                      Save plan
-                    </button>
-                  </div>
-                  <div className="regional-prices">
-                    {product.prices.map((price) => (
-                      <span key={price.id} className="price-chip">
-                        {price.country || 'GLOBAL'} · {price.amount} {price.currency}
-                        {price.active ? '' : ' · off'}
-                      </span>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="billing-section">
-              <div className="panel-head">
-                <div>
-                  <h3>Product Catalog</h3>
-                  <p className="muted">Commercial plans and operational capacity policy.</p>
-                </div>
-              </div>
+              <div className="panel-head"><div><h3>Service plans & regional pricing</h3><p className="muted">Edit name, code, base price, currency, duration, device allowance and active state. Prices are stored in cents but shown here as normal amounts.</p></div></div>
               <div className="ad-list">
-                {payments.catalog.map((p) => (
-                  <article className="ad-row" key={p.code}>
-                    <div>
-                      <span className="status published">{p.category}</span>
-                      <h3>{p.name}</h3>
-                      <p>
-                        {p.price === 0 ? 'Free' : p.price + ' ' + p.currency} · {p.durationDays}{' '}
-                        days · 1 user · {p.deviceLimit} device{p.deviceLimit === 1 ? '' : 's'}
-                      </p>
-                      <small>{p.capacityPolicy}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-            <div className="billing-section">
-              <div className="panel-head">
-                <h3>Production VPN Topology</h3>
-              </div>
-              <div className="grid-two">
-                <div className="panel soft">
-                  <h3>General Free</h3>
-                  <p>
-                    Free Server · maximum 100 concurrent/served users within a 1-hour operating
-                    window.
-                  </p>
-                  <p>
-                    Active usage/device check → inactive connections automatically disconnected →
-                    capacity released → reconnect according to current capacity and queue.
-                  </p>
-                </div>
-                <div className="panel soft">
-                  <h3>General Pro</h3>
-                  <p>Smart VPN / Smart VProxy → Production General Nodes.</p>
-                  <p>Controlled by health, load, capacity and queue.</p>
-                </div>
-                <div className="panel soft">
-                  <h3>WireGuard</h3>
-                  <p>Production WireGuard Nodes.</p>
-                  <p>Controlled by health, load, capacity and queue.</p>
-                </div>
-              </div>
-            </div>
-            <div className="billing-section">
-              <div className="panel-head">
-                <h3>Recent payments</h3>
-              </div>
-              <div className="ad-list">
-                {payments.payments.map((p) => (
-                  <article className="ad-row" key={p.id}>
-                    <div>
-                      <span className={`status ${p.status === 'success' ? 'published' : ''}`}>
-                        {p.status}
-                      </span>
-                      <h3>{p.subscription.product.name}</h3>
-                      <p>
-                        {p.subscription.user.email} · {p.amount} {p.currency}
-                      </p>
-                      <small>
-                        {p.provider}
-                        {p.country ? ' · ' + p.country : ''}
-                      </small>
+                {payments.products.map((product) => (
+                  <article className="ad-row" key={product.id}><div style={{ flex: 1 }}>
+                    <input value={product.name} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, name: e.target.value } : x) })} />
+                    <p className="muted">{product.code}</p>
+                    <div className="form-grid">
+                      <label>Base price<input type="number" min="0" step="0.01" value={(product.price / 100).toFixed(2)} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, price: Math.round(Number(e.target.value || 0) * 100) } : x) })} /></label>
+                      <label>Currency<input value={product.currency} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, currency: e.target.value.toUpperCase() } : x) })} /></label>
+                      <label>Duration (days)<input type="number" min="1" value={product.durationDays} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, durationDays: Number(e.target.value) } : x) })} /></label>
+                      <label>Device limit<input type="number" min="1" value={product.deviceLimit} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, deviceLimit: Number(e.target.value) } : x) })} /></label>
+                      <label className="inline-check">Active<input type="checkbox" checked={product.active} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, active: e.target.checked } : x) })} /></label>
                     </div>
                     <div className="row-actions">
-                      <span className="muted">Provider controlled</span>
+                      <button className="primary" onClick={async () => { try { const saved = await api('/api/v1/admin/products/' + product.id, { method: 'PUT', body: JSON.stringify({ name: product.name, price: product.price, currency: product.currency, durationDays: product.durationDays, deviceLimit: product.deviceLimit, active: product.active }) }); setPayments({ ...payments, products: payments.products.map((x) => x.id === saved.id ? saved : x) }); setMessage('Service plan saved.'); } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save plan'); } }}>Save plan</button>
+                      <button onClick={() => setPriceDraft({ productId: product.id, country: '', currency: product.currency, amount: product.price / 100, active: true })}>+ Regional price</button>
                     </div>
-                  </article>
+                    <div className="regional-prices">
+                      {product.prices.length === 0 && <span className="muted">No regional overrides.</span>}
+                      {product.prices.map((price) => <button className="price-chip" key={price.id} onClick={() => setPriceDraft({ id: price.id, productId: product.id, country: price.country ?? '', currency: price.currency, amount: price.amount / 100, active: price.active })}>{price.country || 'GLOBAL'} · {(price.amount / 100).toFixed(2)} {price.currency}{price.active ? '' : ' · off'}</button>)}
+                    </div>
+                  </div></article>
                 ))}
               </div>
             </div>
+            <div className="billing-section"><div className="panel-head"><div><h3>Product catalog & capacity</h3><p className="muted">Operational view of how each plan is served.</p></div></div><div className="ad-list">{payments.catalog.map((p) => <article className="ad-row" key={p.code}><div><span className="status published">{p.category}</span><h3>{p.name}</h3><p>{p.price === 0 ? 'Free' : p.price.toFixed(2) + ' ' + p.currency} · {p.durationDays} days · {p.userLimit} user · {p.deviceLimit} device{p.deviceLimit === 1 ? '' : 's'}</p><small>{p.capacityPolicy}</small></div></article>)}</div></div>
+            <div className="billing-section"><div className="panel-head"><div><h3>Production VPN topology</h3><p className="muted">Operational policies for General and WireGuard service classes.</p></div></div><div className="grid-two"><div className="panel soft"><h3>General Free</h3><p>Free Server · maximum 100 concurrent/served users within a 1-hour operating window.</p><p>Active usage/device check → inactive connections automatically disconnected → capacity released → reconnect according to current capacity and queue.</p></div><div className="panel soft"><h3>General Pro</h3><p>Smart VPN / Smart VProxy → Production General Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div><div className="panel soft"><h3>WireGuard</h3><p>Production WireGuard Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div></div></div>
+            <div className="billing-section"><div className="panel-head"><div><h3>Recent payments</h3><p className="muted">Edit operational payment metadata and status without exposing provider credentials.</p></div></div><div className="ad-list">
+              {payments.payments.length === 0 && <p className="muted">No payments yet.</p>}
+              {payments.payments.map((p) => <article className="ad-row" key={p.id}><div><span className={`status ${p.status === 'success' ? 'published' : ''}`}>{p.status}</span><h3>{p.subscription.product.name}</h3><p>{p.subscription.user.email} · {(p.amount / 100).toFixed(2)} {p.currency}</p><small>{p.provider}{p.country ? ' · ' + p.country : ''} · {new Date(p.createdAt).toLocaleString()}</small></div><div className="row-actions"><button onClick={() => setPaymentDraft({ id: p.id, provider: p.provider, country: p.country ?? '', currency: p.currency, paymentMethod: '', amount: p.amount / 100, settlementCurrency: '', status: p.status, transactionId: p.transactionId ?? '', type: 'one_time', autoDebit: false, providerPaymentId: '', refundId: '', refundReason: '' })}>Edit payment</button></div></article>)}
+            </div></div>
+            <div className="billing-section"><div className="panel-head"><div><h3>Subscriptions</h3><p className="muted">Subscription lifecycle remains editable from Customers.</p></div></div><div className="ad-list">{payments.subscriptions.map((s) => <article className="ad-row" key={s.id}><div><h3>{s.product.name}</h3><p>{s.user.email} · {s.status}</p><small>{s.startDate ? new Date(s.startDate).toLocaleDateString() : 'not started'} → {s.endDate ? new Date(s.endDate).toLocaleDateString() : 'no end date'}</small></div><div className="row-actions"><button onClick={() => setSection('customers')}>Open customer</button></div></article>)}</div></div>
           </section>
         )}
         {section === 'settings' && (
