@@ -212,7 +212,7 @@ async function syncInfrastructureEvents(monitoring: {
     const existing = await prisma.adminOperationalEvent.findFirst({
       where: { status: { in: ['open', 'acknowledged'] }, source: item.source, title: item.title },
     });
-    if (!existing) await prisma.adminOperationalEvent.create({ data: item });
+    if (!existing) await prisma.adminOperationalEvent.create({ data: { ...item, metadata: item.metadata as any } });
   }
 }
 
