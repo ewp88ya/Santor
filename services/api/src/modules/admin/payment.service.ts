@@ -75,9 +75,4 @@ export async function createAdminProductPrice(
     },
   });
 }
-
-export async function updateAdminPaymentStatus(id: string, status: string) {
-  const allowed = ['pending', 'success', 'failed', 'refunded'];
-  if (!allowed.includes(status)) throw new Error('Invalid payment status');
-  return prisma.payment.update({ where: { id }, data: { status } });
-}
+ 
