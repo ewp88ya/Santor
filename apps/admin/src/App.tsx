@@ -21,6 +21,7 @@ type PaymentData = {
   subscriptions: Array<{ id:string; status:string; startDate:string|null; endDate:string|null; autoDebitEnabled:boolean; product:{name:string}; user:{email:string} }>;
   products: Array<{ id:string; name:string; code:string; price:number; currency:string; durationDays:number; deviceLimit:number; active:boolean; prices:Array<{id:string;country:string|null;currency:string;amount:number;active:boolean}> }>;
   providerStatus: Array<{name:string;configured:boolean}>;
+  catalog: Array<{code:string;name:string;price:number;currency:string;durationDays:number;deviceLimit:number;userLimit:number;category:string;capacityPolicy:string}>;
 };
 
 const apiBase = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -63,7 +64,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [adDraft, setAdDraft] = useState<Partial<Ad> | null>(null);
   const [network, setNetwork] = useState<NetworkData>({ supportedClients: [], tunnels: [], profiles: [], bypass: [] });
-  const [payments, setPayments] = useState<PaymentData>({ payments: [], subscriptions: [], products: [], providerStatus: [] });
+  const [payments, setPayments] = useState<PaymentData>({ payments: [], subscriptions: [], products: [], providerStatus: [], catalog: [] });
   const [networkDraft, setNetworkDraft] = useState<any>(null);
 
   const load = async () => {
@@ -179,6 +180,8 @@ function App() {
             <div className="regional-prices">{product.prices.map(price=><span key={price.id} className="price-chip">{price.country||'GLOBAL'} · {price.amount} {price.currency}{price.active?'':' · off'}</span>)}</div>
           </article>)}
         </div>
+        <div className="billing-section"><div className="panel-head"><div><h3>Product Catalog</h3><p className="muted">Commercial plans and operational capacity policy.</p></div></div><div className="ad-list">{payments.catalog.map(p=><article className="ad-row" key={p.code}><div><span className="status published">{p.category}</span><h3>{p.name}</h3><p>{p.price===0?'Free':p.price+' '+p.currency} · {p.durationDays} days · 1 user · {p.deviceLimit} device{p.deviceLimit===1?'':'s'}</p><small>{p.capacityPolicy}</small></div></article>)}</div></div>
+        <div className="billing-section"><div className="panel-head"><h3>Production VPN Topology</h3></div><div className="grid-two"><div className="panel soft"><h3>General Free</h3><p>Free Server · maximum 100 concurrent/served users within a 1-hour operating window.</p><p>Active usage/device check → inactive connections automatically disconnected → capacity released → reconnect according to current capacity and queue.</p></div><div className="panel soft"><h3>General Pro</h3><p>Smart VPN / Smart VProxy → Production General Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div><div className="panel soft"><h3>WireGuard</h3><p>Production WireGuard Nodes.</p><p>Controlled by health, load, capacity and queue.</p></div></div></div>
         <div className="billing-section"><div className="panel-head"><h3>Recent payments</h3></div><div className="ad-list">{payments.payments.map(p=><article className="ad-row" key={p.id}><div><span className={`status ${p.status==='success'?'published':''}`}>{p.status}</span><h3>{p.subscription.product.name}</h3><p>{p.subscription.user.email} · {p.amount} {p.currency}</p><small>{p.provider}{p.country?' · '+p.country:''}</small></div><div className="row-actions"><span className="muted">Provider controlled</span></div></article>)}</div></div>
       </section>
 
