@@ -43,6 +43,8 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      PROXY_PROVISIONER_URL: ${PROXY_PROVISIONER_URL:?PROXY_PROVISIONER_URL is required}
+      PROXY_PROVISIONER_KEY: ${PROXY_PROVISIONER_KEY:?PROXY_PROVISIONER_KEY is required}
       STRIPE_ENABLED: ${STRIPE_ENABLED:-false}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_BASE_URL: ${STRIPE_BASE_URL:-https://api.stripe.com}
@@ -61,6 +63,8 @@ services:
       PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
     ports:
       - '127.0.0.1:3000:3000'
+    extra_hosts:
+      - "host.docker.internal:172.16.1.1"
     networks: [santor-network]
 
 volumes:
