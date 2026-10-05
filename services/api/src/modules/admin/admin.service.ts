@@ -132,6 +132,32 @@ async function tcpProbe(host: string, port: number, timeoutMs = 3000) {
   });
 }
 
+
+async function syncInfrastructureEvents(monitoring: {
+  node: { id: string; status: string; stabilityIndex: number };
+  internet: { status: string; latencyMs: number };
+  domains: Array<{ url: string; ok: boolean; httpStatus: number | null; latencyMs: number }>;
+  regions: Array<{ nodeId: string; city: string; country: string; status: string }>;
+}) {
+  const detected: Array<{ severity: string; source: string; category: string; title: string; message: string; metadata: Record<string, unknown> }> = [];
+  if (monitoring.node.status !== 'online') detected.push({ severity: 'critical', source: 'vps', category: 'alarms', title: 'VPS offline', message: monitoring.node.id, metadata: { nodeId: monitoring.node.id } });
+  if (monitoring.node.stabilityIndex < 70) detected.push({ severity: 'warning', source: 'vps', category: 'problems', title: 'VPS stability degraded', message: `Stability index ${monitoring.node.stabilityIndex}/100`, metadata: { nodeId: monitoring.node.id } });
+  if (monitoring.internet.status !== 'online') detected.push({ severity: 'critical', source: 'internet', category: 'alarms', title: 'Internet connectivity degraded', message: `Latency ${monitoring.internet.latencyMs} ms`, metadata: {} });
+  for (const domain of monitoring.domains) {
+    if (!domain.ok) detected.push({ severity: 'critical', source: 'domain', category: 'problems', title: 'Domain/website problem', message: `${domain.url} returned ${domain.httpStatus ?? 'no response'}`, metadata: { url: domain.url } });
+    else if (domain.latencyMs > 1500) detected.push({ severity: 'warning', source: 'domain', category: 'problems', title: 'Domain latency high', message: `${domain.url} — ${domain.latencyMs} ms`, metadata: { url: domain.url, latencyMs: domain.latencyMs } });
+  }
+  for (const region of monitoring.regions) {
+    if (region.status !== 'online') detected.push({ severity: 'critical', source: 'regional-vps', category: 'problems', title: 'Regional VPS problem', message: `${region.nodeId} — ${region.city}, ${region.country}`, metadata: { nodeId: region.nodeId } });
+  }
+  for (const item of detected) {
+    const existing = await prisma.adminOperationalEvent.findFirst({
+      where: { status: { in: ['open', 'acknowledged'] }, source: item.source, title: item.title },
+    });
+    if (!existing) await prisma.adminOperationalEvent.create({ data: item });
+  }
+}
+
 export async function getInfrastructureMonitoring() {
   const memoryTotal = os.totalmem();
   const memoryFree = os.freemem();
@@ -161,7 +187,7 @@ export async function getInfrastructureMonitoring() {
     (internet.ok ? 0 : 15);
   const stabilityIndex = clamp(resourceScore);
 
-  return {
+  const result = {
     generatedAt: new Date().toISOString(),
     node: {
       id: 'asia-vpn-01',
@@ -215,6 +241,8 @@ export async function getInfrastructureMonitoring() {
       )),
     ],
   };
+  await syncInfrastructureEvents(result);
+  return result;
 }
 
 export async function getSiteConfig() {
