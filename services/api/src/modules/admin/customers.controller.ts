@@ -1,5 +1,9 @@
 import type { FastifyRequest } from 'fastify';
-import { adminCustomers, updateAdminCustomer, updateAdminSubscription } from './customers.service.js';
+import {
+  adminCustomers,
+  updateAdminCustomer,
+  updateAdminSubscription,
+} from './customers.service.js';
 
 export async function listAdminCustomers() {
   return adminCustomers();

@@ -97,7 +97,11 @@ type AdminCustomer = {
   status: string;
   emailVerified: boolean;
   role: { name: string };
-  telegramIdentity: { telegramUserId: string; username: string | null; linkedAt: string | null } | null;
+  telegramIdentity: {
+    telegramUserId: string;
+    username: string | null;
+    linkedAt: string | null;
+  } | null;
   subscriptions: Array<{
     id: string;
     status: string;
@@ -262,7 +266,7 @@ async function api(path: string, options: RequestInit = {}) {
         ? data.message
         : typeof data?.error === 'string'
           ? data.error
-          : data?.error?.message ?? 'Request failed';
+          : (data?.error?.message ?? 'Request failed');
     throw new Error(detail);
   }
   return data;
@@ -273,7 +277,9 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [section, setSection] = useState(() => localStorage.getItem('santor_admin_section') ?? 'overview');
+  const [section, setSection] = useState(
+    () => localStorage.getItem('santor_admin_section') ?? 'overview',
+  );
   const [stats, setStats] = useState({ users: 0, subscriptions: 0, activeProducts: 0 });
   const [site, setSite] = useState<SiteConfig>(defaultSite);
   const [ads, setAds] = useState<Ad[]>([]);
@@ -291,8 +297,22 @@ function App() {
     bypass: [],
   });
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
-  const [financialReport, setFinancialReport] = useState<FinancialReport>({ totals: [], daily: [], monthly: [], yearly: [], expenses: [], note: '' });
-  const [expenseDraft, setExpenseDraft] = useState({ category: '', description: '', amount: 0, currency: 'USD', expenseDate: new Date().toISOString().slice(0, 10), recurring: false });
+  const [financialReport, setFinancialReport] = useState<FinancialReport>({
+    totals: [],
+    daily: [],
+    monthly: [],
+    yearly: [],
+    expenses: [],
+    note: '',
+  });
+  const [expenseDraft, setExpenseDraft] = useState({
+    category: '',
+    description: '',
+    amount: 0,
+    currency: 'USD',
+    expenseDate: new Date().toISOString().slice(0, 10),
+    recurring: false,
+  });
   const [payments, setPayments] = useState<PaymentData>({
     payments: [],
     subscriptions: [],
@@ -337,7 +357,17 @@ function App() {
   });
 
   const load = async () => {
-    const [overview, config, adList, roadmap, networkData, paymentData, customerData, topologyData, financialData] = await Promise.all([
+    const [
+      overview,
+      config,
+      adList,
+      roadmap,
+      networkData,
+      paymentData,
+      customerData,
+      topologyData,
+      financialData,
+    ] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
       api('/api/v1/admin/ads'),
@@ -557,7 +587,10 @@ function App() {
         </nav>
         <div className="sidebar-footer">
           <span className="health-dot" />
-          <div><strong>Control plane</strong><small>Admin session active</small></div>
+          <div>
+            <strong>Control plane</strong>
+            <small>Admin session active</small>
+          </div>
         </div>
         <button
           className="logout"
@@ -587,7 +620,10 @@ function App() {
               <div>
                 <p className="eyebrow">Santor operations</p>
                 <h2>One control plane for the whole service.</h2>
-                <p>Customers, billing, VPN clients, content and roadmap are managed here. Customer-facing website data remains isolated behind the existing marketing API.</p>
+                <p>
+                  Customers, billing, VPN clients, content and roadmap are managed here.
+                  Customer-facing website data remains isolated behind the existing marketing API.
+                </p>
               </div>
               <div className="hero-meta">
                 <span className="status published">CORE ONLINE</span>
@@ -595,27 +631,103 @@ function App() {
               </div>
             </section>
             <section className="stats ops-stats">
-              <div><span>Customers</span><strong>{stats.users}</strong><small>registered accounts</small></div>
-              <div><span>Subscriptions</span><strong>{stats.subscriptions}</strong><small>commercial entitlements</small></div>
-              <div><span>Active products</span><strong>{stats.activeProducts}</strong><small>plans available</small></div>
-              <div><span>Published campaigns</span><strong>{ads.filter((ad) => ad.status === 'published').length}</strong><small>public content</small></div>
-              <div><span>VPN tunnels</span><strong>{network.tunnels.length}</strong><small>configured control paths</small></div>
-              <div><span>Client profiles</span><strong>{network.profiles.length}</strong><small>provisioning definitions</small></div>
-              <div><span>Bypass rules</span><strong>{network.bypass.length}</strong><small>direct-routing rules</small></div>
-              <div><span>Roadmap complete</span><strong>{phases.filter((p) => p.status === 'complete').length}/{phases.length}</strong><small>phase status</small></div>
+              <div>
+                <span>Customers</span>
+                <strong>{stats.users}</strong>
+                <small>registered accounts</small>
+              </div>
+              <div>
+                <span>Subscriptions</span>
+                <strong>{stats.subscriptions}</strong>
+                <small>commercial entitlements</small>
+              </div>
+              <div>
+                <span>Active products</span>
+                <strong>{stats.activeProducts}</strong>
+                <small>plans available</small>
+              </div>
+              <div>
+                <span>Published campaigns</span>
+                <strong>{ads.filter((ad) => ad.status === 'published').length}</strong>
+                <small>public content</small>
+              </div>
+              <div>
+                <span>VPN tunnels</span>
+                <strong>{network.tunnels.length}</strong>
+                <small>configured control paths</small>
+              </div>
+              <div>
+                <span>Client profiles</span>
+                <strong>{network.profiles.length}</strong>
+                <small>provisioning definitions</small>
+              </div>
+              <div>
+                <span>Bypass rules</span>
+                <strong>{network.bypass.length}</strong>
+                <small>direct-routing rules</small>
+              </div>
+              <div>
+                <span>Roadmap complete</span>
+                <strong>
+                  {phases.filter((p) => p.status === 'complete').length}/{phases.length}
+                </strong>
+                <small>phase status</small>
+              </div>
             </section>
             <section className="operation-grid">
               <div className="panel">
-                <div className="panel-head"><div><p className="eyebrow">Service health</p><h3>Operational domains</h3></div><span className="status published">READY</span></div>
+                <div className="panel-head">
+                  <div>
+                    <p className="eyebrow">Service health</p>
+                    <h3>Operational domains</h3>
+                  </div>
+                  <span className="status published">READY</span>
+                </div>
                 <div className="health-list">
-                  <div><span><i className="health-dot" />Santor Core</span><strong>Connected</strong></div>
-                  <div><span><i className="health-dot" />Billing & catalog</span><strong>{payments.providerStatus.filter((p) => p.configured).length}/{payments.providerStatus.length || 0} providers configured</strong></div>
-                  <div><span><i className="health-dot" />Network control</span><strong>{network.tunnels.length} tunnels · {network.profiles.length} profiles</strong></div>
-                  <div><span><i className="health-dot" />Project control</span><strong>{phases.filter((p) => p.status === 'complete').length} phases complete</strong></div>
+                  <div>
+                    <span>
+                      <i className="health-dot" />
+                      Santor Core
+                    </span>
+                    <strong>Connected</strong>
+                  </div>
+                  <div>
+                    <span>
+                      <i className="health-dot" />
+                      Billing & catalog
+                    </span>
+                    <strong>
+                      {payments.providerStatus.filter((p) => p.configured).length}/
+                      {payments.providerStatus.length || 0} providers configured
+                    </strong>
+                  </div>
+                  <div>
+                    <span>
+                      <i className="health-dot" />
+                      Network control
+                    </span>
+                    <strong>
+                      {network.tunnels.length} tunnels · {network.profiles.length} profiles
+                    </strong>
+                  </div>
+                  <div>
+                    <span>
+                      <i className="health-dot" />
+                      Project control
+                    </span>
+                    <strong>
+                      {phases.filter((p) => p.status === 'complete').length} phases complete
+                    </strong>
+                  </div>
                 </div>
               </div>
               <div className="panel">
-                <div className="panel-head"><div><p className="eyebrow">Quick actions</p><h3>Operate without leaving Control Center</h3></div></div>
+                <div className="panel-head">
+                  <div>
+                    <p className="eyebrow">Quick actions</p>
+                    <h3>Operate without leaving Control Center</h3>
+                  </div>
+                </div>
                 <div className="quick-actions">
                   <button onClick={() => setSection('customers')}>View customers</button>
                   <button onClick={() => setSection('network')}>Manage VPN & clients</button>
@@ -625,9 +737,27 @@ function App() {
               </div>
             </section>
             <section className="panel">
-              <div className="panel-head"><div><p className="eyebrow">Operating lifecycle</p><h3>Customer → entitlement → access</h3></div></div>
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Operating lifecycle</p>
+                  <h3>Customer → entitlement → access</h3>
+                </div>
+              </div>
               <div className="lifecycle">
-                {['Customer','Subscription','VPN entitlement','Provision','Client profile','Download / config','Revoke'].map((item, i) => <div key={item}><span>{i + 1}</span><strong>{item}</strong></div>)}
+                {[
+                  'Customer',
+                  'Subscription',
+                  'VPN entitlement',
+                  'Provision',
+                  'Client profile',
+                  'Download / config',
+                  'Revoke',
+                ].map((item, i) => (
+                  <div key={item}>
+                    <span>{i + 1}</span>
+                    <strong>{item}</strong>
+                  </div>
+                ))}
               </div>
             </section>
           </>
@@ -635,65 +765,179 @@ function App() {
         {section === 'customers' && (
           <section className="panel">
             <div className="panel-head">
-              <div><p className="eyebrow">Customer operations</p><h2>Customers</h2><p>Edit customer identity, account status, verification and subscription lifecycle directly from Admin.</p></div>
+              <div>
+                <p className="eyebrow">Customer operations</p>
+                <h2>Customers</h2>
+                <p>
+                  Edit customer identity, account status, verification and subscription lifecycle
+                  directly from Admin.
+                </p>
+              </div>
               <span className="status published">FULL CONTROL</span>
             </div>
             <div className="customer-summary">
-              <div><span>Total customers</span><strong>{customers.length}</strong></div>
-              <div><span>Subscriptions</span><strong>{customers.reduce((n, c) => n + c.subscriptions.length, 0)}</strong></div>
-              <div><span>Active customers</span><strong>{customers.filter((c) => c.status === 'active').length}</strong></div>
+              <div>
+                <span>Total customers</span>
+                <strong>{customers.length}</strong>
+              </div>
+              <div>
+                <span>Subscriptions</span>
+                <strong>{customers.reduce((n, c) => n + c.subscriptions.length, 0)}</strong>
+              </div>
+              <div>
+                <span>Active customers</span>
+                <strong>{customers.filter((c) => c.status === 'active').length}</strong>
+              </div>
             </div>
             <div className="customer-list">
-              {customers.length ? customers.map((customer) => (
-                <article className="customer-row" key={customer.id}>
-                  <div className="customer-editor">
-                    <input value={customer.name ?? ''} placeholder="Customer name" onChange={(e) => setCustomers(customers.map((x) => x.id === customer.id ? { ...x, name: e.target.value } : x))} />
-                    <input value={customer.email} type="email" onChange={(e) => setCustomers(customers.map((x) => x.id === customer.id ? { ...x, email: e.target.value } : x))} />
-                    <small>{customer.role.name}{customer.telegramIdentity?.username ? ' · @' + customer.telegramIdentity.username : ''}</small>
-                  </div>
-                  <select value={customer.status} onChange={async (e) => {
-                    const saved = await api('/api/v1/admin/customers/' + customer.id, { method: 'PUT', body: JSON.stringify({ status: e.target.value }) });
-                    setCustomers(customers.map((x) => x.id === saved.id ? saved : x));
-                    setMessage('Customer status saved.');
-                  }}>
-                    <option value="active">active</option>
-                    <option value="suspended">suspended</option>
-                    <option value="disabled">disabled</option>
-                  </select>
-                  <button className="primary" onClick={async () => {
-                    const saved = await api('/api/v1/admin/customers/' + customer.id, { method: 'PUT', body: JSON.stringify({ name: customer.name, email: customer.email }) });
-                    setCustomers(customers.map((x) => x.id === saved.id ? saved : x));
-                    setMessage('Customer saved.');
-                  }}>Save customer</button>
-                  <div className="subscription-editor">
-                    {customer.subscriptions.map((sub) => (
-                      <div className="customer-row" key={sub.id}>
-                        <div><strong>{sub.product.name}</strong><small>{sub.product.code}</small></div>
-                        <select value={sub.status} onChange={async (e) => {
-                          const saved = await api('/api/v1/admin/subscriptions/' + sub.id, { method: 'PUT', body: JSON.stringify({ status: e.target.value }) });
-                          setCustomers(customers.map((x) => x.id === customer.id ? { ...x, subscriptions: x.subscriptions.map((z) => z.id === saved.id ? { ...z, status: saved.status, startDate: saved.startDate, endDate: saved.endDate, autoDebitEnabled: saved.autoDebitEnabled } : z) } : x));
-                          setMessage('Subscription status saved.');
-                        }}>
-                          <option value="pending">pending</option>
-                          <option value="active">active</option>
-                          <option value="expired">expired</option>
-                          <option value="cancelled">cancelled</option>
-                          <option value="suspended">suspended</option>
-                        </select>
-                        <label className="inline-check"><input type="checkbox" checked={sub.autoDebitEnabled} onChange={async (e) => {
-                          const saved = await api('/api/v1/admin/subscriptions/' + sub.id, { method: 'PUT', body: JSON.stringify({ autoDebitEnabled: e.target.checked }) });
-                          setCustomers(customers.map((x) => x.id === customer.id ? { ...x, subscriptions: x.subscriptions.map((z) => z.id === saved.id ? { ...z, autoDebitEnabled: saved.autoDebitEnabled } : z) } : x));
-                        }} /> Auto debit</label>
-                        <small>{sub.startDate ? new Date(sub.startDate).toLocaleDateString() : 'no start'} → {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : 'no end'}</small>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              )) : <div className="empty-state">No customers found.</div>}
+              {customers.length ? (
+                customers.map((customer) => (
+                  <article className="customer-row" key={customer.id}>
+                    <div className="customer-editor">
+                      <input
+                        value={customer.name ?? ''}
+                        placeholder="Customer name"
+                        onChange={(e) =>
+                          setCustomers(
+                            customers.map((x) =>
+                              x.id === customer.id ? { ...x, name: e.target.value } : x,
+                            ),
+                          )
+                        }
+                      />
+                      <input
+                        value={customer.email}
+                        type="email"
+                        onChange={(e) =>
+                          setCustomers(
+                            customers.map((x) =>
+                              x.id === customer.id ? { ...x, email: e.target.value } : x,
+                            ),
+                          )
+                        }
+                      />
+                      <small>
+                        {customer.role.name}
+                        {customer.telegramIdentity?.username
+                          ? ' · @' + customer.telegramIdentity.username
+                          : ''}
+                      </small>
+                    </div>
+                    <select
+                      value={customer.status}
+                      onChange={async (e) => {
+                        const saved = await api('/api/v1/admin/customers/' + customer.id, {
+                          method: 'PUT',
+                          body: JSON.stringify({ status: e.target.value }),
+                        });
+                        setCustomers(customers.map((x) => (x.id === saved.id ? saved : x)));
+                        setMessage('Customer status saved.');
+                      }}
+                    >
+                      <option value="active">active</option>
+                      <option value="suspended">suspended</option>
+                      <option value="disabled">disabled</option>
+                    </select>
+                    <button
+                      className="primary"
+                      onClick={async () => {
+                        const saved = await api('/api/v1/admin/customers/' + customer.id, {
+                          method: 'PUT',
+                          body: JSON.stringify({ name: customer.name, email: customer.email }),
+                        });
+                        setCustomers(customers.map((x) => (x.id === saved.id ? saved : x)));
+                        setMessage('Customer saved.');
+                      }}
+                    >
+                      Save customer
+                    </button>
+                    <div className="subscription-editor">
+                      {customer.subscriptions.map((sub) => (
+                        <div className="customer-row" key={sub.id}>
+                          <div>
+                            <strong>{sub.product.name}</strong>
+                            <small>{sub.product.code}</small>
+                          </div>
+                          <select
+                            value={sub.status}
+                            onChange={async (e) => {
+                              const saved = await api('/api/v1/admin/subscriptions/' + sub.id, {
+                                method: 'PUT',
+                                body: JSON.stringify({ status: e.target.value }),
+                              });
+                              setCustomers(
+                                customers.map((x) =>
+                                  x.id === customer.id
+                                    ? {
+                                        ...x,
+                                        subscriptions: x.subscriptions.map((z) =>
+                                          z.id === saved.id
+                                            ? {
+                                                ...z,
+                                                status: saved.status,
+                                                startDate: saved.startDate,
+                                                endDate: saved.endDate,
+                                                autoDebitEnabled: saved.autoDebitEnabled,
+                                              }
+                                            : z,
+                                        ),
+                                      }
+                                    : x,
+                                ),
+                              );
+                              setMessage('Subscription status saved.');
+                            }}
+                          >
+                            <option value="pending">pending</option>
+                            <option value="active">active</option>
+                            <option value="expired">expired</option>
+                            <option value="cancelled">cancelled</option>
+                            <option value="suspended">suspended</option>
+                          </select>
+                          <label className="inline-check">
+                            <input
+                              type="checkbox"
+                              checked={sub.autoDebitEnabled}
+                              onChange={async (e) => {
+                                const saved = await api('/api/v1/admin/subscriptions/' + sub.id, {
+                                  method: 'PUT',
+                                  body: JSON.stringify({ autoDebitEnabled: e.target.checked }),
+                                });
+                                setCustomers(
+                                  customers.map((x) =>
+                                    x.id === customer.id
+                                      ? {
+                                          ...x,
+                                          subscriptions: x.subscriptions.map((z) =>
+                                            z.id === saved.id
+                                              ? { ...z, autoDebitEnabled: saved.autoDebitEnabled }
+                                              : z,
+                                          ),
+                                        }
+                                      : x,
+                                  ),
+                                );
+                              }}
+                            />{' '}
+                            Auto debit
+                          </label>
+                          <small>
+                            {sub.startDate
+                              ? new Date(sub.startDate).toLocaleDateString()
+                              : 'no start'}{' '}
+                            → {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : 'no end'}
+                          </small>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="empty-state">No customers found.</div>
+              )}
             </div>
           </section>
         )}
-
         {section === 'website' && (
           <section className="panel publisher-workspace">
             <div className="panel-head">
@@ -973,7 +1217,9 @@ function App() {
               </div>
               <div>
                 <h3>Client profiles</h3>
-                <p className="muted">Create and manage the actual provisioning profiles used by supported clients.</p>
+                <p className="muted">
+                  Create and manage the actual provisioning profiles used by supported clients.
+                </p>
                 <div className="client-chip-list">
                   {network.supportedClients.map((client) => (
                     <button
@@ -995,32 +1241,42 @@ function App() {
                   ))}
                 </div>
                 <div className="profile-list">
-                  {network.profiles.length ? network.profiles.map((profile) => (
-                    <article className="network-row" key={profile.id}>
-                      <div>
-                        <span className={profile.enabled ? 'status published' : 'status'}>
-                          {profile.enabled ? 'enabled' : 'disabled'}
-                        </span>
-                        <strong>{profile.name}</strong>
-                        <small>{profile.client} · {profile.tunnelId ? 'tunnel linked' : 'no tunnel'}</small>
-                      </div>
-                      <div className="row-actions">
-                        <button onClick={() => setNetworkDraft({ ...profile, type: 'client' })}>Edit</button>
-                        <button
-                          className="danger"
-                          onClick={async () => {
-                            await api('/api/v1/admin/network/client/' + profile.id, { method: 'DELETE' });
-                            setNetwork({
-                              ...network,
-                              profiles: network.profiles.filter((x) => x.id !== profile.id),
-                            });
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </article>
-                  )) : <div className="empty-state">No client profiles configured yet.</div>}
+                  {network.profiles.length ? (
+                    network.profiles.map((profile) => (
+                      <article className="network-row" key={profile.id}>
+                        <div>
+                          <span className={profile.enabled ? 'status published' : 'status'}>
+                            {profile.enabled ? 'enabled' : 'disabled'}
+                          </span>
+                          <strong>{profile.name}</strong>
+                          <small>
+                            {profile.client} · {profile.tunnelId ? 'tunnel linked' : 'no tunnel'}
+                          </small>
+                        </div>
+                        <div className="row-actions">
+                          <button onClick={() => setNetworkDraft({ ...profile, type: 'client' })}>
+                            Edit
+                          </button>
+                          <button
+                            className="danger"
+                            onClick={async () => {
+                              await api('/api/v1/admin/network/client/' + profile.id, {
+                                method: 'DELETE',
+                              });
+                              setNetwork({
+                                ...network,
+                                profiles: network.profiles.filter((x) => x.id !== profile.id),
+                              });
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="empty-state">No client profiles configured yet.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1088,18 +1344,60 @@ function App() {
         {section === 'payments' && (
           <section className="panel">
             <div className="panel-head">
-              <div><p className="eyebrow">Billing</p><h2>Payments & Billing</h2><p>Kelola paket layanan, harga regional, batas perangkat, status langganan, pembayaran, dan kesiapan provider. Credential tetap server-side.</p></div>
-              <div className="row-actions"><button className="primary" onClick={() => setProductDraft({ name: '', code: '', price: 0, currency: 'USD', durationDays: 30, deviceLimit: 1, active: true })}>+ New service plan</button></div>
+              <div>
+                <p className="eyebrow">Billing</p>
+                <h2>Payments & Billing</h2>
+                <p>
+                  Kelola paket layanan, harga regional, batas perangkat, status langganan,
+                  pembayaran, dan kesiapan provider. Credential tetap server-side.
+                </p>
+              </div>
+              <div className="row-actions">
+                <button
+                  className="primary"
+                  onClick={() =>
+                    setProductDraft({
+                      name: '',
+                      code: '',
+                      price: 0,
+                      currency: 'USD',
+                      durationDays: 30,
+                      deviceLimit: 1,
+                      active: true,
+                    })
+                  }
+                >
+                  + New service plan
+                </button>
+              </div>
             </div>
             <div className="stats">
-              <div><span>Payments</span><strong>{payments.payments.length}</strong></div><div><span>Successful</span><strong>{payments.payments.filter((p) => p.status === 'success').length}</strong></div><div><span>Subscriptions</span><strong>{payments.subscriptions.length}</strong></div><div><span>Active plans</span><strong>{payments.products.filter((p) => p.active).length}</strong></div>
+              <div>
+                <span>Payments</span>
+                <strong>{payments.payments.length}</strong>
+              </div>
+              <div>
+                <span>Successful</span>
+                <strong>{payments.payments.filter((p) => p.status === 'success').length}</strong>
+              </div>
+              <div>
+                <span>Subscriptions</span>
+                <strong>{payments.subscriptions.length}</strong>
+              </div>
+              <div>
+                <span>Active plans</span>
+                <strong>{payments.products.filter((p) => p.active).length}</strong>
+              </div>
             </div>
             <div className="billing-section">
               <div className="panel-head">
                 <div>
                   <p className="eyebrow">Financial intelligence</p>
                   <h3>Revenue, profit & sales summary</h3>
-                  <p className="muted">Accumulated revenue is calculated from successful payments. Values stay separated by currency so currencies are never incorrectly added together.</p>
+                  <p className="muted">
+                    Accumulated revenue is calculated from successful payments. Values stay
+                    separated by currency so currencies are never incorrectly added together.
+                  </p>
                 </div>
               </div>
               <div className="stats">
@@ -1107,10 +1405,19 @@ function App() {
                   <div key={t.currency}>
                     <span>{t.currency} net revenue</span>
                     <strong>{(t.netRevenue / 100).toFixed(2)}</strong>
-                    <small>profit {(t.profit / 100).toFixed(2)} · expenses {(t.expenses / 100).toFixed(2)}</small>
+                    <small>
+                      profit {(t.profit / 100).toFixed(2)} · expenses{' '}
+                      {(t.expenses / 100).toFixed(2)}
+                    </small>
                   </div>
                 ))}
-                {!financialReport.totals.length && <div><span>Revenue</span><strong>0.00</strong><small>No successful payments yet</small></div>}
+                {!financialReport.totals.length && (
+                  <div>
+                    <span>Revenue</span>
+                    <strong>0.00</strong>
+                    <small>No successful payments yet</small>
+                  </div>
+                )}
               </div>
               <div className="grid-two">
                 <div className="panel soft">
@@ -1119,7 +1426,14 @@ function App() {
                   <div className="ad-list">
                     {financialReport.daily.slice(-14).map((row) => (
                       <article className="ad-row" key={row.period}>
-                        <div><strong>{row.period}</strong><small>{row.amounts.map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`).join(' · ')}</small></div>
+                        <div>
+                          <strong>{row.period}</strong>
+                          <small>
+                            {row.amounts
+                              .map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`)
+                              .join(' · ')}
+                          </small>
+                        </div>
                       </article>
                     ))}
                     {!financialReport.daily.length && <p className="muted">No daily sales yet.</p>}
@@ -1131,10 +1445,19 @@ function App() {
                   <div className="ad-list">
                     {financialReport.monthly.slice(-12).map((row) => (
                       <article className="ad-row" key={row.period}>
-                        <div><strong>{row.period}</strong><small>{row.amounts.map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`).join(' · ')}</small></div>
+                        <div>
+                          <strong>{row.period}</strong>
+                          <small>
+                            {row.amounts
+                              .map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`)
+                              .join(' · ')}
+                          </small>
+                        </div>
                       </article>
                     ))}
-                    {!financialReport.monthly.length && <p className="muted">No monthly sales yet.</p>}
+                    {!financialReport.monthly.length && (
+                      <p className="muted">No monthly sales yet.</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1145,10 +1468,19 @@ function App() {
                   <div className="ad-list">
                     {financialReport.yearly.map((row) => (
                       <article className="ad-row" key={row.period}>
-                        <div><strong>{row.period}</strong><small>{row.amounts.map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`).join(' · ')}</small></div>
+                        <div>
+                          <strong>{row.period}</strong>
+                          <small>
+                            {row.amounts
+                              .map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`)
+                              .join(' · ')}
+                          </small>
+                        </div>
                       </article>
                     ))}
-                    {!financialReport.yearly.length && <p className="muted">No yearly sales yet.</p>}
+                    {!financialReport.yearly.length && (
+                      <p className="muted">No yearly sales yet.</p>
+                    )}
                   </div>
                 </div>
                 <div className="panel soft">
@@ -1156,130 +1488,651 @@ function App() {
                   <h3>Gross → refunds → net → profit</h3>
                   {financialReport.totals.map((t) => (
                     <div className="health-list" key={t.currency}>
-                      <div><span>Gross sales · {t.currency}</span><strong>{(t.grossRevenue / 100).toFixed(2)}</strong></div>
-                      <div><span>Refunds · {t.currency}</span><strong>{(t.refunds / 100).toFixed(2)}</strong></div>
-                      <div><span>Net revenue · {t.currency}</span><strong>{(t.netRevenue / 100).toFixed(2)}</strong></div>
-                      <div><span>Operating expenses · {t.currency}</span><strong>{(t.expenses / 100).toFixed(2)}</strong></div>
-                      <div><span>Profit · {t.currency}</span><strong>{(t.profit / 100).toFixed(2)}</strong></div>
+                      <div>
+                        <span>Gross sales · {t.currency}</span>
+                        <strong>{(t.grossRevenue / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Refunds · {t.currency}</span>
+                        <strong>{(t.refunds / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Net revenue · {t.currency}</span>
+                        <strong>{(t.netRevenue / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Operating expenses · {t.currency}</span>
+                        <strong>{(t.expenses / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Profit · {t.currency}</span>
+                        <strong>{(t.profit / 100).toFixed(2)}</strong>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="panel soft">
                 <div className="panel-head">
-                  <div><p className="eyebrow">Profit & loss</p><h3>Operating expenses</h3><p className="muted">{financialReport.note}</p></div>
+                  <div>
+                    <p className="eyebrow">Profit & loss</p>
+                    <h3>Operating expenses</h3>
+                    <p className="muted">{financialReport.note}</p>
+                  </div>
                 </div>
                 <div className="form-grid">
-                  <label>Category<input value={expenseDraft.category} onChange={(e) => setExpenseDraft({ ...expenseDraft, category: e.target.value })} placeholder="Hosting, payment fees, operations..." /></label>
-                  <label>Description<input value={expenseDraft.description} onChange={(e) => setExpenseDraft({ ...expenseDraft, description: e.target.value })} /></label>
-                  <label>Amount<input type="number" min="0" step="0.01" value={expenseDraft.amount} onChange={(e) => setExpenseDraft({ ...expenseDraft, amount: Number(e.target.value) })} /></label>
-                  <label>Currency<input value={expenseDraft.currency} onChange={(e) => setExpenseDraft({ ...expenseDraft, currency: e.target.value.toUpperCase() })} /></label>
-                  <label>Date<input type="date" value={expenseDraft.expenseDate} onChange={(e) => setExpenseDraft({ ...expenseDraft, expenseDate: e.target.value })} /></label>
-                  <label className="inline-check">Recurring<input type="checkbox" checked={expenseDraft.recurring} onChange={(e) => setExpenseDraft({ ...expenseDraft, recurring: e.target.checked })} /></label>
+                  <label>
+                    Category
+                    <input
+                      value={expenseDraft.category}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, category: e.target.value })
+                      }
+                      placeholder="Hosting, payment fees, operations..."
+                    />
+                  </label>
+                  <label>
+                    Description
+                    <input
+                      value={expenseDraft.description}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, description: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Amount
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={expenseDraft.amount}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, amount: Number(e.target.value) })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Currency
+                    <input
+                      value={expenseDraft.currency}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, currency: e.target.value.toUpperCase() })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Date
+                    <input
+                      type="date"
+                      value={expenseDraft.expenseDate}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, expenseDate: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="inline-check">
+                    Recurring
+                    <input
+                      type="checkbox"
+                      checked={expenseDraft.recurring}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, recurring: e.target.checked })
+                      }
+                    />
+                  </label>
                 </div>
                 <div className="row-actions">
-                  <button className="primary" onClick={async () => {
-                    try {
-                      await api('/api/v1/admin/financial-expenses', {
-                        method: 'POST',
-                        body: JSON.stringify({ ...expenseDraft, amount: Math.round(expenseDraft.amount * 100) }),
-                      });
-                      const report = await api('/api/v1/admin/financial-report');
-                      setFinancialReport(report);
-                      setExpenseDraft({ category: '', description: '', amount: 0, currency: 'USD', expenseDate: new Date().toISOString().slice(0, 10), recurring: false });
-                      setMessage('Operating expense recorded.');
-                    } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to record expense'); }
-                  }}>Add expense</button>
+                  <button
+                    className="primary"
+                    onClick={async () => {
+                      try {
+                        await api('/api/v1/admin/financial-expenses', {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            ...expenseDraft,
+                            amount: Math.round(expenseDraft.amount * 100),
+                          }),
+                        });
+                        const report = await api('/api/v1/admin/financial-report');
+                        setFinancialReport(report);
+                        setExpenseDraft({
+                          category: '',
+                          description: '',
+                          amount: 0,
+                          currency: 'USD',
+                          expenseDate: new Date().toISOString().slice(0, 10),
+                          recurring: false,
+                        });
+                        setMessage('Operating expense recorded.');
+                      } catch (error) {
+                        setMessage(
+                          error instanceof Error ? error.message : 'Unable to record expense',
+                        );
+                      }
+                    }}
+                  >
+                    Add expense
+                  </button>
                 </div>
                 <div className="ad-list">
                   {financialReport.expenses.map((expense) => (
                     <article className="ad-row" key={expense.id}>
-                      <div><strong>{expense.category}</strong><p>{expense.description ?? 'No description'}</p><small>{(expense.amount / 100).toFixed(2)} {expense.currency} · {new Date(expense.expenseDate).toLocaleDateString()}{expense.recurring ? ' · recurring' : ''}</small></div>
-                      <button className="danger" onClick={async () => {
-                        await api('/api/v1/admin/financial-expenses/' + expense.id, { method: 'DELETE' });
-                        setFinancialReport(await api('/api/v1/admin/financial-report'));
-                      }}>Delete</button>
+                      <div>
+                        <strong>{expense.category}</strong>
+                        <p>{expense.description ?? 'No description'}</p>
+                        <small>
+                          {(expense.amount / 100).toFixed(2)} {expense.currency} ·{' '}
+                          {new Date(expense.expenseDate).toLocaleDateString()}
+                          {expense.recurring ? ' · recurring' : ''}
+                        </small>
+                      </div>
+                      <button
+                        className="danger"
+                        onClick={async () => {
+                          await api('/api/v1/admin/financial-expenses/' + expense.id, {
+                            method: 'DELETE',
+                          });
+                          setFinancialReport(await api('/api/v1/admin/financial-report'));
+                        }}
+                      >
+                        Delete
+                      </button>
                     </article>
                   ))}
                 </div>
               </div>
             </div>
             <div className="billing-grid">
-              <div><h3>Payment providers</h3><div className="provider-list">{payments.providerStatus.map((p) => <div className="provider-row" key={p.name}><strong>{p.name}</strong><span className={p.configured ? 'status published' : 'status'}>{p.configured ? 'configured' : 'not configured'}</span></div>)}</div></div>
-              <div className="panel soft"><p className="eyebrow">Security</p><h3>Credentials stay out of the CMS</h3><p>API keys, merchant secrets and signing keys are read from server environment configuration. Admin controls operational billing data, never private credentials.</p></div>
+              <div>
+                <h3>Payment providers</h3>
+                <div className="provider-list">
+                  {payments.providerStatus.map((p) => (
+                    <div className="provider-row" key={p.name}>
+                      <strong>{p.name}</strong>
+                      <span className={p.configured ? 'status published' : 'status'}>
+                        {p.configured ? 'configured' : 'not configured'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="panel soft">
+                <p className="eyebrow">Security</p>
+                <h3>Credentials stay out of the CMS</h3>
+                <p>
+                  API keys, merchant secrets and signing keys are read from server environment
+                  configuration. Admin controls operational billing data, never private credentials.
+                </p>
+              </div>
             </div>
             <div className="billing-section">
-              <div className="panel-head"><div><h3>Service plans & checkout</h3><p className="muted">Edit name, code, base price, currency, duration, device allowance and active state. Customer location is detected automatically; payment methods can vary by region.</p></div></div>
+              <div className="panel-head">
+                <div>
+                  <h3>Service plans & checkout</h3>
+                  <p className="muted">
+                    Edit name, code, base price, currency, duration, device allowance and active
+                    state. Customer location is detected automatically; payment methods can vary by
+                    region.
+                  </p>
+                </div>
+              </div>
               <div className="ad-list">
                 {payments.products.map((product) => (
-                  <article className="ad-row" key={product.id}><div style={{ flex: 1 }}>
-                    <input value={product.name} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, name: e.target.value } : x) })} />
-                    <p className="muted">{product.code}</p>
-                    <div className="form-grid">
-                      <label>Base price<input type="number" min="0" step="0.01" value={(product.price / 100).toFixed(2)} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, price: Math.round(Number(e.target.value || 0) * 100) } : x) })} /></label>
-                      <label>Currency<input value={product.currency} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, currency: e.target.value.toUpperCase() } : x) })} /></label>
-                      <label>Duration (days)<input type="number" min="1" value={product.durationDays} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, durationDays: Number(e.target.value) } : x) })} /></label>
-                      <label>Device limit<input type="number" min="1" value={product.deviceLimit} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, deviceLimit: Number(e.target.value) } : x) })} /></label>
-                      <label className="inline-check">Active<input type="checkbox" checked={product.active} onChange={(e) => setPayments({ ...payments, products: payments.products.map((x) => x.id === product.id ? { ...x, active: e.target.checked } : x) })} /></label>
+                  <article className="ad-row" key={product.id}>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        value={product.name}
+                        onChange={(e) =>
+                          setPayments({
+                            ...payments,
+                            products: payments.products.map((x) =>
+                              x.id === product.id ? { ...x, name: e.target.value } : x,
+                            ),
+                          })
+                        }
+                      />
+                      <p className="muted">{product.code}</p>
+                      <div className="form-grid">
+                        <label>
+                          Base price
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={(product.price / 100).toFixed(2)}
+                            onChange={(e) =>
+                              setPayments({
+                                ...payments,
+                                products: payments.products.map((x) =>
+                                  x.id === product.id
+                                    ? { ...x, price: Math.round(Number(e.target.value || 0) * 100) }
+                                    : x,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          Currency
+                          <input
+                            value={product.currency}
+                            onChange={(e) =>
+                              setPayments({
+                                ...payments,
+                                products: payments.products.map((x) =>
+                                  x.id === product.id
+                                    ? { ...x, currency: e.target.value.toUpperCase() }
+                                    : x,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          Duration (days)
+                          <input
+                            type="number"
+                            min="1"
+                            value={product.durationDays}
+                            onChange={(e) =>
+                              setPayments({
+                                ...payments,
+                                products: payments.products.map((x) =>
+                                  x.id === product.id
+                                    ? { ...x, durationDays: Number(e.target.value) }
+                                    : x,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          Device limit
+                          <input
+                            type="number"
+                            min="1"
+                            value={product.deviceLimit}
+                            onChange={(e) =>
+                              setPayments({
+                                ...payments,
+                                products: payments.products.map((x) =>
+                                  x.id === product.id
+                                    ? { ...x, deviceLimit: Number(e.target.value) }
+                                    : x,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="inline-check">
+                          Active
+                          <input
+                            type="checkbox"
+                            checked={product.active}
+                            onChange={(e) =>
+                              setPayments({
+                                ...payments,
+                                products: payments.products.map((x) =>
+                                  x.id === product.id ? { ...x, active: e.target.checked } : x,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+                      <div className="row-actions">
+                        <button
+                          className="primary"
+                          onClick={async () => {
+                            try {
+                              const saved = await api('/api/v1/admin/products/' + product.id, {
+                                method: 'PUT',
+                                body: JSON.stringify({
+                                  name: product.name,
+                                  price: product.price,
+                                  currency: product.currency,
+                                  durationDays: product.durationDays,
+                                  deviceLimit: product.deviceLimit,
+                                  active: product.active,
+                                }),
+                              });
+                              setPayments({
+                                ...payments,
+                                products: payments.products.map((x) =>
+                                  x.id === saved.id ? saved : x,
+                                ),
+                              });
+                              setMessage('Service plan saved.');
+                            } catch (error) {
+                              setMessage(
+                                error instanceof Error ? error.message : 'Unable to save plan',
+                              );
+                            }
+                          }}
+                        >
+                          Save plan
+                        </button>
+                      </div>
                     </div>
-                    <div className="row-actions">
-                      <button className="primary" onClick={async () => { try { const saved = await api('/api/v1/admin/products/' + product.id, { method: 'PUT', body: JSON.stringify({ name: product.name, price: product.price, currency: product.currency, durationDays: product.durationDays, deviceLimit: product.deviceLimit, active: product.active }) }); setPayments({ ...payments, products: payments.products.map((x) => x.id === saved.id ? saved : x) }); setMessage('Service plan saved.'); } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save plan'); } }}>Save plan</button>
-                    </div>
-                  </div></article>
+                  </article>
                 ))}
               </div>
             </div>
-            <div className="billing-section"><div className="panel-head"><div><h3>Product catalog & capacity</h3><p className="muted">Operational view of how each plan is served.</p></div></div><div className="ad-list">{payments.catalog.map((p) => <article className="ad-row" key={p.code}><div><span className="status published">{p.category}</span><h3>{p.name}</h3><p>{p.price === 0 ? 'Free' : p.price.toFixed(2) + ' ' + p.currency} · {p.durationDays} days · {p.userLimit} user · {p.deviceLimit} device{p.deviceLimit === 1 ? '' : 's'}</p><small>{p.capacityPolicy}</small></div></article>)}</div></div>
-            <div className="billing-section"><div className="panel-head"><div><h3>Production VPN topology</h3><p className="muted">Kebijakan operasional ini sekarang tersimpan di database dan bisa diubah langsung dari website Admin.</p></div><button className="primary" onClick={() => billingTopology && setTopologyDraft(JSON.parse(JSON.stringify(billingTopology)))}>Edit topology</button></div>
-              {billingTopology && <div className="grid-two">
-                <div className="panel soft"><h3>General Free</h3><p>{billingTopology.generalFree.routeLabel} · maximum {billingTopology.generalFree.maxConcurrentUsers} concurrent/served users within a {billingTopology.generalFree.operatingWindowHours}-hour operating window.</p><p>{billingTopology.generalFree.description}</p></div>
-                <div className="panel soft"><h3>General Pro</h3><p>{billingTopology.generalPro.smartVpn ? 'Smart VPN' : ''}{billingTopology.generalPro.smartVpn && billingTopology.generalPro.smartVproxy ? ' / ' : ''}{billingTopology.generalPro.smartVproxy ? 'Smart VProxy' : ''} → {billingTopology.generalPro.target}.</p><p>Health: {billingTopology.generalPro.health ? 'on' : 'off'} · Load: {billingTopology.generalPro.load ? 'on' : 'off'} · Capacity: {billingTopology.generalPro.capacity ? 'on' : 'off'} · Queue: {billingTopology.generalPro.queue ? 'on' : 'off'}.</p></div>
-                <div className="panel soft"><h3>WireGuard</h3><p>{billingTopology.wireguard.target}.</p><p>Health: {billingTopology.wireguard.health ? 'on' : 'off'} · Load: {billingTopology.wireguard.load ? 'on' : 'off'} · Capacity: {billingTopology.wireguard.capacity ? 'on' : 'off'} · Queue: {billingTopology.wireguard.queue ? 'on' : 'off'}.</p></div>
-              </div>}
+            <div className="billing-section">
+              <div className="panel-head">
+                <div>
+                  <h3>Product catalog & capacity</h3>
+                  <p className="muted">Operational view of how each plan is served.</p>
+                </div>
+              </div>
+              <div className="ad-list">
+                {payments.catalog.map((p) => (
+                  <article className="ad-row" key={p.code}>
+                    <div>
+                      <span className="status published">{p.category}</span>
+                      <h3>{p.name}</h3>
+                      <p>
+                        {p.price === 0 ? 'Free' : p.price.toFixed(2) + ' ' + p.currency} ·{' '}
+                        {p.durationDays} days · {p.userLimit} user · {p.deviceLimit} device
+                        {p.deviceLimit === 1 ? '' : 's'}
+                      </p>
+                      <small>{p.capacityPolicy}</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
-            <div className="billing-section"><div className="panel-head"><div><h3>Recent payments</h3><p className="muted">Edit operational payment metadata and status without exposing provider credentials.</p></div></div><div className="ad-list">
-              {payments.payments.length === 0 && <p className="muted">No payments yet.</p>}
-              {payments.payments.map((p) => <article className="ad-row" key={p.id}><div><span className={`status ${p.status === 'success' ? 'published' : ''}`}>{p.status}</span><h3>{p.subscription.product.name}</h3><p>{p.subscription.user.email} · {(p.amount / 100).toFixed(2)} {p.currency}</p><small>{p.provider}{p.country ? ' · ' + p.country : ''} · {new Date(p.createdAt).toLocaleString()}</small></div><div className="row-actions"><button onClick={() => setPaymentDraft({ id: p.id, provider: p.provider, country: p.country ?? '', currency: p.currency, paymentMethod: '', amount: p.amount / 100, settlementCurrency: '', status: p.status, transactionId: p.transactionId ?? '', type: 'one_time', autoDebit: false, providerPaymentId: '', refundId: '', refundReason: '' })}>Edit payment</button></div></article>)}
-            </div></div>
-            <div className="billing-section"><div className="panel-head"><div><h3>Subscriptions</h3><p className="muted">Subscription lifecycle remains editable from Customers.</p></div></div><div className="ad-list">{payments.subscriptions.map((s) => <article className="ad-row" key={s.id}><div><h3>{s.product.name}</h3><p>{s.user.email} · {s.status}</p><small>{s.startDate ? new Date(s.startDate).toLocaleDateString() : 'not started'} → {s.endDate ? new Date(s.endDate).toLocaleDateString() : 'no end date'}</small></div><div className="row-actions"><button onClick={() => setSection('customers')}>Open customer</button></div></article>)}</div></div>
+            <div className="billing-section">
+              <div className="panel-head">
+                <div>
+                  <h3>Production VPN topology</h3>
+                  <p className="muted">
+                    Kebijakan operasional ini sekarang tersimpan di database dan bisa diubah
+                    langsung dari website Admin.
+                  </p>
+                </div>
+                <button
+                  className="primary"
+                  onClick={() =>
+                    billingTopology && setTopologyDraft(JSON.parse(JSON.stringify(billingTopology)))
+                  }
+                >
+                  Edit topology
+                </button>
+              </div>
+              {billingTopology && (
+                <div className="grid-two">
+                  <div className="panel soft">
+                    <h3>General Free</h3>
+                    <p>
+                      {billingTopology.generalFree.routeLabel} · maximum{' '}
+                      {billingTopology.generalFree.maxConcurrentUsers} concurrent/served users
+                      within a {billingTopology.generalFree.operatingWindowHours}-hour operating
+                      window.
+                    </p>
+                    <p>{billingTopology.generalFree.description}</p>
+                  </div>
+                  <div className="panel soft">
+                    <h3>General Pro</h3>
+                    <p>
+                      {billingTopology.generalPro.smartVpn ? 'Smart VPN' : ''}
+                      {billingTopology.generalPro.smartVpn && billingTopology.generalPro.smartVproxy
+                        ? ' / '
+                        : ''}
+                      {billingTopology.generalPro.smartVproxy ? 'Smart VProxy' : ''} →{' '}
+                      {billingTopology.generalPro.target}.
+                    </p>
+                    <p>
+                      Health: {billingTopology.generalPro.health ? 'on' : 'off'} · Load:{' '}
+                      {billingTopology.generalPro.load ? 'on' : 'off'} · Capacity:{' '}
+                      {billingTopology.generalPro.capacity ? 'on' : 'off'} · Queue:{' '}
+                      {billingTopology.generalPro.queue ? 'on' : 'off'}.
+                    </p>
+                  </div>
+                  <div className="panel soft">
+                    <h3>WireGuard</h3>
+                    <p>{billingTopology.wireguard.target}.</p>
+                    <p>
+                      Health: {billingTopology.wireguard.health ? 'on' : 'off'} · Load:{' '}
+                      {billingTopology.wireguard.load ? 'on' : 'off'} · Capacity:{' '}
+                      {billingTopology.wireguard.capacity ? 'on' : 'off'} · Queue:{' '}
+                      {billingTopology.wireguard.queue ? 'on' : 'off'}.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="billing-section">
+              <div className="panel-head">
+                <div>
+                  <h3>Recent payments</h3>
+                  <p className="muted">
+                    Edit operational payment metadata and status without exposing provider
+                    credentials.
+                  </p>
+                </div>
+              </div>
+              <div className="ad-list">
+                {payments.payments.length === 0 && <p className="muted">No payments yet.</p>}
+                {payments.payments.map((p) => (
+                  <article className="ad-row" key={p.id}>
+                    <div>
+                      <span className={`status ${p.status === 'success' ? 'published' : ''}`}>
+                        {p.status}
+                      </span>
+                      <h3>{p.subscription.product.name}</h3>
+                      <p>
+                        {p.subscription.user.email} · {(p.amount / 100).toFixed(2)} {p.currency}
+                      </p>
+                      <small>
+                        {p.provider}
+                        {p.country ? ' · ' + p.country : ''} ·{' '}
+                        {new Date(p.createdAt).toLocaleString()}
+                      </small>
+                    </div>
+                    <div className="row-actions">
+                      <button
+                        onClick={() =>
+                          setPaymentDraft({
+                            id: p.id,
+                            provider: p.provider,
+                            country: p.country ?? '',
+                            currency: p.currency,
+                            paymentMethod: '',
+                            amount: p.amount / 100,
+                            settlementCurrency: '',
+                            status: p.status,
+                            transactionId: p.transactionId ?? '',
+                            type: 'one_time',
+                            autoDebit: false,
+                            providerPaymentId: '',
+                            refundId: '',
+                            refundReason: '',
+                          })
+                        }
+                      >
+                        Edit payment
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <div className="billing-section">
+              <div className="panel-head">
+                <div>
+                  <h3>Subscriptions</h3>
+                  <p className="muted">Subscription lifecycle remains editable from Customers.</p>
+                </div>
+              </div>
+              <div className="ad-list">
+                {payments.subscriptions.map((s) => (
+                  <article className="ad-row" key={s.id}>
+                    <div>
+                      <h3>{s.product.name}</h3>
+                      <p>
+                        {s.user.email} · {s.status}
+                      </p>
+                      <small>
+                        {s.startDate ? new Date(s.startDate).toLocaleDateString() : 'not started'} →{' '}
+                        {s.endDate ? new Date(s.endDate).toLocaleDateString() : 'no end date'}
+                      </small>
+                    </div>
+                    <div className="row-actions">
+                      <button onClick={() => setSection('customers')}>Open customer</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
           </section>
         )}
         {section === 'settings' && (
           <section className="panel settings-workspace">
             <div className="panel-head">
-              <div><p className="eyebrow">Workspace configuration</p><h2>Admin Settings</h2><p>Customize the internal Control Center layout, colors and density. These settings are private to the admin workspace and never modify the customer website.</p></div>
+              <div>
+                <p className="eyebrow">Workspace configuration</p>
+                <h2>Admin Settings</h2>
+                <p>
+                  Customize the internal Control Center layout, colors and density. These settings
+                  are private to the admin workspace and never modify the customer website.
+                </p>
+              </div>
               <span className="status published">ADMIN ONLY</span>
             </div>
             <div className="settings-grid">
               <div className="editor-group">
                 <h3>Appearance</h3>
                 <div className="form-grid">
-                  <label>Accent color<input type="color" value={adminPrefs.accent} onChange={(e) => setAdminPrefs({ ...adminPrefs, accent: e.target.value })} /></label>
-                  <label>Surface<input type="color" value={adminPrefs.surface} onChange={(e) => setAdminPrefs({ ...adminPrefs, surface: e.target.value })} /></label>
-                  <label>Workspace background<input type="color" value={adminPrefs.background} onChange={(e) => setAdminPrefs({ ...adminPrefs, background: e.target.value })} /></label>
-                  <label>Density<select value={adminPrefs.density} onChange={(e) => setAdminPrefs({ ...adminPrefs, density: e.target.value as 'comfortable' | 'compact' })}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
-                  <label>Sidebar width<select value={adminPrefs.sidebar} onChange={(e) => setAdminPrefs({ ...adminPrefs, sidebar: e.target.value as '220px' | '240px' | '280px' })}><option value="220px">220 px</option><option value="240px">240 px</option><option value="280px">280 px</option></select></label>
-                  <label>Corner radius<select value={adminPrefs.radius} onChange={(e) => setAdminPrefs({ ...adminPrefs, radius: e.target.value as '10px' | '14px' | '18px' })}><option value="10px">Small</option><option value="14px">Medium</option><option value="18px">Large</option></select></label>
-                  <label>Default section<select value={adminPrefs.defaultSection} onChange={(e) => setAdminPrefs({ ...adminPrefs, defaultSection: e.target.value })}><option value="overview">Control Center</option><option value="customers">Customers</option><option value="payments">Payments & Billing</option><option value="network">Network & Clients</option><option value="website">Website & Marketing</option><option value="roadmap">Roadmap</option></select></label>
+                  <label>
+                    Accent color
+                    <input
+                      type="color"
+                      value={adminPrefs.accent}
+                      onChange={(e) => setAdminPrefs({ ...adminPrefs, accent: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Surface
+                    <input
+                      type="color"
+                      value={adminPrefs.surface}
+                      onChange={(e) => setAdminPrefs({ ...adminPrefs, surface: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Workspace background
+                    <input
+                      type="color"
+                      value={adminPrefs.background}
+                      onChange={(e) => setAdminPrefs({ ...adminPrefs, background: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Density
+                    <select
+                      value={adminPrefs.density}
+                      onChange={(e) =>
+                        setAdminPrefs({
+                          ...adminPrefs,
+                          density: e.target.value as 'comfortable' | 'compact',
+                        })
+                      }
+                    >
+                      <option value="comfortable">Comfortable</option>
+                      <option value="compact">Compact</option>
+                    </select>
+                  </label>
+                  <label>
+                    Sidebar width
+                    <select
+                      value={adminPrefs.sidebar}
+                      onChange={(e) =>
+                        setAdminPrefs({
+                          ...adminPrefs,
+                          sidebar: e.target.value as '220px' | '240px' | '280px',
+                        })
+                      }
+                    >
+                      <option value="220px">220 px</option>
+                      <option value="240px">240 px</option>
+                      <option value="280px">280 px</option>
+                    </select>
+                  </label>
+                  <label>
+                    Corner radius
+                    <select
+                      value={adminPrefs.radius}
+                      onChange={(e) =>
+                        setAdminPrefs({
+                          ...adminPrefs,
+                          radius: e.target.value as '10px' | '14px' | '18px',
+                        })
+                      }
+                    >
+                      <option value="10px">Small</option>
+                      <option value="14px">Medium</option>
+                      <option value="18px">Large</option>
+                    </select>
+                  </label>
+                  <label>
+                    Default section
+                    <select
+                      value={adminPrefs.defaultSection}
+                      onChange={(e) =>
+                        setAdminPrefs({ ...adminPrefs, defaultSection: e.target.value })
+                      }
+                    >
+                      <option value="overview">Control Center</option>
+                      <option value="customers">Customers</option>
+                      <option value="payments">Payments & Billing</option>
+                      <option value="network">Network & Clients</option>
+                      <option value="website">Website & Marketing</option>
+                      <option value="roadmap">Roadmap</option>
+                    </select>
+                  </label>
                 </div>
-                <button className="primary" onClick={() => { localStorage.setItem('santor_admin_section', adminPrefs.defaultSection); setSection(adminPrefs.defaultSection); setMessage('Admin workspace preferences saved.'); }}>Save workspace preferences</button>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    localStorage.setItem('santor_admin_section', adminPrefs.defaultSection);
+                    setSection(adminPrefs.defaultSection);
+                    setMessage('Admin workspace preferences saved.');
+                  }}
+                >
+                  Save workspace preferences
+                </button>
               </div>
               <div className="settings-preview">
                 <p className="eyebrow">Live preview</p>
                 <h3>Control Center</h3>
-                <p>Accent, surface, background, sidebar width and density update immediately in this workspace.</p>
-                <div className="preview-swatch"><span style={{ background: adminPrefs.accent }} /><span style={{ background: adminPrefs.surface }} /><span style={{ background: adminPrefs.background }} /></div>
-                <ul><li>Admin-only visual settings</li><li>No customer website mutation</li><li>Persisted locally per browser</li></ul>
+                <p>
+                  Accent, surface, background, sidebar width and density update immediately in this
+                  workspace.
+                </p>
+                <div className="preview-swatch">
+                  <span style={{ background: adminPrefs.accent }} />
+                  <span style={{ background: adminPrefs.surface }} />
+                  <span style={{ background: adminPrefs.background }} />
+                </div>
+                <ul>
+                  <li>Admin-only visual settings</li>
+                  <li>No customer website mutation</li>
+                  <li>Persisted locally per browser</li>
+                </ul>
               </div>
             </div>
             <div className="panel soft">
               <p className="eyebrow">Safety boundary</p>
               <h3>Public website controls remain separate</h3>
-              <p>Customer-facing brand, hero copy and public primary color continue to live under Website & Marketing and the existing <code>/api/v1/admin/site-config</code> API.</p>
+              <p>
+                Customer-facing brand, hero copy and public primary color continue to live under
+                Website & Marketing and the existing <code>/api/v1/admin/site-config</code> API.
+              </p>
             </div>
           </section>
         )}
-
         {section === 'roadmap' && (
           <section className="panel">
             <div className="panel-head">
@@ -1330,42 +2183,310 @@ function App() {
       {topologyDraft && (
         <div className="modal-backdrop">
           <section className="modal">
-            <div className="panel-head"><div><p className="eyebrow">Production topology</p><h2>Edit VPN topology</h2></div><button onClick={() => setTopologyDraft(null)}>Close</button></div>
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">Production topology</p>
+                <h2>Edit VPN topology</h2>
+              </div>
+              <button onClick={() => setTopologyDraft(null)}>Close</button>
+            </div>
             <div className="editor-group">
               <h3>General Free</h3>
               <div className="form-grid">
-                <label>Route label<input value={topologyDraft.generalFree.routeLabel} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, routeLabel: e.target.value } })} /></label>
-                <label>Max concurrent users<input type="number" min="1" value={topologyDraft.generalFree.maxConcurrentUsers} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, maxConcurrentUsers: Number(e.target.value) } })} /></label>
-                <label>Operating window (hours)<input type="number" min="1" value={topologyDraft.generalFree.operatingWindowHours} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, operatingWindowHours: Number(e.target.value) } })} /></label>
-                <label className="inline-check">Disconnect inactive<input type="checkbox" checked={topologyDraft.generalFree.disconnectInactive} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, disconnectInactive: e.target.checked } })} /></label>
-                <label className="inline-check">Release capacity<input type="checkbox" checked={topologyDraft.generalFree.releaseCapacity} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, releaseCapacity: e.target.checked } })} /></label>
-                <label className="inline-check">Queue enabled<input type="checkbox" checked={topologyDraft.generalFree.queueEnabled} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, queueEnabled: e.target.checked } })} /></label>
-                <label className="full">Description<textarea rows={3} value={topologyDraft.generalFree.description} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalFree: { ...topologyDraft.generalFree, description: e.target.value } })} /></label>
+                <label>
+                  Route label
+                  <input
+                    value={topologyDraft.generalFree.routeLabel}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: { ...topologyDraft.generalFree, routeLabel: e.target.value },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Max concurrent users
+                  <input
+                    type="number"
+                    min="1"
+                    value={topologyDraft.generalFree.maxConcurrentUsers}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: {
+                          ...topologyDraft.generalFree,
+                          maxConcurrentUsers: Number(e.target.value),
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Operating window (hours)
+                  <input
+                    type="number"
+                    min="1"
+                    value={topologyDraft.generalFree.operatingWindowHours}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: {
+                          ...topologyDraft.generalFree,
+                          operatingWindowHours: Number(e.target.value),
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Disconnect inactive
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalFree.disconnectInactive}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: {
+                          ...topologyDraft.generalFree,
+                          disconnectInactive: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Release capacity
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalFree.releaseCapacity}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: {
+                          ...topologyDraft.generalFree,
+                          releaseCapacity: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Queue enabled
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalFree.queueEnabled}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: {
+                          ...topologyDraft.generalFree,
+                          queueEnabled: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="full">
+                  Description
+                  <textarea
+                    rows={3}
+                    value={topologyDraft.generalFree.description}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalFree: { ...topologyDraft.generalFree, description: e.target.value },
+                      })
+                    }
+                  />
+                </label>
               </div>
             </div>
             <div className="editor-group">
               <h3>General Pro</h3>
               <div className="form-grid">
-                <label>Target nodes<input value={topologyDraft.generalPro.target} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, target: e.target.value } })} /></label>
-                <label className="inline-check">Smart VPN<input type="checkbox" checked={topologyDraft.generalPro.smartVpn} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, smartVpn: e.target.checked } })} /></label>
-                <label className="inline-check">Smart VProxy<input type="checkbox" checked={topologyDraft.generalPro.smartVproxy} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, smartVproxy: e.target.checked } })} /></label>
-                <label className="inline-check">Health control<input type="checkbox" checked={topologyDraft.generalPro.health} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, health: e.target.checked } })} /></label>
-                <label className="inline-check">Load control<input type="checkbox" checked={topologyDraft.generalPro.load} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, load: e.target.checked } })} /></label>
-                <label className="inline-check">Capacity control<input type="checkbox" checked={topologyDraft.generalPro.capacity} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, capacity: e.target.checked } })} /></label>
-                <label className="inline-check">Queue control<input type="checkbox" checked={topologyDraft.generalPro.queue} onChange={(e) => setTopologyDraft({ ...topologyDraft, generalPro: { ...topologyDraft.generalPro, queue: e.target.checked } })} /></label>
+                <label>
+                  Target nodes
+                  <input
+                    value={topologyDraft.generalPro.target}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, target: e.target.value },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Smart VPN
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalPro.smartVpn}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, smartVpn: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Smart VProxy
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalPro.smartVproxy}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, smartVproxy: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Health control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalPro.health}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, health: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Load control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalPro.load}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, load: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Capacity control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalPro.capacity}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, capacity: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Queue control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.generalPro.queue}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        generalPro: { ...topologyDraft.generalPro, queue: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
               </div>
             </div>
             <div className="editor-group">
               <h3>WireGuard</h3>
               <div className="form-grid">
-                <label>Target nodes<input value={topologyDraft.wireguard.target} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, target: e.target.value } })} /></label>
-                <label className="inline-check">Health control<input type="checkbox" checked={topologyDraft.wireguard.health} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, health: e.target.checked } })} /></label>
-                <label className="inline-check">Load control<input type="checkbox" checked={topologyDraft.wireguard.load} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, load: e.target.checked } })} /></label>
-                <label className="inline-check">Capacity control<input type="checkbox" checked={topologyDraft.wireguard.capacity} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, capacity: e.target.checked } })} /></label>
-                <label className="inline-check">Queue control<input type="checkbox" checked={topologyDraft.wireguard.queue} onChange={(e) => setTopologyDraft({ ...topologyDraft, wireguard: { ...topologyDraft.wireguard, queue: e.target.checked } })} /></label>
+                <label>
+                  Target nodes
+                  <input
+                    value={topologyDraft.wireguard.target}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        wireguard: { ...topologyDraft.wireguard, target: e.target.value },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Health control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.wireguard.health}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        wireguard: { ...topologyDraft.wireguard, health: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Load control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.wireguard.load}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        wireguard: { ...topologyDraft.wireguard, load: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Capacity control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.wireguard.capacity}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        wireguard: { ...topologyDraft.wireguard, capacity: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="inline-check">
+                  Queue control
+                  <input
+                    type="checkbox"
+                    checked={topologyDraft.wireguard.queue}
+                    onChange={(e) =>
+                      setTopologyDraft({
+                        ...topologyDraft,
+                        wireguard: { ...topologyDraft.wireguard, queue: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
               </div>
             </div>
-            <div className="modal-actions"><button onClick={() => setTopologyDraft(null)}>Cancel</button><button className="primary" onClick={async () => { try { const saved = await api('/api/v1/admin/billing-topology', { method: 'PUT', body: JSON.stringify(topologyDraft) }); setBillingTopology(saved); setTopologyDraft(null); setMessage('Production VPN topology saved.'); } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save topology'); } }}>Save topology</button></div>
+            <div className="modal-actions">
+              <button onClick={() => setTopologyDraft(null)}>Cancel</button>
+              <button
+                className="primary"
+                onClick={async () => {
+                  try {
+                    const saved = await api('/api/v1/admin/billing-topology', {
+                      method: 'PUT',
+                      body: JSON.stringify(topologyDraft),
+                    });
+                    setBillingTopology(saved);
+                    setTopologyDraft(null);
+                    setMessage('Production VPN topology saved.');
+                  } catch (error) {
+                    setMessage(error instanceof Error ? error.message : 'Unable to save topology');
+                  }
+                }}
+              >
+                Save topology
+              </button>
+            </div>
           </section>
         </div>
       )}
@@ -1393,16 +2514,20 @@ function App() {
                     <input
                       type="checkbox"
                       checked={networkDraft[key] !== false}
-                      onChange={(e) => setNetworkDraft({ ...networkDraft, [key]: e.target.checked })}
+                      onChange={(e) =>
+                        setNetworkDraft({ ...networkDraft, [key]: e.target.checked })
+                      }
                     />
                   ) : key === 'notes' || key === 'config' ? (
                     <textarea
                       rows={key === 'config' ? 5 : 3}
-                      value={key === 'config'
-                        ? typeof networkDraft[key] === 'string'
-                          ? String(networkDraft[key])
-                          : JSON.stringify(networkDraft[key] ?? {}, null, 2)
-                        : String(networkDraft[key] ?? '')}
+                      value={
+                        key === 'config'
+                          ? typeof networkDraft[key] === 'string'
+                            ? String(networkDraft[key])
+                            : JSON.stringify(networkDraft[key] ?? {}, null, 2)
+                          : String(networkDraft[key] ?? '')
+                      }
                       onChange={(e) => setNetworkDraft({ ...networkDraft, [key]: e.target.value })}
                     />
                   ) : (
@@ -1412,7 +2537,10 @@ function App() {
                       onChange={(e) =>
                         setNetworkDraft({
                           ...networkDraft,
-                          [key]: key === 'port' || key === 'priority' ? Number(e.target.value) : e.target.value,
+                          [key]:
+                            key === 'port' || key === 'priority'
+                              ? Number(e.target.value)
+                              : e.target.value,
                         })
                       }
                     />
@@ -1478,46 +2606,121 @@ function App() {
       {productDraft && (
         <div className="modal-backdrop">
           <section className="modal">
-            <div className="panel-head"><div><p className="eyebrow">Service plan</p><h2>{productDraft.id ? 'Edit plan' : 'New plan'}</h2></div><button onClick={() => setProductDraft(null)}>Close</button></div>
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">Service plan</p>
+                <h2>{productDraft.id ? 'Edit plan' : 'New plan'}</h2>
+              </div>
+              <button onClick={() => setProductDraft(null)}>Close</button>
+            </div>
             <div className="form-grid">
-              <label>Plan name<input value={productDraft.name} onChange={(e) => setProductDraft({ ...productDraft, name: e.target.value })} /></label>
-              <label>Plan code<input value={productDraft.code} onChange={(e) => setProductDraft({ ...productDraft, code: e.target.value })} disabled={Boolean(productDraft.id)} /></label>
-              <label>Base price<input type="number" min="0" step="0.01" value={productDraft.price} onChange={(e) => setProductDraft({ ...productDraft, price: Number(e.target.value) })} /></label>
-              <label>Currency<input value={productDraft.currency} onChange={(e) => setProductDraft({ ...productDraft, currency: e.target.value.toUpperCase() })} /></label>
-              <label>Duration (days)<input type="number" min="1" value={productDraft.durationDays} onChange={(e) => setProductDraft({ ...productDraft, durationDays: Number(e.target.value) })} /></label>
-              <label>Device limit<input type="number" min="1" value={productDraft.deviceLimit} onChange={(e) => setProductDraft({ ...productDraft, deviceLimit: Number(e.target.value) })} /></label>
-              <label className="inline-check">Active<input type="checkbox" checked={productDraft.active} onChange={(e) => setProductDraft({ ...productDraft, active: e.target.checked })} /></label>
+              <label>
+                Plan name
+                <input
+                  value={productDraft.name}
+                  onChange={(e) => setProductDraft({ ...productDraft, name: e.target.value })}
+                />
+              </label>
+              <label>
+                Plan code
+                <input
+                  value={productDraft.code}
+                  onChange={(e) => setProductDraft({ ...productDraft, code: e.target.value })}
+                  disabled={Boolean(productDraft.id)}
+                />
+              </label>
+              <label>
+                Base price
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={productDraft.price}
+                  onChange={(e) =>
+                    setProductDraft({ ...productDraft, price: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label>
+                Currency
+                <input
+                  value={productDraft.currency}
+                  onChange={(e) =>
+                    setProductDraft({ ...productDraft, currency: e.target.value.toUpperCase() })
+                  }
+                />
+              </label>
+              <label>
+                Duration (days)
+                <input
+                  type="number"
+                  min="1"
+                  value={productDraft.durationDays}
+                  onChange={(e) =>
+                    setProductDraft({ ...productDraft, durationDays: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label>
+                Device limit
+                <input
+                  type="number"
+                  min="1"
+                  value={productDraft.deviceLimit}
+                  onChange={(e) =>
+                    setProductDraft({ ...productDraft, deviceLimit: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label className="inline-check">
+                Active
+                <input
+                  type="checkbox"
+                  checked={productDraft.active}
+                  onChange={(e) => setProductDraft({ ...productDraft, active: e.target.checked })}
+                />
+              </label>
             </div>
             <div className="modal-actions">
               <button onClick={() => setProductDraft(null)}>Cancel</button>
-              <button className="primary" onClick={async () => {
-                try {
-                  const payload = {
-                    name: productDraft.name,
-                    code: productDraft.code,
-                    price: Math.round(productDraft.price * 100),
-                    currency: productDraft.currency,
-                    durationDays: productDraft.durationDays,
-                    deviceLimit: productDraft.deviceLimit,
-                    active: productDraft.active,
-                  };
-                  const saved = await api(productDraft.id ? '/api/v1/admin/products/' + productDraft.id : '/api/v1/admin/products', {
-                    method: productDraft.id ? 'PUT' : 'POST',
-                    body: JSON.stringify(payload),
-                  });
-                  setPayments({
-                    ...payments,
-                    products: productDraft.id
-                      ? payments.products.map((x) => x.id === saved.id ? saved : x)
-                      : [...payments.products, saved],
-                  });
-                  setProductDraft(null);
-                  setMessage('Service plan saved.');
-                  await load();
-                } catch (error) {
-                  setMessage(error instanceof Error ? error.message : 'Unable to save plan');
-                }
-              }}>Save plan</button>
+              <button
+                className="primary"
+                onClick={async () => {
+                  try {
+                    const payload = {
+                      name: productDraft.name,
+                      code: productDraft.code,
+                      price: Math.round(productDraft.price * 100),
+                      currency: productDraft.currency,
+                      durationDays: productDraft.durationDays,
+                      deviceLimit: productDraft.deviceLimit,
+                      active: productDraft.active,
+                    };
+                    const saved = await api(
+                      productDraft.id
+                        ? '/api/v1/admin/products/' + productDraft.id
+                        : '/api/v1/admin/products',
+                      {
+                        method: productDraft.id ? 'PUT' : 'POST',
+                        body: JSON.stringify(payload),
+                      },
+                    );
+                    setPayments({
+                      ...payments,
+                      products: productDraft.id
+                        ? payments.products.map((x) => (x.id === saved.id ? saved : x))
+                        : [...payments.products, saved],
+                    });
+                    setProductDraft(null);
+                    setMessage('Service plan saved.');
+                    await load();
+                  } catch (error) {
+                    setMessage(error instanceof Error ? error.message : 'Unable to save plan');
+                  }
+                }}
+              >
+                Save plan
+              </button>
             </div>
           </section>
         </div>
@@ -1525,49 +2728,177 @@ function App() {
       {paymentDraft && (
         <div className="modal-backdrop">
           <section className="modal">
-            <div className="panel-head"><div><p className="eyebrow">Payment record</p><h2>Edit payment</h2></div><button onClick={() => setPaymentDraft(null)}>Close</button></div>
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">Payment record</p>
+                <h2>Edit payment</h2>
+              </div>
+              <button onClick={() => setPaymentDraft(null)}>Close</button>
+            </div>
             <div className="form-grid">
-              <label>Provider<input value={paymentDraft.provider} onChange={(e) => setPaymentDraft({ ...paymentDraft, provider: e.target.value })} /></label>
-              <label>Country<input value={paymentDraft.country} onChange={(e) => setPaymentDraft({ ...paymentDraft, country: e.target.value.toUpperCase() })} /></label>
-              <label>Currency<input value={paymentDraft.currency} onChange={(e) => setPaymentDraft({ ...paymentDraft, currency: e.target.value.toUpperCase() })} /></label>
-              <label>Amount<input type="number" min="0" step="0.01" value={paymentDraft.amount} onChange={(e) => setPaymentDraft({ ...paymentDraft, amount: Number(e.target.value) })} /></label>
-              <label>Payment method<input value={paymentDraft.paymentMethod} onChange={(e) => setPaymentDraft({ ...paymentDraft, paymentMethod: e.target.value })} /></label>
-              <label>Status<select value={paymentDraft.status} onChange={(e) => setPaymentDraft({ ...paymentDraft, status: e.target.value })}><option value="pending">Pending</option><option value="success">Success</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
-              <label>Transaction ID<input value={paymentDraft.transactionId} onChange={(e) => setPaymentDraft({ ...paymentDraft, transactionId: e.target.value })} /></label>
-              <label>Settlement currency<input value={paymentDraft.settlementCurrency} onChange={(e) => setPaymentDraft({ ...paymentDraft, settlementCurrency: e.target.value.toUpperCase() })} /></label>
-              <label>Type<select value={paymentDraft.type} onChange={(e) => setPaymentDraft({ ...paymentDraft, type: e.target.value })}><option value="one_time">One time</option><option value="recurring">Recurring</option></select></label>
-              <label className="inline-check">Auto debit<input type="checkbox" checked={paymentDraft.autoDebit} onChange={(e) => setPaymentDraft({ ...paymentDraft, autoDebit: e.target.checked })} /></label>
-              <label>Provider payment ID<input value={paymentDraft.providerPaymentId} onChange={(e) => setPaymentDraft({ ...paymentDraft, providerPaymentId: e.target.value })} /></label>
-              <label>Refund ID<input value={paymentDraft.refundId} onChange={(e) => setPaymentDraft({ ...paymentDraft, refundId: e.target.value })} /></label>
-              <label>Refund reason<textarea value={paymentDraft.refundReason} onChange={(e) => setPaymentDraft({ ...paymentDraft, refundReason: e.target.value })} /></label>
+              <label>
+                Provider
+                <input
+                  value={paymentDraft.provider}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, provider: e.target.value })}
+                />
+              </label>
+              <label>
+                Country
+                <input
+                  value={paymentDraft.country}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, country: e.target.value.toUpperCase() })
+                  }
+                />
+              </label>
+              <label>
+                Currency
+                <input
+                  value={paymentDraft.currency}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, currency: e.target.value.toUpperCase() })
+                  }
+                />
+              </label>
+              <label>
+                Amount
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentDraft.amount}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, amount: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label>
+                Payment method
+                <input
+                  value={paymentDraft.paymentMethod}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, paymentMethod: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Status
+                <select
+                  value={paymentDraft.status}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, status: e.target.value })}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="success">Success</option>
+                  <option value="failed">Failed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </label>
+              <label>
+                Transaction ID
+                <input
+                  value={paymentDraft.transactionId}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, transactionId: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Settlement currency
+                <input
+                  value={paymentDraft.settlementCurrency}
+                  onChange={(e) =>
+                    setPaymentDraft({
+                      ...paymentDraft,
+                      settlementCurrency: e.target.value.toUpperCase(),
+                    })
+                  }
+                />
+              </label>
+              <label>
+                Type
+                <select
+                  value={paymentDraft.type}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, type: e.target.value })}
+                >
+                  <option value="one_time">One time</option>
+                  <option value="recurring">Recurring</option>
+                </select>
+              </label>
+              <label className="inline-check">
+                Auto debit
+                <input
+                  type="checkbox"
+                  checked={paymentDraft.autoDebit}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, autoDebit: e.target.checked })
+                  }
+                />
+              </label>
+              <label>
+                Provider payment ID
+                <input
+                  value={paymentDraft.providerPaymentId}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, providerPaymentId: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Refund ID
+                <input
+                  value={paymentDraft.refundId}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, refundId: e.target.value })}
+                />
+              </label>
+              <label>
+                Refund reason
+                <textarea
+                  value={paymentDraft.refundReason}
+                  onChange={(e) =>
+                    setPaymentDraft({ ...paymentDraft, refundReason: e.target.value })
+                  }
+                />
+              </label>
             </div>
             <div className="modal-actions">
               <button onClick={() => setPaymentDraft(null)}>Cancel</button>
-              <button className="primary" onClick={async () => {
-                try {
-                  const saved = await api('/api/v1/admin/payments/' + paymentDraft.id, {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                      provider: paymentDraft.provider,
-                      country: paymentDraft.country || null,
-                      currency: paymentDraft.currency,
-                      paymentMethod: paymentDraft.paymentMethod || null,
-                      amount: Math.round(paymentDraft.amount * 100),
-                      settlementCurrency: paymentDraft.settlementCurrency || null,
-                      status: paymentDraft.status,
-                      transactionId: paymentDraft.transactionId || null,
-                      type: paymentDraft.type,
-                      autoDebit: paymentDraft.autoDebit,
-                      providerPaymentId: paymentDraft.providerPaymentId || null,
-                      refundId: paymentDraft.refundId || null,
-                      refundReason: paymentDraft.refundReason || null,
-                    }),
-                  });
-                  setPayments({ ...payments, payments: payments.payments.map((x) => x.id === saved.id ? saved : x) });
-                  setPaymentDraft(null);
-                  setMessage('Payment record saved.');
-                } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save payment'); }
-              }}>Save payment</button>
+              <button
+                className="primary"
+                onClick={async () => {
+                  try {
+                    const saved = await api('/api/v1/admin/payments/' + paymentDraft.id, {
+                      method: 'PUT',
+                      body: JSON.stringify({
+                        provider: paymentDraft.provider,
+                        country: paymentDraft.country || null,
+                        currency: paymentDraft.currency,
+                        paymentMethod: paymentDraft.paymentMethod || null,
+                        amount: Math.round(paymentDraft.amount * 100),
+                        settlementCurrency: paymentDraft.settlementCurrency || null,
+                        status: paymentDraft.status,
+                        transactionId: paymentDraft.transactionId || null,
+                        type: paymentDraft.type,
+                        autoDebit: paymentDraft.autoDebit,
+                        providerPaymentId: paymentDraft.providerPaymentId || null,
+                        refundId: paymentDraft.refundId || null,
+                        refundReason: paymentDraft.refundReason || null,
+                      }),
+                    });
+                    setPayments({
+                      ...payments,
+                      payments: payments.payments.map((x) => (x.id === saved.id ? saved : x)),
+                    });
+                    setPaymentDraft(null);
+                    setMessage('Payment record saved.');
+                  } catch (error) {
+                    setMessage(error instanceof Error ? error.message : 'Unable to save payment');
+                  }
+                }}
+              >
+                Save payment
+              </button>
             </div>
           </section>
         </div>

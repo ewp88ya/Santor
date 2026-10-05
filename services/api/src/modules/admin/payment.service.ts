@@ -153,11 +153,12 @@ export async function adminPaymentOverview() {
     deviceLimit: product.deviceLimit,
     userLimit: 1,
     category: product.code.startsWith('wg-') ? 'wireguard' : 'general',
-    capacityPolicy: product.code === 'general-free'
-      ? 'Free capacity: 100 concurrent/served users within a 1-hour operating window; inactive connections are disconnected and capacity is released.'
-      : product.code.startsWith('wg-')
-        ? 'Production WireGuard nodes with health, load, capacity and queue control.'
-        : 'Production General Nodes with health, load, capacity and queue control.',
+    capacityPolicy:
+      product.code === 'general-free'
+        ? 'Free capacity: 100 concurrent/served users within a 1-hour operating window; inactive connections are disconnected and capacity is released.'
+        : product.code.startsWith('wg-')
+          ? 'Production WireGuard nodes with health, load, capacity and queue control.'
+          : 'Production General Nodes with health, load, capacity and queue control.',
   }));
   return { payments, subscriptions, products, providerStatus, catalog };
 }
@@ -286,27 +287,34 @@ export async function updateAdminPayment(
     where: { id },
     data: {
       ...(data.provider !== undefined ? { provider: data.provider.trim() } : {}),
-      ...(data.country !== undefined ? { country: data.country?.trim().toUpperCase() || null } : {}),
+      ...(data.country !== undefined
+        ? { country: data.country?.trim().toUpperCase() || null }
+        : {}),
       ...(data.currency !== undefined ? { currency: data.currency.trim().toUpperCase() } : {}),
-      ...(data.paymentMethod !== undefined ? { paymentMethod: data.paymentMethod?.trim() || null } : {}),
+      ...(data.paymentMethod !== undefined
+        ? { paymentMethod: data.paymentMethod?.trim() || null }
+        : {}),
       ...(data.amount !== undefined ? { amount: Number(data.amount) } : {}),
       ...(data.settlementCurrency !== undefined
         ? { settlementCurrency: data.settlementCurrency?.trim().toUpperCase() || null }
         : {}),
       ...(data.status !== undefined ? { status: data.status.trim() } : {}),
-      ...(data.transactionId !== undefined ? { transactionId: data.transactionId?.trim() || null } : {}),
+      ...(data.transactionId !== undefined
+        ? { transactionId: data.transactionId?.trim() || null }
+        : {}),
       ...(data.type !== undefined ? { type: data.type.trim() } : {}),
       ...(data.autoDebit !== undefined ? { autoDebit: Boolean(data.autoDebit) } : {}),
       ...(data.providerPaymentId !== undefined
         ? { providerPaymentId: data.providerPaymentId?.trim() || null }
         : {}),
       ...(data.refundId !== undefined ? { refundId: data.refundId?.trim() || null } : {}),
-      ...(data.refundReason !== undefined ? { refundReason: data.refundReason?.trim() || null } : {}),
+      ...(data.refundReason !== undefined
+        ? { refundReason: data.refundReason?.trim() || null }
+        : {}),
     },
     include: { subscription: { include: { user: true, product: true } } },
   });
 }
-
 
 const defaultBillingTopology = {
   generalFree: {
@@ -316,7 +324,8 @@ const defaultBillingTopology = {
     releaseCapacity: true,
     queueEnabled: true,
     routeLabel: 'Free Server',
-    description: 'Active usage/device checks, automatic disconnect of inactive connections, capacity release and queue-aware reconnection.',
+    description:
+      'Active usage/device checks, automatic disconnect of inactive connections, capacity release and queue-aware reconnection.',
   },
   generalPro: {
     target: 'Production General Nodes',
@@ -355,7 +364,6 @@ export async function updateAdminBillingTopology(topology: unknown) {
     })
   ).topology;
 }
-
 
 type FinancialBucket = {
   currency: string;
@@ -431,7 +439,9 @@ function buildRevenueSeries(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([periodKeyValue, values]) => ({
       period: periodKeyValue,
-      amounts: [...values.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([currency, amount]) => ({ currency, amount })),
+      amounts: [...values.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([currency, amount]) => ({ currency, amount })),
     }));
 }
 
@@ -442,7 +452,16 @@ export async function adminFinancialReport() {
       orderBy: { createdAt: 'asc' },
     }),
     prisma.adminFinancialExpense.findMany({
-      select: { id: true, category: true, description: true, amount: true, currency: true, expenseDate: true, recurring: true, createdAt: true },
+      select: {
+        id: true,
+        category: true,
+        description: true,
+        amount: true,
+        currency: true,
+        expenseDate: true,
+        recurring: true,
+        createdAt: true,
+      },
       orderBy: { expenseDate: 'desc' },
       take: 200,
     }),

@@ -57,13 +57,62 @@ const defaultConfig = {
     note: 'Deployment controls are prepared for agent-based execution; credentials remain outside the admin database.',
   },
   providers: [
-    { id: 'global-card', name: 'GlobalCard', kind: 'payment', enabled: true, credentialEnv: 'GLOBALCARD_API_KEY', region: 'global' },
-    { id: 'paypal', name: 'PayPal', kind: 'payment', enabled: true, credentialEnv: 'PAYPAL_CLIENT_ID', region: 'global' },
-    { id: 'xendit', name: 'Xendit', kind: 'payment', enabled: true, credentialEnv: 'XENDIT_API_KEY', region: 'id' },
-    { id: 'russia-payment', name: 'RussiaPayment', kind: 'payment', enabled: true, credentialEnv: 'RUSSIA_PAYMENT_API_KEY', region: 'ru' },
-    { id: 'alipay', name: 'Alipay', kind: 'payment', enabled: true, credentialEnv: 'ALIPAY_APP_ID', region: 'cn' },
-    { id: 'wechatpay', name: 'WeChatPay', kind: 'payment', enabled: true, credentialEnv: 'WECHATPAY_APP_ID', region: 'cn' },
-    { id: 'hostinger-asia', name: 'Hostinger Asia VPN', kind: 'vpn', enabled: true, credentialEnv: 'HOSTINGER_API_TOKEN', region: 'asia' },
+    {
+      id: 'global-card',
+      name: 'GlobalCard',
+      kind: 'payment',
+      enabled: true,
+      credentialEnv: 'GLOBALCARD_API_KEY',
+      region: 'global',
+    },
+    {
+      id: 'paypal',
+      name: 'PayPal',
+      kind: 'payment',
+      enabled: true,
+      credentialEnv: 'PAYPAL_CLIENT_ID',
+      region: 'global',
+    },
+    {
+      id: 'xendit',
+      name: 'Xendit',
+      kind: 'payment',
+      enabled: true,
+      credentialEnv: 'XENDIT_API_KEY',
+      region: 'id',
+    },
+    {
+      id: 'russia-payment',
+      name: 'RussiaPayment',
+      kind: 'payment',
+      enabled: true,
+      credentialEnv: 'RUSSIA_PAYMENT_API_KEY',
+      region: 'ru',
+    },
+    {
+      id: 'alipay',
+      name: 'Alipay',
+      kind: 'payment',
+      enabled: true,
+      credentialEnv: 'ALIPAY_APP_ID',
+      region: 'cn',
+    },
+    {
+      id: 'wechatpay',
+      name: 'WeChatPay',
+      kind: 'payment',
+      enabled: true,
+      credentialEnv: 'WECHATPAY_APP_ID',
+      region: 'cn',
+    },
+    {
+      id: 'hostinger-asia',
+      name: 'Hostinger Asia VPN',
+      kind: 'vpn',
+      enabled: true,
+      credentialEnv: 'HOSTINGER_API_TOKEN',
+      region: 'asia',
+    },
   ],
 };
 
@@ -111,7 +160,8 @@ export async function getAdminControlPlane() {
 }
 
 export async function updateAdminControlPlane(input: unknown) {
-  if (!input || typeof input !== 'object') throw createError(400, 'Invalid control plane configuration');
+  if (!input || typeof input !== 'object')
+    throw createError(400, 'Invalid control plane configuration');
   const config = mergeDefaults(input);
   const providers = config.providers.map((provider: any) => ({
     id: String(provider.id),

@@ -22,7 +22,11 @@ export default async function paymentAdminRoutes(app: FastifyInstance) {
   app.get('/billing-topology', { preHandler: guard }, adminBillingTopologyController);
   app.get('/financial-report', { preHandler: guard }, adminFinancialReportController);
   app.post('/financial-expenses', { preHandler: guard }, createAdminFinancialExpenseController);
-  app.delete<{ Params: { id: string } }>('/financial-expenses/:id', { preHandler: guard }, deleteAdminFinancialExpenseController);
+  app.delete<{ Params: { id: string } }>(
+    '/financial-expenses/:id',
+    { preHandler: guard },
+    deleteAdminFinancialExpenseController,
+  );
   app.put('/billing-topology', { preHandler: guard }, updateAdminBillingTopologyController);
   app.post('/products', { preHandler: guard }, createAdminProductController);
   app.put<{ Params: { id: string } }>(
