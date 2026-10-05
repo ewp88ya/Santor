@@ -63,14 +63,6 @@ type NetworkData = {
   bypass: BypassRule[];
 };
 type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'tunnel' | 'client' | 'bypass' };
-type PriceDraft = {
-  id?: string;
-  productId: string;
-  country: string;
-  currency: string;
-  amount: number;
-  active: boolean;
-};
 type ProductDraft = {
   id?: string;
   name: string;
@@ -264,7 +256,6 @@ function App() {
   const [message, setMessage] = useState('');
   const [adDraft, setAdDraft] = useState<Partial<Ad> | null>(null);
   const [productDraft, setProductDraft] = useState<ProductDraft | null>(null);
-  const [priceDraft, setPriceDraft] = useState<PriceDraft | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
   const [billingTopology, setBillingTopology] = useState<BillingTopology | null>(null);
   const [topologyDraft, setTopologyDraft] = useState<BillingTopology | null>(null);
@@ -1092,11 +1083,6 @@ function App() {
                     </div>
                     <div className="row-actions">
                       <button className="primary" onClick={async () => { try { const saved = await api('/api/v1/admin/products/' + product.id, { method: 'PUT', body: JSON.stringify({ name: product.name, price: product.price, currency: product.currency, durationDays: product.durationDays, deviceLimit: product.deviceLimit, active: product.active }) }); setPayments({ ...payments, products: payments.products.map((x) => x.id === saved.id ? saved : x) }); setMessage('Service plan saved.'); } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save plan'); } }}>Save plan</button>
-                      <button onClick={() => setPriceDraft({ productId: product.id, country: '', currency: product.currency, amount: product.price / 100, active: true })}>+ Regional price</button>
-                    </div>
-                    <div className="regional-prices">
-                      {product.prices.length === 0 && <span className="muted">No regional overrides.</span>}
-                      {product.prices.map((price) => <button className="price-chip" key={price.id} onClick={() => setPriceDraft({ id: price.id, productId: product.id, country: price.country ?? '', currency: price.currency, amount: price.amount / 100, active: price.active })}>{price.country || 'GLOBAL'} · {(price.amount / 100).toFixed(2)} {price.currency}{price.active ? '' : ' · off'}</button>)}
                     </div>
                   </div></article>
                 ))}
@@ -1390,48 +1376,6 @@ function App() {
                   setMessage(error instanceof Error ? error.message : 'Unable to save plan');
                 }
               }}>Save plan</button>
-            </div>
-          </section>
-        </div>
-      )}
-      {priceDraft && (
-        <div className="modal-backdrop">
-          <section className="modal">
-            <div className="panel-head"><div><p className="eyebrow">Regional pricing</p><h2>{priceDraft.id ? 'Edit regional price' : 'Add regional price'}</h2></div><button onClick={() => setPriceDraft(null)}>Close</button></div>
-            <div className="form-grid">
-              <label>Country code<input placeholder="RU, ID, NL..." value={priceDraft.country} onChange={(e) => setPriceDraft({ ...priceDraft, country: e.target.value.toUpperCase() })} /></label>
-              <label>Currency<input value={priceDraft.currency} onChange={(e) => setPriceDraft({ ...priceDraft, currency: e.target.value.toUpperCase() })} /></label>
-              <label>Amount<input type="number" min="0" step="0.01" value={priceDraft.amount} onChange={(e) => setPriceDraft({ ...priceDraft, amount: Number(e.target.value) })} /></label>
-              <label className="inline-check">Active<input type="checkbox" checked={priceDraft.active} onChange={(e) => setPriceDraft({ ...priceDraft, active: e.target.checked })} /></label>
-            </div>
-            <div className="modal-actions">
-              {priceDraft.id && <button onClick={async () => {
-                try {
-                  await api('/api/v1/admin/product-prices/' + priceDraft.id, { method: 'DELETE' });
-                  await load();
-                  setPriceDraft(null);
-                  setMessage('Regional price removed.');
-                } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to remove price'); }
-              }}>Delete</button>}
-              <button onClick={() => setPriceDraft(null)}>Cancel</button>
-              <button className="primary" onClick={async () => {
-                try {
-                  const payload = {
-                    productId: priceDraft.productId,
-                    country: priceDraft.country || null,
-                    currency: priceDraft.currency,
-                    amount: Math.round(priceDraft.amount * 100),
-                    active: priceDraft.active,
-                  };
-                  await api(priceDraft.id ? '/api/v1/admin/product-prices/' + priceDraft.id : '/api/v1/admin/product-prices', {
-                    method: priceDraft.id ? 'PUT' : 'POST',
-                    body: JSON.stringify(payload),
-                  });
-                  setPriceDraft(null);
-                  setMessage('Regional price saved.');
-                  await load();
-                } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save regional price'); }
-              }}>Save price</button>
             </div>
           </section>
         </div>
