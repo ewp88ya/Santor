@@ -1,9 +1,13 @@
 import type { FastifyRequest } from 'fastify';
 import createError from 'http-errors';
-import { getAdminOverview, getSiteConfig, updateSiteConfig } from './admin.service.js';
+import { getAdminOverview, getInfrastructureMonitoring, getSiteConfig, updateSiteConfig } from './admin.service.js';
 
 export async function adminOverview() {
   return getAdminOverview();
+}
+
+export async function adminInfrastructureMonitoring() {
+  return getInfrastructureMonitoring();
 }
 
 export async function adminSiteConfig() {
