@@ -334,3 +334,18 @@ model AdCampaign {
   @@index([channel, status])
   @@index([startAt, endAt])
 }
+
+model RoadmapPhase {
+  id        String   @id @default(uuid())
+  phase     Int      @unique
+  title     String
+  status    String   @default("validation")
+  note      String?
+  active    Boolean  @default(true)
+  sortOrder Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([sortOrder])
+}
