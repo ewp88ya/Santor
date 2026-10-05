@@ -1068,7 +1068,7 @@ function App() {
               <div className="panel soft"><p className="eyebrow">Security</p><h3>Credentials stay out of the CMS</h3><p>API keys, merchant secrets and signing keys are read from server environment configuration. Admin controls operational billing data, never private credentials.</p></div>
             </div>
             <div className="billing-section">
-              <div className="panel-head"><div><h3>Service plans & regional pricing</h3><p className="muted">Edit name, code, base price, currency, duration, device allowance and active state. Prices are stored in cents but shown here as normal amounts.</p></div></div>
+              <div className="panel-head"><div><h3>Service plans & checkout</h3><p className="muted">Edit name, code, base price, currency, duration, device allowance and active state. Customer location is detected automatically; payment methods can vary by region.</p></div></div>
               <div className="ad-list">
                 {payments.products.map((product) => (
                   <article className="ad-row" key={product.id}><div style={{ flex: 1 }}>
