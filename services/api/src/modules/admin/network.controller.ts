@@ -1,6 +1,8 @@
 import type { FastifyRequest } from 'fastify';
 import {
   createBypassRule,
+  createServer,
+  updateServer,
   createClientProfile,
   createTunnel,
   deleteNetworkItem,
@@ -12,6 +14,12 @@ import {
 
 export async function adminNetwork() {
   return networkOverview();
+}
+export async function createAdminServer(request: FastifyRequest) {
+  return createServer(request.body);
+}
+export async function updateAdminServer(request: FastifyRequest<{ Params: { id: string } }>) {
+  return updateServer(request.params.id, request.body);
 }
 export async function createAdminTunnel(request: FastifyRequest) {
   return createTunnel(request.body);
