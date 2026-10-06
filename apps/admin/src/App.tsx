@@ -60,13 +60,27 @@ type BypassRule = {
   priority: number;
   notes: string | null;
 };
+type InfrastructureServer = {
+  id: string;
+  name: string;
+  provider: string | null;
+  region: string | null;
+  country: string;
+  city: string;
+  role: string;
+  endpoint: string | null;
+  monitorPort: number | null;
+  local: boolean;
+  enabled: boolean;
+};
 type NetworkData = {
   supportedClients: string[];
+  servers: InfrastructureServer[];
   tunnels: Tunnel[];
   profiles: ClientProfile[];
   bypass: BypassRule[];
 };
-type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'tunnel' | 'client' | 'bypass' };
+type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'server' | 'tunnel' | 'client' | 'bypass' };
 type ProductDraft = {
   id?: string;
   name: string;
@@ -295,6 +309,7 @@ function App() {
   const [topologyDraft, setTopologyDraft] = useState<BillingTopology | null>(null);
   const [network, setNetwork] = useState<NetworkData>({
     supportedClients: [],
+    servers: [],
     tunnels: [],
     profiles: [],
     bypass: [],
@@ -1211,6 +1226,35 @@ function App() {
                 New tunnel
               </button>
             </div>
+            <section className="panel soft" style={{ marginBottom: '20px' }}>
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Infrastructure registry</p>
+                  <h3>Servers</h3>
+                  <p className="muted">Add a server once. It is automatically available to monitoring, operations and network controls.</p>
+                </div>
+                <button className="primary" onClick={() => setNetworkDraft({ type: 'server', id: undefined, name: '', provider: '', region: '', country: '', city: '', role: 'VPN', endpoint: '', monitorPort: 443, local: false, enabled: true })}>+ New server</button>
+              </div>
+              <div className="profile-list">
+                {network.servers.map((server) => (
+                  <article className="network-row" key={server.id}>
+                    <div>
+                      <span className={server.enabled ? 'status published' : 'status'}>{server.enabled ? 'enabled' : 'disabled'}</span>
+                      <strong>{server.name}</strong>
+                      <small>{server.id} · {server.provider ?? 'Provider'} · {server.city}, {server.country} · {server.role}</small>
+                    </div>
+                    <div className="row-actions">
+                      <button onClick={() => setNetworkDraft({ ...server, type: 'server' })}>Edit</button>
+                      <button className="danger" onClick={async () => {
+                        await api('/api/v1/admin/network/server/' + server.id, { method: 'DELETE' });
+                        setNetwork({ ...network, servers: network.servers.filter((x) => x.id !== server.id) });
+                      }}>Delete</button>
+                    </div>
+                  </article>
+                ))}
+                {!network.servers.length && <div className="empty-state">No servers registered.</div>}
+              </div>
+            </section>
             <div className="network-grid">
               <div>
                 <h3>Tunnel profiles</h3>
@@ -2530,11 +2574,13 @@ function App() {
               <button onClick={() => setNetworkDraft(null)}>Close</button>
             </div>
             <div className="form-grid">
-              {(networkDraft.type === 'tunnel'
-                ? ['name', 'protocol', 'nodeId', 'endpoint', 'port', 'config', 'enabled']
-                : networkDraft.type === 'client'
-                  ? ['name', 'client', 'tunnelId', 'config', 'enabled']
-                  : ['name', 'matchType', 'pattern', 'action', 'priority', 'notes', 'enabled']
+              {(networkDraft.type === 'server'
+                ? ['id', 'name', 'provider', 'region', 'country', 'city', 'role', 'endpoint', 'monitorPort', 'local', 'enabled']
+                : networkDraft.type === 'tunnel'
+                  ? ['name', 'protocol', 'nodeId', 'serverId', 'endpoint', 'port', 'config', 'enabled']
+                  : networkDraft.type === 'client'
+                    ? ['name', 'client', 'tunnelId', 'config', 'enabled']
+                    : ['name', 'matchType', 'pattern', 'action', 'priority', 'notes', 'enabled']
               ).map((key: string) => (
                 <label key={key}>
                   {key}
@@ -2560,7 +2606,7 @@ function App() {
                     />
                   ) : (
                     <input
-                      type={key === 'port' || key === 'priority' ? 'number' : 'text'}
+                      type={key === 'port' || key === 'monitorPort' || key === 'priority' ? 'number' : 'text'}
                       value={String(networkDraft[key] ?? '')}
                       onChange={(e) =>
                         setNetworkDraft({
@@ -2595,7 +2641,7 @@ function App() {
                   const id = networkDraft.id;
                   delete d.id;
                   const path =
-                    kind === 'tunnel' ? 'tunnels' : kind === 'client' ? 'clients' : 'bypass';
+                    kind === 'server' ? 'servers' : kind === 'tunnel' ? 'tunnels' : kind === 'client' ? 'clients' : 'bypass';
                   const saved = await api('/api/v1/admin/network/' + path + (id ? '/' + id : ''), {
                     method: id ? 'PUT' : 'POST',
                     body: JSON.stringify(d),
@@ -2608,16 +2654,16 @@ function App() {
                             ? network.tunnels.map((x) => (x.id === saved.id ? saved : x))
                             : [saved, ...network.tunnels],
                         }
-                      : kind === 'client'
-                        ? {
+                        : kind === 'client'
+                          ? {
                             ...network,
                             profiles: id
                               ? network.profiles.map((x) => (x.id === saved.id ? saved : x))
                               : [saved, ...network.profiles],
                           }
-                        : {
-                            ...network,
-                            bypass: id
+                          : {
+                              ...network,
+                              bypass: id
                               ? network.bypass.map((x) => (x.id === saved.id ? saved : x))
                               : [saved, ...network.bypass],
                           },
