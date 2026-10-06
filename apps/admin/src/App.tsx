@@ -1,8 +1,6 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import './App.css';
 import ControlPlane from './ControlPlane';
-import FinancialReports from './FinancialReports';
-import OperationsAlerts from './OperationsAlerts';
 
 type SiteService = { label: string; title: string; description: string };
 type SiteConfig = {
@@ -59,40 +57,6 @@ type BypassRule = {
   priority: number;
   notes: string | null;
 };
-type InfrastructureMonitoring = {
-  generatedAt: string;
-  node: {
-    id: string;
-    country: string;
-    city: string;
-    role: string;
-    status: string;
-    source: string;
-    stabilityIndex: number;
-    uptimeSeconds: number;
-    load: number[];
-    cpuCount: number;
-    memory: { totalBytes: number; freeBytes: number; usedPercent: number };
-    disk: { totalBytes: number | null; freeBytes: number | null; usedPercent: number | null };
-  };
-  internet: { status: string; latencyMs: number; speedMbps: number | null; note: string };
-  domains: Array<{
-    url: string;
-    ok: boolean;
-    httpStatus: number | null;
-    latencyMs: number;
-    status: string;
-  }>;
-  regions: Array<{
-    country: string;
-    city: string;
-    nodeId: string;
-    status: string;
-    stabilityIndex: number;
-    latencyMs: number;
-  }>;
-};
-
 type NetworkData = {
   supportedClients: string[];
   tunnels: Tunnel[];
@@ -174,6 +138,30 @@ type BillingTopology = {
     capacity: boolean;
     queue: boolean;
   };
+};
+
+type FinancialReport = {
+  totals: Array<{
+    currency: string;
+    grossRevenue: number;
+    refunds: number;
+    netRevenue: number;
+    expenses: number;
+    profit: number;
+  }>;
+  daily: Array<{ period: string; amounts: Array<{ currency: string; amount: number }> }>;
+  monthly: Array<{ period: string; amounts: Array<{ currency: string; amount: number }> }>;
+  yearly: Array<{ period: string; amounts: Array<{ currency: string; amount: number }> }>;
+  expenses: Array<{
+    id: string;
+    category: string;
+    description: string | null;
+    amount: number;
+    currency: string;
+    expenseDate: string;
+    recurring: boolean;
+  }>;
+  note: string;
 };
 
 type PaymentData = {
@@ -302,7 +290,6 @@ function App() {
   const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
   const [billingTopology, setBillingTopology] = useState<BillingTopology | null>(null);
   const [topologyDraft, setTopologyDraft] = useState<BillingTopology | null>(null);
-  const [monitoring, setMonitoring] = useState<InfrastructureMonitoring | null>(null);
   const [network, setNetwork] = useState<NetworkData>({
     supportedClients: [],
     tunnels: [],
@@ -310,6 +297,22 @@ function App() {
     bypass: [],
   });
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [financialReport, setFinancialReport] = useState<FinancialReport>({
+    totals: [],
+    daily: [],
+    monthly: [],
+    yearly: [],
+    expenses: [],
+    note: '',
+  });
+  const [expenseDraft, setExpenseDraft] = useState({
+    category: '',
+    description: '',
+    amount: 0,
+    currency: 'USD',
+    expenseDate: new Date().toISOString().slice(0, 10),
+    recurring: false,
+  });
   const [payments, setPayments] = useState<PaymentData>({
     payments: [],
     subscriptions: [],
@@ -363,7 +366,7 @@ function App() {
       paymentData,
       customerData,
       topologyData,
-      monitoringData,
+      financialData,
     ] = await Promise.all([
       api('/api/v1/admin/overview'),
       api('/api/v1/admin/site-config'),
@@ -373,7 +376,7 @@ function App() {
       api('/api/v1/admin/payments'),
       api('/api/v1/admin/customers'),
       api('/api/v1/admin/billing-topology'),
-      api('/api/v1/admin/monitoring'),
+      api('/api/v1/admin/financial-report'),
     ]);
     setStats(overview.stats);
     setSite(config);
@@ -383,7 +386,7 @@ function App() {
     setPayments(paymentData);
     setCustomers(customerData);
     setBillingTopology(topologyData);
-    setMonitoring(monitoringData);
+    setFinancialReport(financialData);
   };
 
   useEffect(() => {
@@ -411,19 +414,6 @@ function App() {
       }
     };
     void run();
-  }, [token]);
-
-  useEffect(() => {
-    if (!token) return;
-    const refreshMonitoring = async () => {
-      try {
-        setMonitoring(await api('/api/v1/admin/monitoring'));
-      } catch {
-        // Keep the last successful monitoring snapshot visible.
-      }
-    };
-    const timer = window.setInterval(() => void refreshMonitoring(), 30000);
-    return () => window.clearInterval(timer);
   }, [token]);
 
   const login = async (event: FormEvent) => {
@@ -512,10 +502,8 @@ function App() {
   const nav = [
     ['overview', 'Dashboard'],
     ['control', 'Service Control'],
-    ['operations', 'Messages & Alerts'],
     ['customers', 'Customers'],
     ['payments', 'Payments & Billing'],
-    ['financial', 'Financial Reports'],
     ['network', 'Network & Clients'],
     ['website', 'Website & Marketing'],
     ['ads', 'Ads & Campaigns'],
@@ -551,7 +539,7 @@ function App() {
         </nav>
         <div className="sidebar-label">OPERATIONS</div>
         <nav>
-          {nav.slice(2, 6).map(([id, label]) => (
+          {nav.slice(2, 5).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -567,7 +555,7 @@ function App() {
         </nav>
         <div className="sidebar-label">CONTENT</div>
         <nav>
-          {nav.slice(6, 8).map(([id, label]) => (
+          {nav.slice(5, 7).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -583,7 +571,7 @@ function App() {
         </nav>
         <div className="sidebar-label">PROJECT</div>
         <nav>
-          {nav.slice(8).map(([id, label]) => (
+          {nav.slice(7).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -626,7 +614,6 @@ function App() {
         </header>
         {message && <div className="notice">{message}</div>}
         {section === 'control' && <ControlPlane />}
-        {section === 'operations' && <OperationsAlerts monitoring={monitoring} />}
         {section === 'overview' && (
           <>
             <section className="hero-panel">
@@ -680,9 +667,11 @@ function App() {
                 <small>direct-routing rules</small>
               </div>
               <div>
-                <span>VPS stability</span>
-                <strong>{monitoring ? `${monitoring.node.stabilityIndex}/100` : '—'}</strong>
-                <small>host health index</small>
+                <span>Roadmap complete</span>
+                <strong>
+                  {phases.filter((p) => p.status === 'complete').length}/{phases.length}
+                </strong>
+                <small>phase status</small>
               </div>
             </section>
             <section className="operation-grid">
@@ -724,12 +713,10 @@ function App() {
                   <div>
                     <span>
                       <i className="health-dot" />
-                      VPS & internet
+                      Project control
                     </span>
                     <strong>
-                      {monitoring
-                        ? `${monitoring.node.city}, ${monitoring.node.country} · ${monitoring.internet.latencyMs} ms`
-                        : 'Monitoring unavailable'}
+                      {phases.filter((p) => p.status === 'complete').length} phases complete
                     </strong>
                   </div>
                 </div>
@@ -747,71 +734,6 @@ function App() {
                   <button onClick={() => setSection('payments')}>Manage plans & billing</button>
                   <button onClick={() => setSection('settings')}>Customize admin UI</button>
                 </div>
-              </div>
-            </section>
-            <section className="panel">
-              <div className="panel-head">
-                <div>
-                  <p className="eyebrow">Infrastructure monitoring</p>
-                  <h3>VPS, internet & regional quality</h3>
-                </div>
-                <span className="status published">
-                  {monitoring?.node.status === 'online' ? 'LIVE' : 'CHECKING'}
-                </span>
-              </div>
-              <div className="customer-summary">
-                <div>
-                  <span>Internet latency</span>
-                  <strong>{monitoring ? `${monitoring.internet.latencyMs} ms` : '—'}</strong>
-                </div>
-                <div>
-                  <span>Internet speed</span>
-                  <strong>
-                    {monitoring?.internet.speedMbps != null
-                      ? `${monitoring.internet.speedMbps} Mbps`
-                      : '—'}
-                  </strong>
-                </div>
-                <div>
-                  <span>Memory</span>
-                  <strong>{monitoring ? `${monitoring.node.memory.usedPercent}%` : '—'}</strong>
-                </div>
-                <div>
-                  <span>Disk</span>
-                  <strong>
-                    {monitoring?.node.disk.usedPercent != null
-                      ? `${monitoring.node.disk.usedPercent}%`
-                      : '—'}
-                  </strong>
-                </div>
-                <div>
-                  <span>VPS index</span>
-                  <strong>{monitoring ? `${monitoring.node.stabilityIndex}/100` : '—'}</strong>
-                </div>
-              </div>
-              <div className="health-list">
-                {(monitoring?.regions ?? []).map((region) => (
-                  <div key={region.nodeId}>
-                    <span>
-                      <i className="health-dot" />
-                      {region.country} · {region.city}
-                    </span>
-                    <strong>
-                      {region.stabilityIndex}/100 · {region.latencyMs} ms
-                    </strong>
-                  </div>
-                ))}
-                {(monitoring?.domains ?? []).map((domain) => (
-                  <div key={domain.url}>
-                    <span>
-                      <i className="health-dot" />
-                      {domain.url.replace(/^https?:\/\//, '').replace(/\/.*$/, '')}
-                    </span>
-                    <strong>
-                      {domain.status} · {domain.latencyMs} ms
-                    </strong>
-                  </div>
-                ))}
               </div>
             </section>
             <section className="panel">
@@ -1419,7 +1341,6 @@ function App() {
             </div>
           </section>
         )}{' '}
-        {section === 'financial' && <FinancialReports api={api} />}
         {section === 'payments' && (
           <section className="panel">
             <div className="panel-head">
@@ -1466,6 +1387,260 @@ function App() {
               <div>
                 <span>Active plans</span>
                 <strong>{payments.products.filter((p) => p.active).length}</strong>
+              </div>
+            </div>
+            <div className="billing-section">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Financial intelligence</p>
+                  <h3>Revenue, profit & sales summary</h3>
+                  <p className="muted">
+                    Accumulated revenue is calculated from successful payments. Values stay
+                    separated by currency so currencies are never incorrectly added together.
+                  </p>
+                </div>
+              </div>
+              <div className="stats">
+                {financialReport.totals.map((t) => (
+                  <div key={t.currency}>
+                    <span>{t.currency} net revenue</span>
+                    <strong>{(t.netRevenue / 100).toFixed(2)}</strong>
+                    <small>
+                      profit {(t.profit / 100).toFixed(2)} · expenses{' '}
+                      {(t.expenses / 100).toFixed(2)}
+                    </small>
+                  </div>
+                ))}
+                {!financialReport.totals.length && (
+                  <div>
+                    <span>Revenue</span>
+                    <strong>0.00</strong>
+                    <small>No successful payments yet</small>
+                  </div>
+                )}
+              </div>
+              <div className="grid-two">
+                <div className="panel soft">
+                  <p className="eyebrow">Daily</p>
+                  <h3>Daily revenue</h3>
+                  <div className="ad-list">
+                    {financialReport.daily.slice(-14).map((row) => (
+                      <article className="ad-row" key={row.period}>
+                        <div>
+                          <strong>{row.period}</strong>
+                          <small>
+                            {row.amounts
+                              .map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`)
+                              .join(' · ')}
+                          </small>
+                        </div>
+                      </article>
+                    ))}
+                    {!financialReport.daily.length && <p className="muted">No daily sales yet.</p>}
+                  </div>
+                </div>
+                <div className="panel soft">
+                  <p className="eyebrow">Monthly</p>
+                  <h3>Monthly revenue</h3>
+                  <div className="ad-list">
+                    {financialReport.monthly.slice(-12).map((row) => (
+                      <article className="ad-row" key={row.period}>
+                        <div>
+                          <strong>{row.period}</strong>
+                          <small>
+                            {row.amounts
+                              .map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`)
+                              .join(' · ')}
+                          </small>
+                        </div>
+                      </article>
+                    ))}
+                    {!financialReport.monthly.length && (
+                      <p className="muted">No monthly sales yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid-two">
+                <div className="panel soft">
+                  <p className="eyebrow">Annual</p>
+                  <h3>Yearly revenue</h3>
+                  <div className="ad-list">
+                    {financialReport.yearly.map((row) => (
+                      <article className="ad-row" key={row.period}>
+                        <div>
+                          <strong>{row.period}</strong>
+                          <small>
+                            {row.amounts
+                              .map((a) => `${a.currency} ${(a.amount / 100).toFixed(2)}`)
+                              .join(' · ')}
+                          </small>
+                        </div>
+                      </article>
+                    ))}
+                    {!financialReport.yearly.length && (
+                      <p className="muted">No yearly sales yet.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="panel soft">
+                  <p className="eyebrow">Sales summary</p>
+                  <h3>Gross → refunds → net → profit</h3>
+                  {financialReport.totals.map((t) => (
+                    <div className="health-list" key={t.currency}>
+                      <div>
+                        <span>Gross sales · {t.currency}</span>
+                        <strong>{(t.grossRevenue / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Refunds · {t.currency}</span>
+                        <strong>{(t.refunds / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Net revenue · {t.currency}</span>
+                        <strong>{(t.netRevenue / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Operating expenses · {t.currency}</span>
+                        <strong>{(t.expenses / 100).toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span>Profit · {t.currency}</span>
+                        <strong>{(t.profit / 100).toFixed(2)}</strong>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="panel soft">
+                <div className="panel-head">
+                  <div>
+                    <p className="eyebrow">Profit & loss</p>
+                    <h3>Operating expenses</h3>
+                    <p className="muted">{financialReport.note}</p>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    Category
+                    <input
+                      value={expenseDraft.category}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, category: e.target.value })
+                      }
+                      placeholder="Hosting, payment fees, operations..."
+                    />
+                  </label>
+                  <label>
+                    Description
+                    <input
+                      value={expenseDraft.description}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, description: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Amount
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={expenseDraft.amount}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, amount: Number(e.target.value) })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Currency
+                    <input
+                      value={expenseDraft.currency}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, currency: e.target.value.toUpperCase() })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Date
+                    <input
+                      type="date"
+                      value={expenseDraft.expenseDate}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, expenseDate: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="inline-check">
+                    Recurring
+                    <input
+                      type="checkbox"
+                      checked={expenseDraft.recurring}
+                      onChange={(e) =>
+                        setExpenseDraft({ ...expenseDraft, recurring: e.target.checked })
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="row-actions">
+                  <button
+                    className="primary"
+                    onClick={async () => {
+                      try {
+                        await api('/api/v1/admin/financial-expenses', {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            ...expenseDraft,
+                            amount: Math.round(expenseDraft.amount * 100),
+                          }),
+                        });
+                        const report = await api('/api/v1/admin/financial-report');
+                        setFinancialReport(report);
+                        setExpenseDraft({
+                          category: '',
+                          description: '',
+                          amount: 0,
+                          currency: 'USD',
+                          expenseDate: new Date().toISOString().slice(0, 10),
+                          recurring: false,
+                        });
+                        setMessage('Operating expense recorded.');
+                      } catch (error) {
+                        setMessage(
+                          error instanceof Error ? error.message : 'Unable to record expense',
+                        );
+                      }
+                    }}
+                  >
+                    Add expense
+                  </button>
+                </div>
+                <div className="ad-list">
+                  {financialReport.expenses.map((expense) => (
+                    <article className="ad-row" key={expense.id}>
+                      <div>
+                        <strong>{expense.category}</strong>
+                        <p>{expense.description ?? 'No description'}</p>
+                        <small>
+                          {(expense.amount / 100).toFixed(2)} {expense.currency} ·{' '}
+                          {new Date(expense.expenseDate).toLocaleDateString()}
+                          {expense.recurring ? ' · recurring' : ''}
+                        </small>
+                      </div>
+                      <button
+                        className="danger"
+                        onClick={async () => {
+                          await api('/api/v1/admin/financial-expenses/' + expense.id, {
+                            method: 'DELETE',
+                          });
+                          setFinancialReport(await api('/api/v1/admin/financial-report'));
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </article>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="billing-grid">
@@ -1820,8 +1995,8 @@ function App() {
                 <p className="eyebrow">Workspace configuration</p>
                 <h2>Admin Settings</h2>
                 <p>
-                  Customize the internal Dashboard layout, colors and density. These settings
-                  are private to the admin workspace and never modify the customer website.
+                  Customize the internal Dashboard layout, colors and density. These settings are
+                  private to the admin workspace and never modify the customer website.
                 </p>
               </div>
               <span className="status published">ADMIN ONLY</span>
