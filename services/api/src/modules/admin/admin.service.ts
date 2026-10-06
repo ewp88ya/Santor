@@ -230,18 +230,18 @@ export async function getInfrastructureMonitoring() {
   const loadPercent = clamp((load[0] / cpuCount) * 100);
   const disk = await diskStats();
 
-  const [internet, speedMbps, domains, tunnels] = await Promise.all([
+  const [internet, speedMbps, domains, servers] = await Promise.all([
     timedFetch('https://www.cloudflare.com/cdn-cgi/trace', 6000),
     measureDownloadMbps(),
     Promise.all(
       ['https://santor.app/', 'https://admin.santor.app/', 'https://mcp.santor.app/health'].map(
-        async (url) => ({
-          url,
-          ...(await timedFetch(url, 6000)),
-        }),
+        async (url) => ({ url, ...(await timedFetch(url, 6000)) }),
       ),
     ),
-    prisma.tunnelProfile.findMany({ where: { enabled: true }, orderBy: { updatedAt: 'desc' } }),
+    prisma.infrastructureServer.findMany({
+      where: { enabled: true },
+      orderBy: [{ local: 'desc' }, { updatedAt: 'desc' }],
+    }),
   ]);
 
   const resourceScore =
@@ -251,14 +251,50 @@ export async function getInfrastructureMonitoring() {
     Math.round((disk.usedPercent ?? 0) * 0.2) -
     (internet.ok ? 0 : 15);
   const stabilityIndex = clamp(resourceScore);
+  const localServer = servers.find((server) => server.local) ?? servers[0];
+  const localId = localServer?.id ?? 'local-host';
+
+  const regions = await Promise.all(
+    servers.map(async (server) => {
+      if (server.local) {
+        return {
+          country: server.country,
+          city: server.city,
+          nodeId: server.id,
+          name: server.name,
+          role: server.role,
+          provider: server.provider,
+          status: 'online',
+          stabilityIndex,
+          latencyMs: internet.latencyMs,
+          local: true,
+        };
+      }
+      const endpoint = server.endpoint?.trim() ?? '';
+      const port = server.monitorPort ? Number(server.monitorPort) : 0;
+      const probe = endpoint && port ? await tcpProbe(endpoint, port) : { ok: false, latencyMs: 0 };
+      return {
+        country: server.country,
+        city: server.city,
+        nodeId: server.id,
+        name: server.name,
+        role: server.role,
+        provider: server.provider,
+        status: probe.ok ? 'online' : 'degraded',
+        stabilityIndex: probe.ok ? 100 : 35,
+        latencyMs: probe.latencyMs,
+        local: false,
+      };
+    }),
+  );
 
   const result = {
     generatedAt: new Date().toISOString(),
     node: {
-      id: 'asia-vpn-01',
-      country: 'India',
-      city: 'Mumbai',
-      role: 'Asia VPN',
+      id: localId,
+      country: localServer?.country ?? 'Unknown',
+      city: localServer?.city ?? 'Unknown',
+      role: localServer?.role ?? 'Local',
       status: 'online',
       source: 'local-host',
       stabilityIndex,
@@ -272,45 +308,19 @@ export async function getInfrastructureMonitoring() {
       status: internet.ok ? 'online' : 'degraded',
       latencyMs: internet.latencyMs,
       speedMbps,
-      note: 'Latency and throughput are measured from the monitored VPS. Regional probes can be added as additional nodes without changing the dashboard model.',
+      note: 'Connectivity is measured from the local production node. Every enabled server in the registry is automatically monitored below.',
     },
     domains: domains.map((item) => ({
       ...item,
       httpStatus: item.status,
       status: item.ok ? 'online' : 'degraded',
     })),
-    regions: [
-      {
-        country: 'India',
-        city: 'Mumbai',
-        nodeId: 'asia-vpn-01',
-        status: 'online',
-        stabilityIndex,
-        latencyMs: internet.latencyMs,
-      },
-      ...(await Promise.all(
-        tunnels.map(async (tunnel) => {
-          const endpoint = typeof tunnel.endpoint === 'string' ? tunnel.endpoint.trim() : '';
-          const port = tunnel.port ? Number(tunnel.port) : 0;
-          const probe =
-            endpoint && port ? await tcpProbe(endpoint, port) : { ok: false, latencyMs: 0 };
-          const stability = probe.ok ? 100 : 35;
-          return {
-            country: 'Configured',
-            city: tunnel.name,
-            nodeId: tunnel.nodeId || tunnel.id,
-            status: probe.ok ? 'online' : 'degraded',
-            stabilityIndex: stability,
-            latencyMs: probe.latencyMs,
-          };
-        }),
-      )),
-    ],
+    regions,
+    servers: regions,
   };
   await syncInfrastructureEvents(result);
   return result;
 }
-
 export async function getSiteConfig() {
   const existing = await prisma.siteConfig.findUnique({ where: { id: SITE_CONFIG_ID } });
   if (existing) return output(existing);
