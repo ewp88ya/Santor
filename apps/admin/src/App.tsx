@@ -3,6 +3,7 @@ import './App.css';
 import ControlPlane from './ControlPlane';
 import FinancialReports from './FinancialReports';
 import OperationsAlerts from './OperationsAlerts';
+import MonitorControl from './MonitorControl';
 
 type SiteService = { label: string; title: string; description: string };
 type SiteConfig = {
@@ -504,6 +505,7 @@ function App() {
     ['overview', 'Dashboard'],
     ['control', 'Service Control'],
     ['operations', 'Operations'],
+    ['monitor', 'Monitor Control'],
     ['customers', 'Customers'],
     ['payments', 'Payments & Billing'],
     ['financial', 'Financial Reports'],
@@ -542,7 +544,7 @@ function App() {
         </nav>
         <div className="sidebar-label">OPERATIONS</div>
         <nav>
-          {nav.slice(2, 6).map(([id, label]) => (
+          {nav.slice(2, 7).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -558,7 +560,7 @@ function App() {
         </nav>
         <div className="sidebar-label">CONTENT</div>
         <nav>
-          {nav.slice(6, 9).map(([id, label]) => (
+          {nav.slice(7, 10).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -574,7 +576,7 @@ function App() {
         </nav>
         <div className="sidebar-label">PROJECT</div>
         <nav>
-          {nav.slice(9).map(([id, label]) => (
+          {nav.slice(10).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -790,6 +792,7 @@ function App() {
           </>
         )}
         {section === 'operations' && <OperationsAlerts monitoring={null} />}
+        {section === 'monitor' && <MonitorControl />}
         {section === 'financial' && <FinancialReports api={api} />}
         {section === 'customers' && (
           <section className="panel">
