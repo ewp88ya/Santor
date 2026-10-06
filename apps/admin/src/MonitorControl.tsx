@@ -7,7 +7,7 @@ export default function MonitorControl(){
  const loadControl=useCallback(async()=>{const value=await get('/api/v1/admin/control-plane');setControl(value);setDraft(value.config.monitoring)},[]);
  useEffect(()=>{void loadControl().catch(e=>setMsg(e instanceof Error?e.message:'Control load failed'))},[loadControl]);
  const load=useCallback(async()=>{setBusy(true);try{setData(await get('/api/v1/admin/monitoring'));setMsg('')}catch(e){setMsg(e instanceof Error?e.message:'Monitoring failed')}finally{setBusy(false)}},[]);
- useEffect(()=>{void load();const t=window.setInterval(()=>void load(),Math.max(10,draft.healthIntervalSeconds)*1000);return()=>window.clearInterval(t)},[load,draft.healthIntervalSeconds]);
+ useEffect(()=>{if(!draft)return;void load();const t=window.setInterval(()=>void load(),Math.max(10,draft.healthIntervalSeconds)*1000);return()=>window.clearInterval(t)},[load,draft]);
  const save=async()=>{if(!control)return;const r=await fetch(apiBase+'/api/v1/admin/control-plane',{method:'PUT',headers:{Authorization:'Bearer '+token(),'Content-Type':'application/json'},body:JSON.stringify({...control.config,monitoring:draft})});const value=await r.json();if(!r.ok)throw new Error(value?.message??'Save failed');setControl(value);setDraft(value.config.monitoring);setMsg('Monitor control saved.')};
  const dot=(s:string)=>s==='online'?'health-dot':'health-dot offline';
  if(!draft)return <section className="panel"><p>Loading monitor control…</p></section>;
