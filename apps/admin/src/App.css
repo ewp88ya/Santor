@@ -497,7 +497,8 @@ textarea {
 .publisher-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
-  gap: 24px;}
+  gap: 24px;
+}
 .publisher-editor {
   display: grid;
   gap: 18px;
@@ -996,7 +997,8 @@ nav button.active .nav-dot {
   margin-top: 4px;
 }
 .empty-state {
-  padding: 30px;text-align: center;
+  padding: 30px;
+  text-align: center;
   color: #64748b;
   border: 1px dashed #cbd5e1;
   border-radius: 10px;

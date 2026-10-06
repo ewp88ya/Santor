@@ -1,28 +1,248 @@
-import {useCallback,useEffect,useState} from 'react';
-const apiBase=(import.meta.env.VITE_API_URL??'').replace(/\/$/,'');
-const token=()=>localStorage.getItem('santor_token')??'';
-async function get(path:string){const r=await fetch(apiBase+path,{headers:{Authorization:'Bearer '+token()}});const d=await r.json();if(!r.ok)throw new Error(d?.message??'Request failed');return d}
-export default function MonitorControl(){
- const [data,setData]=useState<any>(null);const [control,setControl]=useState<any>(null);const [draft,setDraft]=useState<any>(null);const [busy,setBusy]=useState(false);const [msg,setMsg]=useState('');
- const loadControl=useCallback(async()=>{const value=await get('/api/v1/admin/control-plane');setControl(value);setDraft(value.config.monitoring)},[]);
- useEffect(()=>{void loadControl().catch(e=>setMsg(e instanceof Error?e.message:'Control load failed'))},[loadControl]);
- const load=useCallback(async()=>{setBusy(true);try{setData(await get('/api/v1/admin/monitoring'));setMsg('')}catch(e){setMsg(e instanceof Error?e.message:'Monitoring failed')}finally{setBusy(false)}},[]);
- useEffect(()=>{if(!draft)return;void load();const t=window.setInterval(()=>void load(),Math.max(10,draft.healthIntervalSeconds)*1000);return()=>window.clearInterval(t)},[load,draft]);
- const save=async()=>{if(!control)return;const r=await fetch(apiBase+'/api/v1/admin/control-plane',{method:'PUT',headers:{Authorization:'Bearer '+token(),'Content-Type':'application/json'},body:JSON.stringify({...control.config,monitoring:draft})});const value=await r.json();if(!r.ok)throw new Error(value?.message??'Save failed');setControl(value);setDraft(value.config.monitoring);setMsg('Monitor control saved.')};
- const dot=(s:string)=>s==='online'?'health-dot':'health-dot offline';
- if(!draft)return <section className="panel"><p>Loading monitor control…</p></section>;
- return <div className="section-stack">
-  {msg&&<div className="notice">{msg}</div>}
-  <section className="hero-panel"><div><p className="eyebrow">Monitor Control</p><h2>Production monitoring control.</h2><p>Live VPS, internet, website/API and regional tunnel monitoring with automatic operational alerts.</p></div><div className="hero-meta"><span className={draft.enabled?'status published':'status'}>{draft.enabled?'MONITORING ON':'MONITORING OFF'}</span><small>{data?'Live monitoring':'Waiting for check'}</small></div></section>
-  <section className="panel"><div className="panel-head"><div><p className="eyebrow">Controls</p><h3>Monitoring policy</h3></div><button className="primary-button" onClick={()=>void save()}>Save controls</button></div>
-   <div className="form-grid"><label>Health check interval (seconds)<input type="number" min="10" max="3600" value={draft.healthIntervalSeconds} onChange={e=>setDraft({...draft,healthIntervalSeconds:Number(e.target.value)})}/></label><label>Log retention (days)<input type="number" min="1" max="3650" value={draft.logRetentionDays} onChange={e=>setDraft({...draft,logRetentionDays:Number(e.target.value)})}/></label></div>
-   <div className="check-list"><label><input type="checkbox" checked={draft.enabled} onChange={e=>setDraft({...draft,enabled:e.target.checked})}/> Monitoring enabled</label><label><input type="checkbox" checked={draft.alertingEnabled} onChange={e=>setDraft({...draft,alertingEnabled:e.target.checked})}/> Automatic alerts enabled</label></div>
-  </section>
-  {data&&<><section className="stats ops-stats"><div><span>Stability</span><strong>{data.node.stabilityIndex}%</strong><small>{data.node.id}</small></div><div><span>CPU</span><strong>{data.node.load[0]}%</strong><small>{data.node.cpuCount} cores</small></div><div><span>Memory</span><strong>{data.node.memory.usedPercent}%</strong><small>used</small></div><div><span>Disk</span><strong>{data.node.disk.usedPercent??'—'}%</strong><small>used</small></div><div><span>Internet</span><strong>{data.internet.latencyMs} ms</strong><small>{data.internet.speedMbps??'—'} Mbps</small></div><div><span>Uptime</span><strong>{Math.floor(data.node.uptimeSeconds/3600)}h</strong><small>running</small></div></section>
-  <section className="operation-grid">
-    <div className="panel"><div className="panel-head"><div><p className="eyebrow">Service endpoints</p><h3>Website & API health</h3></div><button className="secondary-button" onClick={()=>void load()} disabled={busy}>{busy?'Checking…':'Check now'}</button></div><div className="health-list">{data.domains.map((x:any)=><div key={x.url}><span><i className={dot(x.status)}/>{x.url.replace(/^https?:\/\//,'')}</span><strong>{x.status==='online'?(x.httpStatus??'OK')+' · '+x.latencyMs+' ms':'DEGRADED'}</strong></div>)}</div></div>
-    <div className="panel"><div className="panel-head"><div><p className="eyebrow">Internet quality</p><h3>Connectivity</h3></div></div><div className="health-list"><div><span><i className={dot(data.internet.status)}/>Internet</span><strong>{data.internet.status.toUpperCase()}</strong></div><div><span>Latency</span><strong>{data.internet.latencyMs} ms</strong></div><div><span>Throughput</span><strong>{data.internet.speedMbps??'—'} Mbps</strong></div></div></div>
-  </section>
-  <section className="panel"><div className="panel-head"><div><p className="eyebrow">Regional monitoring</p><h3>VPS & tunnel probes</h3></div></div><div className="health-list">{data.regions.map((x:any)=><div key={x.nodeId}><span><i className={dot(x.status)}/>{x.city}</span><strong>{x.nodeId} · {x.latencyMs} ms · {x.stabilityIndex}%</strong></div>)}</div></section></>}
- </div>
+import { useCallback, useEffect, useState } from 'react';
+const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+const token = () => localStorage.getItem('santor_token') ?? '';
+async function get(path: string) {
+  const r = await fetch(apiBase + path, { headers: { Authorization: 'Bearer ' + token() } });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d?.message ?? 'Request failed');
+  return d;
+}
+export default function MonitorControl() {
+  const [data, setData] = useState<any>(null);
+  const [control, setControl] = useState<any>(null);
+  const [draft, setDraft] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const loadControl = useCallback(async () => {
+    const value = await get('/api/v1/admin/control-plane');
+    setControl(value);
+    setDraft(value.config.monitoring);
+  }, []);
+  useEffect(() => {
+    void loadControl().catch((e) => setMsg(e instanceof Error ? e.message : 'Control load failed'));
+  }, [loadControl]);
+  const load = useCallback(async () => {
+    setBusy(true);
+    try {
+      setData(await get('/api/v1/admin/monitoring'));
+      setMsg('');
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Monitoring failed');
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (!draft) return;
+    void load();
+    const t = window.setInterval(
+      () => void load(),
+      Math.max(10, draft.healthIntervalSeconds) * 1000,
+    );
+    return () => window.clearInterval(t);
+  }, [load, draft]);
+  const save = async () => {
+    if (!control) return;
+    const r = await fetch(apiBase + '/api/v1/admin/control-plane', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...control.config, monitoring: draft }),
+    });
+    const value = await r.json();
+    if (!r.ok) throw new Error(value?.message ?? 'Save failed');
+    setControl(value);
+    setDraft(value.config.monitoring);
+    setMsg('Monitor control saved.');
+  };
+  const dot = (s: string) => (s === 'online' ? 'health-dot' : 'health-dot offline');
+  if (!draft)
+    return (
+      <section className="panel">
+        <p>Loading monitor control…</p>
+      </section>
+    );
+  return (
+    <div className="section-stack">
+      {msg && <div className="notice">{msg}</div>}
+      <section className="hero-panel">
+        <div>
+          <p className="eyebrow">Monitor Control</p>
+          <h2>Production monitoring control.</h2>
+          <p>
+            Live VPS, internet, website/API and regional tunnel monitoring with automatic
+            operational alerts.
+          </p>
+        </div>
+        <div className="hero-meta">
+          <span className={draft.enabled ? 'status published' : 'status'}>
+            {draft.enabled ? 'MONITORING ON' : 'MONITORING OFF'}
+          </span>
+          <small>{data ? 'Live monitoring' : 'Waiting for check'}</small>
+        </div>
+      </section>
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <p className="eyebrow">Controls</p>
+            <h3>Monitoring policy</h3>
+          </div>
+          <button className="primary-button" onClick={() => void save()}>
+            Save controls
+          </button>
+        </div>
+        <div className="form-grid">
+          <label>
+            Health check interval (seconds)
+            <input
+              type="number"
+              min="10"
+              max="3600"
+              value={draft.healthIntervalSeconds}
+              onChange={(e) =>
+                setDraft({ ...draft, healthIntervalSeconds: Number(e.target.value) })
+              }
+            />
+          </label>
+          <label>
+            Log retention (days)
+            <input
+              type="number"
+              min="1"
+              max="3650"
+              value={draft.logRetentionDays}
+              onChange={(e) => setDraft({ ...draft, logRetentionDays: Number(e.target.value) })}
+            />
+          </label>
+        </div>
+        <div className="check-list">
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.enabled}
+              onChange={(e) => setDraft({ ...draft, enabled: e.target.checked })}
+            />{' '}
+            Monitoring enabled
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.alertingEnabled}
+              onChange={(e) => setDraft({ ...draft, alertingEnabled: e.target.checked })}
+            />{' '}
+            Automatic alerts enabled
+          </label>
+        </div>
+      </section>
+      {data && (
+        <>
+          <section className="stats ops-stats">
+            <div>
+              <span>Stability</span>
+              <strong>{data.node.stabilityIndex}%</strong>
+              <small>{data.node.id}</small>
+            </div>
+            <div>
+              <span>CPU</span>
+              <strong>{data.node.load[0]}%</strong>
+              <small>{data.node.cpuCount} cores</small>
+            </div>
+            <div>
+              <span>Memory</span>
+              <strong>{data.node.memory.usedPercent}%</strong>
+              <small>used</small>
+            </div>
+            <div>
+              <span>Disk</span>
+              <strong>{data.node.disk.usedPercent ?? '—'}%</strong>
+              <small>used</small>
+            </div>
+            <div>
+              <span>Internet</span>
+              <strong>{data.internet.latencyMs} ms</strong>
+              <small>{data.internet.speedMbps ?? '—'} Mbps</small>
+            </div>
+            <div>
+              <span>Uptime</span>
+              <strong>{Math.floor(data.node.uptimeSeconds / 3600)}h</strong>
+              <small>running</small>
+            </div>
+          </section>
+          <section className="operation-grid">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Service endpoints</p>
+                  <h3>Website & API health</h3>
+                </div>
+                <button className="secondary-button" onClick={() => void load()} disabled={busy}>
+                  {busy ? 'Checking…' : 'Check now'}
+                </button>
+              </div>
+              <div className="health-list">
+                {data.domains.map((x: any) => (
+                  <div key={x.url}>
+                    <span>
+                      <i className={dot(x.status)} />
+                      {x.url.replace(/^https?:\/\//, '')}
+                    </span>
+                    <strong>
+                      {x.status === 'online'
+                        ? (x.httpStatus ?? 'OK') + ' · ' + x.latencyMs + ' ms'
+                        : 'DEGRADED'}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Internet quality</p>
+                  <h3>Connectivity</h3>
+                </div>
+              </div>
+              <div className="health-list">
+                <div>
+                  <span>
+                    <i className={dot(data.internet.status)} />
+                    Internet
+                  </span>
+                  <strong>{data.internet.status.toUpperCase()}</strong>
+                </div>
+                <div>
+                  <span>Latency</span>
+                  <strong>{data.internet.latencyMs} ms</strong>
+                </div>
+                <div>
+                  <span>Throughput</span>
+                  <strong>{data.internet.speedMbps ?? '—'} Mbps</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section className="panel">
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">Regional monitoring</p>
+                <h3>VPS & tunnel probes</h3>
+              </div>
+            </div>
+            <div className="health-list">
+              {data.regions.map((x: any) => (
+                <div key={x.nodeId}>
+                  <span>
+                    <i className={dot(x.status)} />
+                    {x.city}
+                  </span>
+                  <strong>
+                    {x.nodeId} · {x.latencyMs} ms · {x.stabilityIndex}%
+                  </strong>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+    </div>
+  );
 }

@@ -80,7 +80,11 @@ type NetworkData = {
   profiles: ClientProfile[];
   bypass: BypassRule[];
 };
-type NetworkDraft = { [key: string]: unknown; id?: string; type?: 'server' | 'tunnel' | 'client' | 'bypass' };
+type NetworkDraft = {
+  [key: string]: unknown;
+  id?: string;
+  type?: 'server' | 'tunnel' | 'client' | 'bypass';
+};
 type ProductDraft = {
   id?: string;
   name: string;
@@ -513,7 +517,8 @@ function App() {
             Log in
           </button>
         </form>
-      </main>);
+      </main>
+    );
   }
 
   const nav = [
@@ -641,9 +646,8 @@ function App() {
                 <p className="eyebrow">Santor Operations</p>
                 <h2>One control plane for the whole service.</h2>
                 <p>
-                  Run the production lifecycle from one place: customers, subscriptions,
-                  access provisioning, VPN infrastructure, payments, finance and operational
-                  incidents.
+                  Run the production lifecycle from one place: customers, subscriptions, access
+                  provisioning, VPN infrastructure, payments, finance and operational incidents.
                 </p>
               </div>
               <div className="hero-meta">
@@ -665,7 +669,10 @@ function App() {
               </div>
               <div>
                 <span>Payment providers</span>
-                <strong>{payments.providerStatus.filter((p) => p.configured).length}/{payments.providerStatus.length}</strong>
+                <strong>
+                  {payments.providerStatus.filter((p) => p.configured).length}/
+                  {payments.providerStatus.length}
+                </strong>
                 <small>configured gateways</small>
               </div>
               <div>
@@ -680,7 +687,9 @@ function App() {
               </div>
               <div>
                 <span>Roadmap progress</span>
-                <strong>{phases.filter((p) => p.status === 'complete').length}/{phases.length}</strong>
+                <strong>
+                  {phases.filter((p) => p.status === 'complete').length}/{phases.length}
+                </strong>
                 <small>delivery phases complete</small>
               </div>
             </section>
@@ -696,19 +705,31 @@ function App() {
                 </div>
                 <div className="health-list">
                   <div>
-                    <span><i className="health-dot" />EU Core</span>
+                    <span>
+                      <i className="health-dot" />
+                      EU Core
+                    </span>
                     <strong>Control plane connected</strong>
                   </div>
                   <div>
-                    <span><i className="health-dot" />Asia VPN</span>
+                    <span>
+                      <i className="health-dot" />
+                      Asia VPN
+                    </span>
                     <strong>Hostinger gateway</strong>
                   </div>
                   <div>
-                    <span><i className="health-dot" />WireGuard</span>
+                    <span>
+                      <i className="health-dot" />
+                      WireGuard
+                    </span>
                     <strong>Dedicated protocol path</strong>
                   </div>
                   <div>
-                    <span><i className="health-dot" />Xray clients</span>
+                    <span>
+                      <i className="health-dot" />
+                      Xray clients
+                    </span>
                     <strong>Hiddify · v2RayTun · Happ · Proxy Gateway</strong>
                   </div>
                 </div>
@@ -734,9 +755,13 @@ function App() {
                         <span className={complete ? 'gate-dot complete' : 'gate-dot'} />
                         <div>
                           <strong>Phase {number}</strong>
-                          <small>{phase?.title?.replace(/^PHASE\s+\d+\s+—\s+/i, '') ?? 'Not loaded'}</small>
+                          <small>
+                            {phase?.title?.replace(/^PHASE\s+\d+\s+—\s+/i, '') ?? 'Not loaded'}
+                          </small>
                         </div>
-                        <em>{complete ? 'COMPLETE' : phase?.status?.toUpperCase() ?? 'PENDING'}</em>
+                        <em>
+                          {complete ? 'COMPLETE' : (phase?.status?.toUpperCase() ?? 'PENDING')}
+                        </em>
                       </button>
                     );
                   })}
@@ -749,7 +774,10 @@ function App() {
                 <div>
                   <p className="eyebrow">Operations center</p>
                   <h3>Act on the service, not just the dashboard</h3>
-                  <p>Open the dedicated workspace for incidents, finance, infrastructure and runtime controls.</p>
+                  <p>
+                    Open the dedicated workspace for incidents, finance, infrastructure and runtime
+                    controls.
+                  </p>
                 </div>
               </div>
               <div className="control-actions">
@@ -1014,7 +1042,8 @@ function App() {
                       <input
                         value={site.primaryColor}
                         onChange={(e) => setSite({ ...site, primaryColor: e.target.value })}
-                      /></label>
+                      />
+                    </label>
                     <label className="full">
                       Hero title
                       <input
@@ -1231,28 +1260,70 @@ function App() {
                 <div>
                   <p className="eyebrow">Infrastructure registry</p>
                   <h3>Servers</h3>
-                  <p className="muted">Add a server once. It is automatically available to monitoring, operations and network controls.</p>
+                  <p className="muted">
+                    Add a server once. It is automatically available to monitoring, operations and
+                    network controls.
+                  </p>
                 </div>
-                <button className="primary" onClick={() => setNetworkDraft({ type: 'server', id: undefined, name: '', provider: '', region: '', country: '', city: '', role: 'VPN', endpoint: '', monitorPort: 443, local: false, enabled: true })}>+ New server</button>
+                <button
+                  className="primary"
+                  onClick={() =>
+                    setNetworkDraft({
+                      type: 'server',
+                      id: undefined,
+                      name: '',
+                      provider: '',
+                      region: '',
+                      country: '',
+                      city: '',
+                      role: 'VPN',
+                      endpoint: '',
+                      monitorPort: 443,
+                      local: false,
+                      enabled: true,
+                    })
+                  }
+                >
+                  + New server
+                </button>
               </div>
               <div className="profile-list">
                 {network.servers.map((server) => (
                   <article className="network-row" key={server.id}>
                     <div>
-                      <span className={server.enabled ? 'status published' : 'status'}>{server.enabled ? 'enabled' : 'disabled'}</span>
+                      <span className={server.enabled ? 'status published' : 'status'}>
+                        {server.enabled ? 'enabled' : 'disabled'}
+                      </span>
                       <strong>{server.name}</strong>
-                      <small>{server.id} · {server.provider ?? 'Provider'} · {server.city}, {server.country} · {server.role}</small>
+                      <small>
+                        {server.id} · {server.provider ?? 'Provider'} · {server.city},{' '}
+                        {server.country} · {server.role}
+                      </small>
                     </div>
                     <div className="row-actions">
-                      <button onClick={() => setNetworkDraft({ ...server, type: 'server' })}>Edit</button>
-                      <button className="danger" onClick={async () => {
-                        await api('/api/v1/admin/network/server/' + server.id, { method: 'DELETE' });
-                        setNetwork({ ...network, servers: network.servers.filter((x) => x.id !== server.id) });
-                      }}>Delete</button>
+                      <button onClick={() => setNetworkDraft({ ...server, type: 'server' })}>
+                        Edit
+                      </button>
+                      <button
+                        className="danger"
+                        onClick={async () => {
+                          await api('/api/v1/admin/network/server/' + server.id, {
+                            method: 'DELETE',
+                          });
+                          setNetwork({
+                            ...network,
+                            servers: network.servers.filter((x) => x.id !== server.id),
+                          });
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </article>
                 ))}
-                {!network.servers.length && <div className="empty-state">No servers registered.</div>}
+                {!network.servers.length && (
+                  <div className="empty-state">No servers registered.</div>
+                )}
               </div>
             </section>
             <div className="network-grid">
@@ -1542,7 +1613,8 @@ function App() {
                   <h3>Yearly revenue</h3>
                   <div className="ad-list">
                     {financialReport.yearly.map((row) => (
-                      <article className="ad-row" key={row.period}><div>
+                      <article className="ad-row" key={row.period}>
+                        <div>
                           <strong>{row.period}</strong>
                           <small>
                             {row.amounts
@@ -2041,7 +2113,8 @@ function App() {
                 </div>
               </div>
               <div className="ad-list">
-                {payments.subscriptions.map((s) => (<article className="ad-row" key={s.id}>
+                {payments.subscriptions.map((s) => (
+                  <article className="ad-row" key={s.id}>
                     <div>
                       <h3>{s.product.name}</h3>
                       <p>
@@ -2540,7 +2613,8 @@ function App() {
               </div>
             </div>
             <div className="modal-actions">
-              <button onClick={() => setTopologyDraft(null)}>Cancel</button><button
+              <button onClick={() => setTopologyDraft(null)}>Cancel</button>
+              <button
                 className="primary"
                 onClick={async () => {
                   try {
@@ -2575,9 +2649,30 @@ function App() {
             </div>
             <div className="form-grid">
               {(networkDraft.type === 'server'
-                ? ['id', 'name', 'provider', 'region', 'country', 'city', 'role', 'endpoint', 'monitorPort', 'local', 'enabled']
+                ? [
+                    'id',
+                    'name',
+                    'provider',
+                    'region',
+                    'country',
+                    'city',
+                    'role',
+                    'endpoint',
+                    'monitorPort',
+                    'local',
+                    'enabled',
+                  ]
                 : networkDraft.type === 'tunnel'
-                  ? ['name', 'protocol', 'nodeId', 'serverId', 'endpoint', 'port', 'config', 'enabled']
+                  ? [
+                      'name',
+                      'protocol',
+                      'nodeId',
+                      'serverId',
+                      'endpoint',
+                      'port',
+                      'config',
+                      'enabled',
+                    ]
                   : networkDraft.type === 'client'
                     ? ['name', 'client', 'tunnelId', 'config', 'enabled']
                     : ['name', 'matchType', 'pattern', 'action', 'priority', 'notes', 'enabled']
@@ -2606,7 +2701,11 @@ function App() {
                     />
                   ) : (
                     <input
-                      type={key === 'port' || key === 'monitorPort' || key === 'priority' ? 'number' : 'text'}
+                      type={
+                        key === 'port' || key === 'monitorPort' || key === 'priority'
+                          ? 'number'
+                          : 'text'
+                      }
                       value={String(networkDraft[key] ?? '')}
                       onChange={(e) =>
                         setNetworkDraft({
@@ -2641,7 +2740,13 @@ function App() {
                   const id = networkDraft.id;
                   delete d.id;
                   const path =
-                    kind === 'server' ? 'servers' : kind === 'tunnel' ? 'tunnels' : kind === 'client' ? 'clients' : 'bypass';
+                    kind === 'server'
+                      ? 'servers'
+                      : kind === 'tunnel'
+                        ? 'tunnels'
+                        : kind === 'client'
+                          ? 'clients'
+                          : 'bypass';
                   const saved = await api('/api/v1/admin/network/' + path + (id ? '/' + id : ''), {
                     method: id ? 'PUT' : 'POST',
                     body: JSON.stringify(d),
