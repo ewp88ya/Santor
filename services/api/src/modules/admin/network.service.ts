@@ -94,6 +94,7 @@ export async function updateTunnel(id: string, input: any) {
       name: input.name,
       protocol: input.protocol,
       nodeId: input.nodeId || null,
+      serverId: input.serverId || null,
       endpoint: input.endpoint || null,
       port: input.port ? Number(input.port) : null,
       enabled: input.enabled !== false,
