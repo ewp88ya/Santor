@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import './App.css';
 import ControlPlane from './ControlPlane';
+import FinancialReports from './FinancialReports';
+import OperationsAlerts from './OperationsAlerts';
 
 type SiteService = { label: string; title: string; description: string };
 type SiteConfig = {
@@ -495,15 +497,16 @@ function App() {
             Log in
           </button>
         </form>
-      </main>
-    );
+      </main>);
   }
 
   const nav = [
     ['overview', 'Dashboard'],
     ['control', 'Service Control'],
+    ['operations', 'Operations'],
     ['customers', 'Customers'],
     ['payments', 'Payments & Billing'],
+    ['financial', 'Financial Reports'],
     ['network', 'Network & Clients'],
     ['website', 'Website & Marketing'],
     ['ads', 'Ads & Campaigns'],
@@ -539,7 +542,7 @@ function App() {
         </nav>
         <div className="sidebar-label">OPERATIONS</div>
         <nav>
-          {nav.slice(2, 5).map(([id, label]) => (
+          {nav.slice(2, 6).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -555,7 +558,7 @@ function App() {
         </nav>
         <div className="sidebar-label">CONTENT</div>
         <nav>
-          {nav.slice(5, 7).map(([id, label]) => (
+          {nav.slice(6, 9).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -571,7 +574,7 @@ function App() {
         </nav>
         <div className="sidebar-label">PROJECT</div>
         <nav>
-          {nav.slice(7).map(([id, label]) => (
+          {nav.slice(9).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -616,21 +619,23 @@ function App() {
         {section === 'control' && <ControlPlane />}
         {section === 'overview' && (
           <>
-            <section className="hero-panel">
+            <section className="hero-panel dashboard-hero">
               <div>
-                <p className="eyebrow">Santor operations</p>
+                <p className="eyebrow">Santor Operations</p>
                 <h2>One control plane for the whole service.</h2>
                 <p>
-                  Customers, billing, VPN clients, content and roadmap are managed here.
-                  Customer-facing website data remains isolated behind the existing marketing API.
+                  Run the production lifecycle from one place: customers, subscriptions,
+                  access provisioning, VPN infrastructure, payments, finance and operational
+                  incidents.
                 </p>
               </div>
               <div className="hero-meta">
                 <span className="status published">CORE ONLINE</span>
-                <small>Admin API connected</small>
+                <small>EU Core control plane · Asia VPN gateway</small>
               </div>
             </section>
-            <section className="stats ops-stats">
+
+            <section className="stats ops-stats dashboard-stats">
               <div>
                 <span>Customers</span>
                 <strong>{stats.users}</strong>
@@ -639,22 +644,17 @@ function App() {
               <div>
                 <span>Subscriptions</span>
                 <strong>{stats.subscriptions}</strong>
-                <small>commercial entitlements</small>
+                <small>active entitlement records</small>
               </div>
               <div>
-                <span>Active products</span>
-                <strong>{stats.activeProducts}</strong>
-                <small>plans available</small>
-              </div>
-              <div>
-                <span>Published campaigns</span>
-                <strong>{ads.filter((ad) => ad.status === 'published').length}</strong>
-                <small>public content</small>
+                <span>Payment providers</span>
+                <strong>{payments.providerStatus.filter((p) => p.configured).length}/{payments.providerStatus.length}</strong>
+                <small>configured gateways</small>
               </div>
               <div>
                 <span>VPN tunnels</span>
                 <strong>{network.tunnels.length}</strong>
-                <small>configured control paths</small>
+                <small>production control paths</small>
               </div>
               <div>
                 <span>Client profiles</span>
@@ -662,84 +662,111 @@ function App() {
                 <small>provisioning definitions</small>
               </div>
               <div>
-                <span>Bypass rules</span>
-                <strong>{network.bypass.length}</strong>
-                <small>direct-routing rules</small>
-              </div>
-              <div>
-                <span>Roadmap complete</span>
-                <strong>
-                  {phases.filter((p) => p.status === 'complete').length}/{phases.length}
-                </strong>
-                <small>phase status</small>
+                <span>Roadmap progress</span>
+                <strong>{phases.filter((p) => p.status === 'complete').length}/{phases.length}</strong>
+                <small>delivery phases complete</small>
               </div>
             </section>
-            <section className="operation-grid">
+
+            <section className="operation-grid dashboard-status-grid">
               <div className="panel">
                 <div className="panel-head">
                   <div>
-                    <p className="eyebrow">Service health</p>
-                    <h3>Operational domains</h3>
+                    <p className="eyebrow">Production topology</p>
+                    <h3>Core & access plane</h3>
                   </div>
                   <span className="status published">READY</span>
                 </div>
                 <div className="health-list">
                   <div>
-                    <span>
-                      <i className="health-dot" />
-                      Santor Core
-                    </span>
-                    <strong>Connected</strong>
+                    <span><i className="health-dot" />EU Core</span>
+                    <strong>Control plane connected</strong>
                   </div>
                   <div>
-                    <span>
-                      <i className="health-dot" />
-                      Billing & catalog
-                    </span>
-                    <strong>
-                      {payments.providerStatus.filter((p) => p.configured).length}/
-                      {payments.providerStatus.length || 0} providers configured
-                    </strong>
+                    <span><i className="health-dot" />Asia VPN</span>
+                    <strong>Hostinger gateway</strong>
                   </div>
                   <div>
-                    <span>
-                      <i className="health-dot" />
-                      Network control
-                    </span>
-                    <strong>
-                      {network.tunnels.length} tunnels · {network.profiles.length} profiles
-                    </strong>
+                    <span><i className="health-dot" />WireGuard</span>
+                    <strong>Dedicated protocol path</strong>
                   </div>
                   <div>
-                    <span>
-                      <i className="health-dot" />
-                      Project control
-                    </span>
-                    <strong>
-                      {phases.filter((p) => p.status === 'complete').length} phases complete
-                    </strong>
+                    <span><i className="health-dot" />Xray clients</span>
+                    <strong>Hiddify · v2RayTun · Happ · Proxy Gateway</strong>
                   </div>
                 </div>
               </div>
+
               <div className="panel">
                 <div className="panel-head">
                   <div>
-                    <p className="eyebrow">Quick actions</p>
-                    <h3>Operate without leaving Dashboard</h3>
+                    <p className="eyebrow">Launch gates</p>
+                    <h3>Phase 14 → Phase 15</h3>
                   </div>
                 </div>
-                <div className="quick-actions">
-                  <button onClick={() => setSection('customers')}>View customers</button>
-                  <button onClick={() => setSection('network')}>Manage VPN & clients</button>
-                  <button onClick={() => setSection('payments')}>Manage plans & billing</button>
-                  <button onClick={() => setSection('settings')}>Customize admin UI</button>
+                <div className="launch-gates">
+                  {[14, 15].map((number) => {
+                    const phase = phases.find((item) => item.phase === number);
+                    const complete = phase?.status === 'complete';
+                    return (
+                      <button
+                        key={number}
+                        className="launch-gate"
+                        onClick={() => setSection('roadmap')}
+                      >
+                        <span className={complete ? 'gate-dot complete' : 'gate-dot'} />
+                        <div>
+                          <strong>Phase {number}</strong>
+                          <small>{phase?.title?.replace(/^PHASE\s+\d+\s+—\s+/i, '') ?? 'Not loaded'}</small>
+                        </div>
+                        <em>{complete ? 'COMPLETE' : phase?.status?.toUpperCase() ?? 'PENDING'}</em>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </section>
+
             <section className="panel">
               <div className="panel-head">
                 <div>
-                  <p className="eyebrow">Operating lifecycle</p>
+                  <p className="eyebrow">Operations center</p>
+                  <h3>Act on the service, not just the dashboard</h3>
+                  <p>Open the dedicated workspace for incidents, finance, infrastructure and runtime controls.</p>
+                </div>
+              </div>
+              <div className="control-actions">
+                <button onClick={() => setSection('operations')}>
+                  <strong>Operations</strong>
+                  <small>Messages · alerts · alarms · problems · incidents</small>
+                </button>
+                <button onClick={() => setSection('control')}>
+                  <strong>Service Control</strong>
+                  <small>AI · Telegram · monitoring · deployment · providers</small>
+                </button>
+                <button onClick={() => setSection('financial')}>
+                  <strong>Financial Reports</strong>
+                  <small>Daily · monthly · annual revenue, P&amp;L and expenses</small>
+                </button>
+                <button onClick={() => setSection('network')}>
+                  <strong>Network & Clients</strong>
+                  <small>WireGuard · Xray clients · profiles · bypass rules</small>
+                </button>
+                <button onClick={() => setSection('customers')}>
+                  <strong>Customers</strong>
+                  <small>Accounts · subscriptions · entitlement lifecycle</small>
+                </button>
+                <button onClick={() => setSection('payments')}>
+                  <strong>Payments & Billing</strong>
+                  <small>Catalog · providers · payment lifecycle</small>
+                </button>
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Provisioning lifecycle</p>
                   <h3>Customer → entitlement → access</h3>
                 </div>
               </div>
@@ -750,7 +777,7 @@ function App() {
                   'VPN entitlement',
                   'Provision',
                   'Client profile',
-                  'Download / config',
+                  'Connect',
                   'Revoke',
                 ].map((item, i) => (
                   <div key={item}>
@@ -762,6 +789,8 @@ function App() {
             </section>
           </>
         )}
+        {section === 'operations' && <OperationsAlerts monitoring={null} />}
+        {section === 'financial' && <FinancialReports />}
         {section === 'customers' && (
           <section className="panel">
             <div className="panel-head">
@@ -967,8 +996,7 @@ function App() {
                       <input
                         value={site.primaryColor}
                         onChange={(e) => setSite({ ...site, primaryColor: e.target.value })}
-                      />
-                    </label>
+                      /></label>
                     <label className="full">
                       Hero title
                       <input
@@ -1467,8 +1495,7 @@ function App() {
                   <h3>Yearly revenue</h3>
                   <div className="ad-list">
                     {financialReport.yearly.map((row) => (
-                      <article className="ad-row" key={row.period}>
-                        <div>
+                      <article className="ad-row" key={row.period}><div>
                           <strong>{row.period}</strong>
                           <small>
                             {row.amounts
@@ -1967,8 +1994,7 @@ function App() {
                 </div>
               </div>
               <div className="ad-list">
-                {payments.subscriptions.map((s) => (
-                  <article className="ad-row" key={s.id}>
+                {payments.subscriptions.map((s) => (<article className="ad-row" key={s.id}>
                     <div>
                       <h3>{s.product.name}</h3>
                       <p>
@@ -2467,8 +2493,7 @@ function App() {
               </div>
             </div>
             <div className="modal-actions">
-              <button onClick={() => setTopologyDraft(null)}>Cancel</button>
-              <button
+              <button onClick={() => setTopologyDraft(null)}>Cancel</button><button
                 className="primary"
                 onClick={async () => {
                   try {
