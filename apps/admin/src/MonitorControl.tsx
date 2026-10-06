@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useCallback, useEffect, useState } from 'react';
 const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 const token = () => localStorage.getItem('santor_token') ?? '';

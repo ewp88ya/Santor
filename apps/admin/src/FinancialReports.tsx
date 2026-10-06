@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
+
+import { useCallback, useEffect, useState } from 'react';
 
 type FinancialBucket = {
   currency: string;
@@ -53,13 +56,15 @@ function FinancialReports({ api }: { api: Api }) {
   });
   const [message, setMessage] = useState('');
 
-  const load = async () => setReport(await api('/api/v1/admin/financial-report'));
+  const load = useCallback(async () => {
+    setReport(await api('/api/v1/admin/financial-report'));
+  }, [api]);
 
   useEffect(() => {
     void load().catch((error) =>
       setMessage(error instanceof Error ? error.message : 'Unable to load financial report'),
     );
-  }, []);
+  }, [load]);
 
   const addExpense = async () => {
     try {

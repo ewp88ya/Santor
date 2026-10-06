@@ -363,7 +363,6 @@ model TunnelProfile {
   serverId    String?
   server      Server?  @relation(fields: [serverId], references: [id], onDelete: SetNull)
   nodeId      String?
-  serverId    String?
   endpoint    String?
   port        Int?
   enabled     Boolean  @default(true)
