@@ -21,6 +21,4 @@ CREATE UNIQUE INDEX "Server_slug_key" ON "Server"("slug");
 CREATE INDEX "Server_active_monitorEnabled_idx" ON "Server"("active", "monitorEnabled");
 CREATE INDEX "Server_region_city_idx" ON "Server"("region", "city");
 
-ALTER TABLE "TunnelProfile" ADD COLUMN "serverId" TEXT;
-CREATE INDEX "TunnelProfile_serverId_idx" ON "TunnelProfile"("serverId");
 ALTER TABLE "TunnelProfile" ADD CONSTRAINT "TunnelProfile_serverId_fkey" FOREIGN KEY ("serverId") REFERENCES "Server"("id") ON DELETE SET NULL ON UPDATE CASCADE;
