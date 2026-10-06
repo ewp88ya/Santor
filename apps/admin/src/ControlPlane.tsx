@@ -6,7 +6,7 @@ type ControlData = {
 };
 
 const tokenKey = 'santor_token';
-const apiBase = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 async function request(path: string, options: RequestInit = {}) {
   const response = await fetch(`${apiBase}${path}`, {
