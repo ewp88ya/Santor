@@ -790,7 +790,7 @@ function App() {
           </>
         )}
         {section === 'operations' && <OperationsAlerts monitoring={null} />}
-        {section === 'financial' && <FinancialReports />}
+        {section === 'financial' && <FinancialReports api={api} />}
         {section === 'customers' && (
           <section className="panel">
             <div className="panel-head">
