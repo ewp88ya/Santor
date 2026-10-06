@@ -22,12 +22,53 @@ export const productionTopology = {
 };
 
 export async function networkOverview() {
-  const [tunnels, profiles, bypass] = await Promise.all([
+  const [servers, tunnels, profiles, bypass] = await Promise.all([
+    prisma.infrastructureServer.findMany({ orderBy: [{ enabled: 'desc' }, { updatedAt: 'desc' }] }),
     prisma.tunnelProfile.findMany({ orderBy: { updatedAt: 'desc' } }),
     prisma.clientProfile.findMany({ orderBy: { updatedAt: 'desc' } }),
     prisma.bypassRule.findMany({ orderBy: [{ priority: 'asc' }, { updatedAt: 'desc' }] }),
   ]);
-  return { supportedClients: clients, tunnels, profiles, bypass };
+  return { supportedClients: clients, servers, tunnels, profiles, bypass };
+}
+
+export async function createServer(input: any) {
+  if (!input?.id || !input?.name || !input?.country || !input?.city || !input?.role)
+    throw new Error('id, name, country, city and role are required');
+  return prisma.infrastructureServer.create({
+    data: {
+      id: String(input.id).trim(),
+      name: String(input.name).trim(),
+      provider: input.provider ? String(input.provider).trim() : null,
+      region: input.region ? String(input.region).trim() : null,
+      country: String(input.country).trim(),
+      city: String(input.city).trim(),
+      role: String(input.role).trim(),
+      endpoint: input.endpoint ? String(input.endpoint).trim() : null,
+      monitorPort: input.monitorPort ? Number(input.monitorPort) : null,
+      local: input.local === true,
+      enabled: input.enabled !== false,
+      metadata: input.metadata && typeof input.metadata === 'object' ? input.metadata : {},
+    },
+  });
+}
+
+export async function updateServer(id: string, input: any) {
+  return prisma.infrastructureServer.update({
+    where: { id },
+    data: {
+      name: String(input.name).trim(),
+      provider: input.provider ? String(input.provider).trim() : null,
+      region: input.region ? String(input.region).trim() : null,
+      country: String(input.country).trim(),
+      city: String(input.city).trim(),
+      role: String(input.role).trim(),
+      endpoint: input.endpoint ? String(input.endpoint).trim() : null,
+      monitorPort: input.monitorPort ? Number(input.monitorPort) : null,
+      local: input.local === true,
+      enabled: input.enabled !== false,
+      metadata: input.metadata && typeof input.metadata === 'object' ? input.metadata : {},
+    },
+  });
 }
 
 export async function createTunnel(input: any) {
@@ -37,6 +78,7 @@ export async function createTunnel(input: any) {
       name: String(input.name).trim(),
       protocol: String(input.protocol).trim(),
       nodeId: input.nodeId || null,
+      serverId: input.serverId || null,
       endpoint: input.endpoint || null,
       port: input.port ? Number(input.port) : null,
       enabled: input.enabled !== false,
@@ -118,6 +160,7 @@ export async function updateBypassRule(id: string, input: any) {
 }
 
 export async function deleteNetworkItem(type: string, id: string) {
+  if (type === 'server') return prisma.infrastructureServer.delete({ where: { id } });
   if (type === 'tunnel') return prisma.tunnelProfile.delete({ where: { id } });
   if (type === 'client') return prisma.clientProfile.delete({ where: { id } });
   return prisma.bypassRule.delete({ where: { id } });
