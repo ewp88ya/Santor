@@ -335,11 +335,33 @@ model AdCampaign {
   @@index([startAt, endAt])
 }
 
+model InfrastructureServer {
+  id          String   @id
+  name        String
+  provider    String?
+  region      String?
+  country     String
+  city        String
+  role        String
+  endpoint    String?
+  monitorPort Int?
+  local       Boolean  @default(false)
+  enabled     Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([enabled, role])
+  @@index([country, city])
+  @@index([endpoint])
+}
+
 model TunnelProfile {
   id          String   @id @default(uuid())
   name        String
   protocol    String
   nodeId      String?
+  serverId    String?
   endpoint    String?
   port        Int?
   enabled     Boolean  @default(true)
