@@ -2612,7 +2612,7 @@ function App() {
                         setNetworkDraft({
                           ...networkDraft,
                           [key]:
-                            key === 'port' || key === 'priority'
+                            key === 'port' || key === 'monitorPort' || key === 'priority'
                               ? Number(e.target.value)
                               : e.target.value,
                         })
@@ -2647,26 +2647,33 @@ function App() {
                     body: JSON.stringify(d),
                   });
                   setNetwork(
-                    kind === 'tunnel'
+                    kind === 'server'
                       ? {
                           ...network,
-                          tunnels: id
-                            ? network.tunnels.map((x) => (x.id === saved.id ? saved : x))
-                            : [saved, ...network.tunnels],
+                          servers: id
+                            ? network.servers.map((x) => (x.id === saved.id ? saved : x))
+                            : [saved, ...network.servers],
                         }
+                      : kind === 'tunnel'
+                        ? {
+                            ...network,
+                            tunnels: id
+                              ? network.tunnels.map((x) => (x.id === saved.id ? saved : x))
+                              : [saved, ...network.tunnels],
+                          }
                         : kind === 'client'
                           ? {
-                            ...network,
-                            profiles: id
-                              ? network.profiles.map((x) => (x.id === saved.id ? saved : x))
-                              : [saved, ...network.profiles],
-                          }
+                              ...network,
+                              profiles: id
+                                ? network.profiles.map((x) => (x.id === saved.id ? saved : x))
+                                : [saved, ...network.profiles],
+                            }
                           : {
                               ...network,
                               bypass: id
-                              ? network.bypass.map((x) => (x.id === saved.id ? saved : x))
-                              : [saved, ...network.bypass],
-                          },
+                                ? network.bypass.map((x) => (x.id === saved.id ? saved : x))
+                                : [saved, ...network.bypass],
+                            },
                   );
                   setNetworkDraft(null);
                 }}
