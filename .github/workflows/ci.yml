@@ -73,7 +73,7 @@ jobs:
         run: pnpm exec eslint .
 
       - name: One-time Prettier repair
-        if: github.event_name == 'push' && github.event.before == '7d459017f0ad096f0c35801cde84e381f1dcf42a'
+        if: github.event_name == 'push' && github.event.before == '7ef34a64325ae0dc9635b736e35be8934322ea8b'
         run: |
           pnpm exec prettier --write .
           if git diff --quiet; then
