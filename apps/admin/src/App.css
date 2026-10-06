@@ -497,8 +497,7 @@ textarea {
 .publisher-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
-  gap: 24px;
-}
+  gap: 24px;}
 .publisher-editor {
   display: grid;
   gap: 18px;
@@ -997,8 +996,7 @@ nav button.active .nav-dot {
   margin-top: 4px;
 }
 .empty-state {
-  padding: 30px;
-  text-align: center;
+  padding: 30px;text-align: center;
   color: #64748b;
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
@@ -1175,5 +1173,108 @@ input[type='color'] {
   }
   .form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-hero {
+  align-items: center;
+}
+
+.dashboard-stats {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.dashboard-status-grid {
+  margin-top: 18px;
+}
+
+.launch-gates {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.launch-gate {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafbfe;
+}
+
+.launch-gate:hover {
+  border-color: var(--admin-accent);
+}
+
+.launch-gate > div {
+  display: grid;
+  gap: 3px;
+}
+
+.launch-gate small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.launch-gate em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.gate-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.gate-dot.complete {
+  background: #16a34a;
+}
+
+.control-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.control-actions button {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  padding: 15px;
+  border: 1px solid #dbe1ea;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.control-actions button:hover {
+  border-color: var(--admin-accent);
+}
+
+.control-actions strong {
+  color: #1e293b;
+}
+
+.control-actions small {
+  color: #64748b;
+  line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .control-actions {
+    grid-template-columns: 1fr 1fr;
   }
 }
