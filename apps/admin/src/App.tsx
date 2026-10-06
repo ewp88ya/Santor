@@ -485,7 +485,7 @@ function App() {
       <main className="login-shell">
         <form className="login-card" onSubmit={login}>
           <p className="eyebrow">SANTOR ADMIN</p>
-          <h1>Control Center</h1>
+          <h1>Dashboard</h1>
           <p>Internal administration only. Customer accounts cannot access this area.</p>
           <label>
             Email
@@ -510,7 +510,7 @@ function App() {
   }
 
   const nav = [
-    ['overview', 'Control Center'],
+    ['overview', 'Dashboard'],
     ['control', 'Service Control'],
     ['operations', 'Messages & Alerts'],
     ['customers', 'Customers'],
@@ -738,7 +738,7 @@ function App() {
                 <div className="panel-head">
                   <div>
                     <p className="eyebrow">Quick actions</p>
-                    <h3>Operate without leaving Control Center</h3>
+                    <h3>Operate without leaving Dashboard</h3>
                   </div>
                 </div>
                 <div className="quick-actions">
@@ -1820,7 +1820,7 @@ function App() {
                 <p className="eyebrow">Workspace configuration</p>
                 <h2>Admin Settings</h2>
                 <p>
-                  Customize the internal Control Center layout, colors and density. These settings
+                  Customize the internal Dashboard layout, colors and density. These settings
                   are private to the admin workspace and never modify the customer website.
                 </p>
               </div>
@@ -1909,7 +1909,7 @@ function App() {
                         setAdminPrefs({ ...adminPrefs, defaultSection: e.target.value })
                       }
                     >
-                      <option value="overview">Control Center</option>
+                      <option value="overview">Dashboard</option>
                       <option value="customers">Customers</option>
                       <option value="payments">Payments & Billing</option>
                       <option value="network">Network & Clients</option>
@@ -1931,7 +1931,7 @@ function App() {
               </div>
               <div className="settings-preview">
                 <p className="eyebrow">Live preview</p>
-                <h3>Control Center</h3>
+                <h3>Dashboard</h3>
                 <p>
                   Accent, surface, background, sidebar width and density update immediately in this
                   workspace.
