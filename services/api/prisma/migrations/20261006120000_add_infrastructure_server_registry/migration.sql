@@ -12,7 +12,7 @@ CREATE TABLE "InfrastructureServer" (
   "enabled" BOOLEAN NOT NULL DEFAULT true,
   "metadata" JSONB,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "InfrastructureServer_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX "InfrastructureServer_enabled_role_idx" ON "InfrastructureServer"("enabled", "role");
