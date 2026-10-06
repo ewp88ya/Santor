@@ -360,6 +360,8 @@ model TunnelProfile {
   id          String   @id @default(uuid())
   name        String
   protocol    String
+  serverId    String?
+  server      Server?  @relation(fields: [serverId], references: [id], onDelete: SetNull)
   nodeId      String?
   serverId    String?
   endpoint    String?
@@ -370,7 +372,33 @@ model TunnelProfile {
   updatedAt   DateTime @updatedAt
 
   @@index([protocol, enabled])
+  @@index([serverId])
   @@index([nodeId])
+}
+
+model Server {
+  id              String   @id @default(uuid())
+  slug            String   @unique
+  name            String
+  provider        String
+  region          String
+  country         String
+  city            String
+  role            String
+  type            String   @default("remote")
+  endpoint        String?
+  monitorPort     Int?
+  active          Boolean  @default(true)
+  monitorEnabled  Boolean  @default(true)
+  metadata        Json
+
+  tunnels         TunnelProfile[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([active, monitorEnabled])
+  @@index([region, city])
 }
 
 model ClientProfile {
