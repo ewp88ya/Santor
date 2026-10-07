@@ -4,6 +4,7 @@ import ControlPlane from './ControlPlane';
 import FinancialReports from './FinancialReports';
 import OperationsAlerts from './OperationsAlerts';
 import MonitorControl from './MonitorControl';
+import LnNeuPanel from './LnNeuPanel';
 
 type SiteService = { label: string; title: string; description: string };
 type SiteConfig = {
@@ -524,6 +525,7 @@ function App() {
   const nav = [
     ['overview', 'Dashboard'],
     ['control', 'Service Control'],
+    ['lnneu', 'LN-NeU'],
     ['operations', 'Operations'],
     ['monitor', 'Monitor Control'],
     ['customers', 'Customers'],
@@ -548,7 +550,7 @@ function App() {
         </div>
         <div className="sidebar-label">COMMAND</div>
         <nav>
-          {nav.slice(0, 2).map(([id, label]) => (
+          {nav.slice(0, 3).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -564,7 +566,7 @@ function App() {
         </nav>
         <div className="sidebar-label">OPERATIONS</div>
         <nav>
-          {nav.slice(2, 7).map(([id, label]) => (
+          {nav.slice(3, 8).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -580,7 +582,7 @@ function App() {
         </nav>
         <div className="sidebar-label">CONTENT</div>
         <nav>
-          {nav.slice(7, 10).map(([id, label]) => (
+          {nav.slice(8, 11).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -596,7 +598,7 @@ function App() {
         </nav>
         <div className="sidebar-label">PROJECT</div>
         <nav>
-          {nav.slice(10).map(([id, label]) => (
+          {nav.slice(11).map(([id, label]) => (
             <button
               key={id}
               className={section === id ? 'active' : ''}
@@ -639,6 +641,7 @@ function App() {
         </header>
         {message && <div className="notice">{message}</div>}
         {section === 'control' && <ControlPlane />}
+        {section === 'lnneu' && <LnNeuPanel />}
         {section === 'overview' && (
           <>
             <section className="hero-panel dashboard-hero">

@@ -6,6 +6,7 @@ export async function getUserDashboard(userId: string) {
       id: userId,
     },
     include: {
+      telegramIdentity: true,
       subscriptions: {
         orderBy: {
           createdAt: 'desc',

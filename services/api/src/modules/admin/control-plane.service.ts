@@ -131,7 +131,27 @@ function mergeDefaults(value: any) {
   };
 }
 
-function status() {
+async function getLnNeuStatus() {
+  const enabled = process.env.LN_NEU_ENABLED === 'true';
+  const endpoint = process.env.LN_NEU_API_URL?.trim() ?? '';
+  if (!enabled || !endpoint) {
+    return { enabled, configured: Boolean(endpoint), healthy: false, endpoint: endpoint || null };
+  }
+
+  try {
+    const base = new URL(endpoint);
+    const healthUrl = new URL('/health', base.origin);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const response = await fetch(healthUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+    return { enabled, configured: true, healthy: response.ok, endpoint };
+  } catch {
+    return { enabled, configured: true, healthy: false, endpoint };
+  }
+}
+
+async function status() {
   const env = (name: string) => Boolean(process.env[name]?.trim());
   return {
     api: true,
@@ -139,6 +159,8 @@ function status() {
     redis: env('REDIS_URL'),
     ai: env('AI_PROVIDER') || env('OLLAMA_BASE_URL'),
     telegram: env('TELEGRAM_BOT_TOKEN'),
+    telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME?.trim() || null,
+    lnNeu: await getLnNeuStatus(),
     payments: {
       GlobalCard: env('GLOBALCARD_API_KEY'),
       PayPal: env('PAYPAL_CLIENT_ID'),
@@ -156,7 +178,7 @@ export async function getAdminControlPlane() {
     update: {},
     create: { id: CONFIG_ID, config: defaultConfig },
   });
-  return { config: mergeDefaults(config.config), status: status() };
+  return { config: mergeDefaults(config.config), status: await status() };
 }
 
 export async function updateAdminControlPlane(input: unknown) {
@@ -177,5 +199,5 @@ export async function updateAdminControlPlane(input: unknown) {
     update: { config },
     create: { id: CONFIG_ID, config },
   });
-  return { config: mergeDefaults(saved.config), status: status() };
+  return { config: mergeDefaults(saved.config), status: await status() };
 }

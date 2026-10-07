@@ -17,6 +17,7 @@ type SiteConfig = {
 
 type Dashboard = {
   user: { id: string; name: string | null; email: string; status: string; emailVerified: boolean };
+  telegram: { connected: boolean; username: string | null; linkedAt: string | null };
   subscription: {
     status: string;
     lifecycle: {
@@ -523,12 +524,18 @@ function CustomerDashboard() {
       <section className="telegram-card">
         <div>
           <p className="eyebrow">Telegram</p>
-          <h2>Connect Telegram</h2>
-          <p>Connect your Santor account to the Santor Telegram bot for AI access.</p>
+          <h2>{dashboard.telegram.connected ? 'Telegram connected' : 'Connect Telegram'}</h2>
+          <p>
+            {dashboard.telegram.connected
+              ? `Connected${dashboard.telegram.username ? ` as @${dashboard.telegram.username}` : ''}. Telegram AI access is ready.`
+              : 'Connect your Santor account to the Santor Telegram bot for AI access.'}
+          </p>
         </div>
-        <Button onClick={connectTelegram} disabled={telegramLoading}>
-          {telegramLoading ? 'Connecting...' : 'Connect Telegram'}
-        </Button>
+        {!dashboard.telegram.connected && (
+          <Button onClick={connectTelegram} disabled={telegramLoading}>
+            {telegramLoading ? 'Connecting...' : 'Connect Telegram'}
+          </Button>
+        )}
         {telegramLink && (
           <p className="telegram-link">
             Telegram did not open automatically.{' '}

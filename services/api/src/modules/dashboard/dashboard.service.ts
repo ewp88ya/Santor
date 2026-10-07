@@ -94,6 +94,12 @@ export async function getDashboard(userId: string) {
       emailVerified: user.emailVerified,
     },
 
+    telegram: {
+      connected: Boolean(user.telegramIdentity?.linkedAt && user.telegramIdentity.telegramUserId),
+      username: user.telegramIdentity?.username ?? null,
+      linkedAt: user.telegramIdentity?.linkedAt ?? null,
+    },
+
     subscription: activeSubscription,
 
     subscriptions,
