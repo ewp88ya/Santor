@@ -109,7 +109,7 @@ function PublicSite() {
         <div className="public-nav-actions">
           <a href="#services">Services</a>
           <a href="#plans">Plans</a>
-          <a className="nav-login" href="/?login=1">
+          <a className="nav-login" href="/login">
             {site.secondaryCta}
           </a>
         </div>
@@ -124,7 +124,7 @@ function PublicSite() {
             <a className="primary-action" href="#plans">
               {site.primaryCta}
             </a>
-            <a className="secondary-action" href="/?register=1">
+            <a className="secondary-action" href="/register">
               Get started
             </a>
           </div>
@@ -171,7 +171,7 @@ function PublicSite() {
             <span className="service-label">START</span>
             <h3>Free</h3>
             <p>Explore the Santor experience and manage your account.</p>
-            <a className="primary-action compact" href="/?register=1">
+            <a className="primary-action compact" href="/register">
               Create account
             </a>
           </article>
@@ -179,7 +179,7 @@ function PublicSite() {
             <span className="service-label">CUSTOMER</span>
             <h3>Choose your service</h3>
             <p>Subscribe to VPN, tunnel or other Santor services from your customer account.</p>
-            <a className="primary-action compact" href="/?register=1">
+            <a className="primary-action compact" href="/register">
               Get started
             </a>
           </article>
@@ -202,9 +202,8 @@ function AuthScreen({
   onAuthenticated: (token: string) => void;
   admin?: boolean;
 }) {
-  const params = new URLSearchParams(window.location.search);
   const [mode, setMode] = useState<AuthMode>(
-    admin || !params.has('register') ? 'login' : 'register',
+    admin || window.location.pathname !== '/register' ? 'login' : 'register',
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -951,12 +950,36 @@ function AdminDashboard() {
 }
 
 function App() {
+  useEffect(() => {
+    const authRoute =
+      window.location.pathname === '/login' || window.location.pathname === '/register';
+    const adminRoute = window.location.hostname === 'admin.santor.app';
+
+    document.title = authRoute
+      ? window.location.pathname === '/register'
+        ? 'Create a Santor account'
+        : 'Log in to Santor'
+      : 'Santor — Private internet, secure access, intelligent service';
+
+    const robots = document.querySelector('meta[name="robots"]');
+    if (robots) {
+      robots.setAttribute(
+        'content',
+        authRoute || adminRoute
+          ? 'noindex, nofollow, noarchive'
+          : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+      );
+    }
+
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', 'https://santor.app/');
+  }, []);
+
   if (isAdminHost) return <AdminDashboard />;
 
   const hasCustomerToken = Boolean(localStorage.getItem('santor_token'));
   const hasAuthIntent =
-    new URLSearchParams(window.location.search).has('login') ||
-    new URLSearchParams(window.location.search).has('register');
+    window.location.pathname === '/login' || window.location.pathname === '/register';
 
   if (isLocalHost || hasCustomerToken || hasAuthIntent) return <CustomerDashboard />;
   return <PublicSite />;
