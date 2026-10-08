@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#863bff" />
     <meta
       name="description"
       content="Santor provides private internet access, secure VPN and tunnel services, and intelligent AI assistance in one customer platform."
@@ -37,9 +38,23 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Santor",
-        "url": "https://santor.app/"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://santor.app/#organization",
+            "name": "Santor",
+            "url": "https://santor.app/"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://santor.app/#website",
+            "name": "Santor",
+            "url": "https://santor.app/",
+            "publisher": {
+              "@id": "https://santor.app/#organization"
+            }
+          }
+        ]
       }
     </script>
   </head>
