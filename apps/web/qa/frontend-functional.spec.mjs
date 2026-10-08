@@ -2,8 +2,16 @@ import { test, expect } from '@playwright/test';
 
 const dashboard = {
   user: {
+    id: 'demo-user',
     name: 'Demo User',
     email: 'demo@santor.app',
+    status: 'active',
+    emailVerified: true,
+  },
+  telegram: {
+    connected: false,
+    username: null,
+    linkedAt: null,
   },
   subscription: {
     status: 'ACTIVE',
