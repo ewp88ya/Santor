@@ -305,17 +305,17 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 # PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE
 
 ## 14.1 Provider Gate
-- ✅ Provider roles selected: OVHcloud = EU Core; Contabo = EU VPN; Hostinger Indonesia = ID VPN
+- ✅ Provider roles selected: OVHcloud = EU Core; Contabo = EU VPN; Hostinger Indonesia = ASIA VPN
 - 🟡 LightNode = APAC/US candidate; production customer-VPN use remains provider-policy confirmation dependent
 - ✅ OVH public/customer VPN excluded from architecture; OVH reserved for EU Core
 - ✅ Contabo WireGuard/WGDashboard path validated from provider documentation
 - ✅ Hostinger WireGuard deployment path validated from provider documentation
 
 ## 14.2 VPS Provisioning
-- 🟢 Purchase/provisioning specifications locked for EU-CORE-01, EU-VPN-01, ID-JKT-VPN-01
+- 🟢 Purchase/provisioning specifications locked for EU-CORE-01, EU-VPN-01, ASIA-VPN-01
 - 🟡 EU-CORE-01 — OVH VPS-2, Gravelines, Ubuntu 24.04 LTS; SentinelX host `eu-core-01` is registered/online. No host-level audit was run in this pass; retain the no-touch constraint. Provider-account confirmation and provisioning metadata still need recording.
 - ⏳ EU-VPN-01 — Contabo Cloud VPS 4, EU region, Ubuntu 24.04 LTS; no matching Contabo host is currently registered in SentinelX. Provisioning remains the active provider gate.
-- 🟡 ID-JKT-VPN-01 candidate — existing Hostinger host `asia-vpn-01` is registered/online at `187.126.113.168`; read-only audit observed Ubuntu 24.04, 1 vCPU, approximately 3.8 GiB RAM, and 48 GB root disk. Proxy/WireGuard provisioner systemd units are active, but Docker inspection was blocked by agent permissions. Because this host also serves Santor web, dedicated VPN isolation and provider-account confirmation are not yet signed off.
+- 🟡 ASIA-VPN-01 candidate — existing Hostinger host `asia-vpn-01` is registered/online at `187.126.113.168`; read-only audit observed Ubuntu 24.04, 1 vCPU, approximately 3.8 GiB RAM, and 48 GB root disk. Proxy/WireGuard provisioner systemd units are active, but Docker inspection was blocked by agent permissions. Because this host also serves Santor web, dedicated VPN isolation and provider-account confirmation are not yet signed off.
 - ⏳ For each role, record provider account confirmation, public IPv4/IPv6, datacenter, renewal price, and provisioning timestamp; run a role-appropriate baseline audit before marking provisioned/production-ready.
 - ⏳ Register any newly purchased server in SentinelX and validate live connectivity.
 - ⏸️ LightNode — do not provision until commercial/customer VPN policy is explicitly confirmed
