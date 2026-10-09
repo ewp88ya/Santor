@@ -71,11 +71,13 @@ test('loads active dashboard from API', async ({ page }) => {
 
   await page.goto('http://127.0.0.1:4173');
 
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
-  await expect(page.getByText('Welcome back, Demo User.')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Your internet, under your control/i }),
+  ).toBeVisible();
+  await expect(page.getByText(/Welcome back, Demo User\./)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Santor Pro 1 Month' }).first()).toBeVisible();
-  await expect(page.getByText('30 days remaining').first()).toBeVisible();
-  await expect(page.getByText('Subscription History')).toBeVisible();
+  await expect(page.getByText(/30\s*days/).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Subscription history/i })).toBeVisible();
 });
 
 test('renders expired subscription state and upgrade action', async ({ page }) => {
@@ -106,9 +108,9 @@ test('renders expired subscription state and upgrade action', async ({ page }) =
 
   await page.goto('http://127.0.0.1:4173');
 
-  await expect(page.getByRole('heading', { name: 'No active service' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No active subscription' })).toBeVisible();
   await expect(page.getByText('No active subscription')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Choose service' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Explore plans/i })).toBeVisible();
 });
 
 test('sends authenticated dashboard message to AI service', async ({ page }) => {
@@ -143,8 +145,8 @@ test('sends authenticated dashboard message to AI service', async ({ page }) => 
 
   await page.goto('http://127.0.0.1:4173');
 
-  await page.getByRole('textbox', { name: 'Message' }).fill('Help me check my VPN status');
-  await page.getByRole('button', { name: 'Send to AI' }).click();
+  await page.getByRole('textbox', { name: 'YOUR MESSAGE' }).fill('Help me check my VPN status');
+  await page.getByRole('button', { name: /Send message/i }).click();
 
   await expect(page.getByRole('status')).toContainText('AI task accepted.');
   expect(aiRequest.authorization).toBe('Bearer browser-qa-token');
