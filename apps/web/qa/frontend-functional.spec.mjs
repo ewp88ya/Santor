@@ -109,7 +109,7 @@ test('renders expired subscription state and upgrade action', async ({ page }) =
   await page.goto('http://127.0.0.1:4173');
 
   await expect(page.getByRole('heading', { name: 'No active subscription' })).toBeVisible();
-  await expect(page.getByText('No active subscription')).toBeVisible();
+  await expect(page.locator('p.remaining.expired-text')).toBeVisible();
   await expect(page.getByRole('button', { name: /Explore plans/i })).toBeVisible();
 });
 
