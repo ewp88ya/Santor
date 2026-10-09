@@ -322,7 +322,7 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 - ✅ PostgreSQL backup→restore round-trip is now tested in both CI pipelines.
 - 🟡 Remaining: review health/recovery behavior, image publishing/deployment, monitoring, and rollback automation in a disposable environment.
 - 🟡 Document production DB/Redis migration, backup/restore, monitoring, recovery, and rollback procedures as runnable acceptance checks.
-- 🟡 Validate existing public web health and frontend asset routes without altering DNS or touching `eu-core-01`.
+- ✅ Read-only production smoke rerun (2026-10-09): `santor.app` `/`, `/login`, `/register`, `/dashboard`, `/pricing/`; `api.santor.app` `/api/v1/health` and `/api/v1/site/config`; and `admin.santor.app` `/` all returned HTTP 200 with valid TLS verification. Certificate expiry: 2027-01-02. No DNS, deployment, or protected-host changes were made.
 - ⏭️ Real node connectivity, new-node provisioning, regional failover, and capacity tests that require additional infrastructure are skipped/deferred by scope.
 
 **Phase 14 outcome:** infrastructure *software/readiness work* can close after CI evidence and runbook validation. New VPS provisioning and multi-region runtime acceptance are excluded, not passed.
