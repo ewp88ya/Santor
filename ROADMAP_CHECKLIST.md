@@ -351,7 +351,7 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 # EXECUTION GATE
 
-**Current GitHub main baseline (checked 2026-10-09):**
+**Latest application-code baseline (checked 2026-10-09; subsequent Santor commits are roadmap/documentation-only):**
 - Santor: `51082fca9daaab53a3033221b716b8626278d1d1` — [CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37949658872).
 - LN-NeU: `b06ec0076198e1a214a43bcb5db5329ffde835c5` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304567) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304481).
 - Phase 13 LN-NeU ↔ Santor core integration remains **LOCKED / COMPLETE** based on the recorded live runtime validation. The newer main commits do not reopen that gate.
