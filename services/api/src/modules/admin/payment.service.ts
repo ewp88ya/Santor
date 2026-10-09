@@ -103,12 +103,22 @@ const catalog = [
 
 export async function ensureProductCatalog() {
   for (const item of catalog) {
-    await prisma.product.upsert({
-      where: { code: item.code },
-      update: {},
-      create: {
+    const existing = await prisma.product.findFirst({
+      where: {
+        code: {
+          equals: item.code,
+          mode: 'insensitive',
+        },
+      },
+      select: { id: true },
+    });
+
+    if (existing) continue;
+
+    await prisma.product.create({
+      data: {
         name: item.name,
-        code: item.code,
+        code: item.code.toUpperCase(),
         price: Math.round(item.price * 100),
         currency: item.currency,
         durationDays: item.durationDays,
@@ -144,22 +154,27 @@ export async function adminPaymentOverview() {
     configured: keys.every((key) => Boolean(process.env[key]?.trim())),
   }));
 
-  const catalog = products.map((product) => ({
-    code: product.code,
-    name: product.name,
-    price: Number(product.price) / 100,
-    currency: product.currency,
-    durationDays: product.durationDays,
-    deviceLimit: product.deviceLimit,
-    userLimit: 1,
-    category: product.code.startsWith('wg-') ? 'wireguard' : 'general',
-    capacityPolicy:
-      product.code === 'general-free'
-        ? 'Free capacity: 100 concurrent/served users within a 1-hour operating window; inactive connections are disconnected and capacity is released.'
-        : product.code.startsWith('wg-')
-          ? 'Production WireGuard nodes with health, load, capacity and queue control.'
-          : 'Production General Nodes with health, load, capacity and queue control.',
-  }));
+  const catalog = products
+    .filter((product) => product.active)
+    .map((product) => {
+      const normalizedCode = product.code.toLowerCase();
+      return {
+        code: product.code,
+        name: product.name,
+        price: Number(product.price) / 100,
+        currency: product.currency,
+        durationDays: product.durationDays,
+        deviceLimit: product.deviceLimit,
+        userLimit: 1,
+        category: normalizedCode.startsWith('wg-') ? 'wireguard' : 'general',
+        capacityPolicy:
+          normalizedCode === 'general-free'
+            ? 'Free capacity: 100 concurrent/served users within a 1-hour operating window; inactive connections are disconnected and capacity is released.'
+            : normalizedCode.startsWith('wg-')
+              ? 'Production WireGuard nodes with health, load, capacity and queue control.'
+              : 'Production General Nodes with health, load, capacity and queue control.',
+      };
+    });
   return { payments, subscriptions, products, providerStatus, catalog };
 }
 
