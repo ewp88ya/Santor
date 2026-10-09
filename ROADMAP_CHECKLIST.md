@@ -3,7 +3,7 @@
 
 ## Reconciliation baseline
 
-**Authoritative code baseline:** `main` @ `76fa126804ab9a382379908dfaef80cff23e89a7` (current Santor repository baseline as of 2026-09-19).
+**Authoritative repository baseline:** Santor `main` @ `e1eac169652ed0b6c811ec0ff804bf3906c1d342` (2026-10-09; includes CI Compose validation/container build and roadmap scope adjustment). Application features remain covered by the passing regression pipeline.
 
 The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are superseded. This file is reconciled to the current `main` baseline. Phase 13 runtime completion is also recorded against LN-NeU `main` @ `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`.
 
@@ -316,7 +316,10 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 ## 14.2 Work that can be completed without new VPS
 - ✅ Local/application foundation and CI pipeline are in place.
-- 🟡 Review and validate production Compose, environment interpolation, image references, health checks, resource/log limits, secret placeholders, and deployment/rollback automation in CI.
+- ✅ Santor CI validates `docker/docker-compose.yml` with isolated placeholder values and builds the API container image (`e1eac16`, CI PASS).
+- ✅ LN-NeU CI validates production Compose with `--env-file`, fails fast when required AI/provider credentials are missing, and builds backend/AI images explicitly (`c4608c7`, CI PASS).
+- ✅ LN-NeU integration tests now use a CI-only port override, an explicit mock provider and dummy service credential; test failures are no longer suppressed (`c4608c7`, Test Pipeline PASS).
+- 🟡 Remaining: review health/recovery behavior, image publishing/deployment, backup/restore, monitoring, and rollback automation in a disposable environment.
 - 🟡 Document production DB/Redis migration, backup/restore, monitoring, recovery, and rollback procedures as runnable acceptance checks.
 - 🟡 Validate existing public web health and frontend asset routes without altering DNS or touching `eu-core-01`.
 - ⏭️ Real node connectivity, new-node provisioning, regional failover, and capacity tests that require additional infrastructure are skipped/deferred by scope.
@@ -328,9 +331,9 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 # PHASE 15 — RELEASE ACCEPTANCE & LIVE-DEPENDENCY EXCLUSIONS
 
 ## Acceptance work that can be completed without Contabo / a new EU VPS
-- 🟡 Production Compose configuration and container-image reference validation in CI.
-- 🟡 Application smoke checks, dashboard/API contract checks, auth/ownership/security regression, and integration tests.
-- 🟡 Backup/restore and rollback procedures validated in disposable CI environments where feasible.
+- ✅ Production Compose configuration and container-image build/reference validation in CI (Santor + LN-NeU).
+- ✅ Application smoke checks, dashboard/API contract checks, auth/ownership/security regression, and integration tests have CI coverage; latest Santor CI and LN-NeU CI/Test Pipeline passed.
+- ⏳ Backup/restore and rollback procedures still need executable disposable-environment validation.
 - 🟡 Payment provider routing, webhook replay/race/idempotency, reconciliation, refund and failure recovery tested with deterministic mocks/sandbox fixtures.
 - 🟡 Release checklist, environment variable validation, secrets policy, monitoring/health/recovery requirements, and deployment rollback instructions.
 
@@ -348,11 +351,11 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 # EXECUTION GATE
 
 **Current GitHub main / CI snapshot (2026-10-09):**
-- Santor `main`: `b8b2adade6d71815320e378bcb8503a1371d90a9` — [latest CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37951970260). Latest change is roadmap-only; application baseline remains covered by the prior successful CI.
-- LN-NeU `main`: `b06ec0076198e1a214a43bcb5db5329ffde835c5` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304567) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304481).
+- Santor `main`: `e1eac169652ed0b6c811ec0ff804bf3906c1d342` — [CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37953244086), including Compose config validation and API container build.
+- LN-NeU `main`: `c4608c73aff4cc5eecc8c9ea4500008b52e612c9` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37953114693) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37953114542), including real container builds and non-masked integration tests.
 - Phase 13 LN-NeU ↔ Santor integration remains **LOCKED / COMPLETE** based on recorded runtime evidence. Do not reopen it without a verified regression.
 - Customer dashboard UI release remains locked separately; mocked authenticated browser QA proves UI behavior only, not real VPN operations.
 - SentinelX inventory: `eu-core-01`, `asia-vpn-01`, and `dev-wsl` are connected. The Asia host audit is read-only; Docker daemon access is denied to the SentinelX user. Disk use is 80%, so any future maintenance needs a separate approved plan.
 
-**Execution order from here:** complete software-only security/configuration/CI fixes, validate them in GitHub Actions, then run non-destructive public application smoke checks. Contabo/EU VPS steps are intentionally bypassed. Preserve local-only artifacts and never promote secrets or test environment values into production configuration.
+**Execution snapshot:** the software-only Compose/CI fixes and non-destructive public smoke checks are complete and green. Public Santor routes `/`, `/login`, `/register`, `/dashboard`, `/pricing/`, `/features/`, `/faq/`, `/privacy/`, and `/terms/` returned HTTP 200; TLS certificate is valid through 2027-01-02. SentinelX still cannot inspect Docker because its agent user lacks socket permissions, and the Asia host root disk remains at 80% usage. Next software-only tasks are executable backup/restore and rollback checks plus review of monitoring/recovery. Contabo/EU VPS provisioning and real regional VPN failover are intentionally bypassed; live payments and live VPN acceptance remain explicitly skipped/deferred. Preserve local-only artifacts and never promote secrets or test environment values into production configuration.
 <!-- prettier-ignore-end -->
