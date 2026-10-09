@@ -10,7 +10,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U santor_test -d santor_test']
+      test: ['CMD-SHELL', 'pg_isready -U santor -d santor']
       interval: 2s
       timeout: 3s
       retries: 30
