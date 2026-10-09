@@ -313,11 +313,11 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 ## 14.2 VPS Provisioning
 - 🟢 Purchase/provisioning specifications locked for EU-CORE-01, EU-VPN-01, ID-JKT-VPN-01
-- ⏳ EU-CORE-01 — OVH VPS-2, Gravelines, Ubuntu 24.04 LTS
-- ⏳ EU-VPN-01 — Contabo Cloud VPS 4, EU region, Ubuntu 24.04 LTS
-- ⏳ ID-JKT-VPN-01 — Hostinger KVM 1, Indonesia, Ubuntu 24.04 LTS
-- ⏳ Record public IPv4/IPv6, datacenter, renewal price, and provisioning timestamp after purchase
-- ⏳ Register each server in SentinelX and run baseline hardware/network/security audit
+- 🟡 EU-CORE-01 — OVH VPS-2, Gravelines, Ubuntu 24.04 LTS; SentinelX host `eu-core-01` is registered/online. No host-level audit was run in this pass; retain the no-touch constraint. Provider-account confirmation and provisioning metadata still need recording.
+- ⏳ EU-VPN-01 — Contabo Cloud VPS 4, EU region, Ubuntu 24.04 LTS; no matching Contabo host is currently registered in SentinelX. Provisioning remains the active provider gate.
+- 🟡 ID-JKT-VPN-01 candidate — existing Hostinger host `asia-vpn-01` is registered/online at `187.126.113.168`; read-only audit observed Ubuntu 24.04, 1 vCPU, approximately 3.8 GiB RAM, and 48 GB root disk. Proxy/WireGuard provisioner systemd units are active, but Docker inspection was blocked by agent permissions. Because this host also serves Santor web, dedicated VPN isolation and provider-account confirmation are not yet signed off.
+- ⏳ For each role, record provider account confirmation, public IPv4/IPv6, datacenter, renewal price, and provisioning timestamp; run a role-appropriate baseline audit before marking provisioned/production-ready.
+- ⏳ Register any newly purchased server in SentinelX and validate live connectivity.
 - ⏸️ LightNode — do not provision until commercial/customer VPN policy is explicitly confirmed
 
 ## Remaining Phase 14
@@ -351,7 +351,13 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 # EXECUTION GATE
 
-**Current baseline:** Santor main @ `76fa126804ab9a382379908dfaef80cff23e89a7`; LN-NeU main @ `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`. Phase 13 LN-NeU ↔ Santor core integration is locked after live runtime validation. Current connector-surfaced CI status for these latest commits is not available, so no CI-green claim is made.
+**Current GitHub main baseline (checked 2026-10-09):**
+- Santor: `51082fca9daaab53a3033221b716b8626278d1d1` — [CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37949658872).
+- LN-NeU: `b06ec0076198e1a214a43bcb5db5329ffde835c5` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304567) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304481).
+- Phase 13 LN-NeU ↔ Santor core integration remains **LOCKED / COMPLETE** based on the recorded live runtime validation. The newer main commits do not reopen that gate.
+- Customer dashboard UI release is locked separately; browser UI checks used a mocked authenticated payload and do not certify live VPN operations.
 
-**Immediate next action:** perform a fresh current-main regression where the latest tree is locally available, then begin **PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE**. Preserve the local-only Santor override `.pnpm-store/` / local environment artifacts and do not promote them into the roadmap baseline. Phase 13 is not reopened.
+**Phase 14 live inventory snapshot (2026-10-09):** SentinelX currently lists three connected hosts: `eu-core-01`, `asia-vpn-01`, and `dev-wsl`. The Hostinger `asia-vpn-01` read-only audit confirmed Ubuntu 24.04 and active Santor proxy/WireGuard provisioner units, but Docker state could not be verified with the agent's current permissions. Do not label it a dedicated, production-ready VPN node until isolation and runtime checks pass. The Contabo `EU-VPN-01` host is not yet registered.
+
+**Immediate next action:** continue **PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE** with the Contabo EU-VPN-01 provider provisioning gate, then verify provider-account creation, register the host in SentinelX, and run the baseline audit. Existing connected hosts are not automatically marked production-ready. Provisioning requires the provider purchase/account action; no server purchase or paid change was made in this pass. Preserve local-only environment artifacts and do not promote them into the roadmap baseline. Phase 13 remains closed.
 <!-- prettier-ignore-end -->
