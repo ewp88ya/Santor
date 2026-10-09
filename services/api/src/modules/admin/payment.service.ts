@@ -1,12 +1,21 @@
 import { prisma } from '../../config/database.js';
 
 const providerEnv: Record<string, string[]> = {
-  global_card: ['GLOBAL_CARD_API_KEY'],
+  global_card: ['GLOBAL_CARD_API_KEY', 'GLOBAL_CARD_API_SECRET'],
+  stripe: ['STRIPE_SECRET_KEY'],
   paypal: ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET'],
-  xendit: ['XENDIT_SECRET_KEY'],
-  russia: ['PLATEGA_MERCHANT_ID', 'PLATEGA_SECRET'],
-  alipay: ['ALIPAY_APP_ID', 'ALIPAY_PRIVATE_KEY'],
-  wechat: ['WECHAT_PAY_APP_ID', 'WECHAT_PAY_MCH_ID', 'WECHAT_PAY_API_KEY'],
+  xendit: ['XENDIT_API_KEY', 'XENDIT_WEBHOOK_TOKEN'],
+  platega: ['PLATEGA_MERCHANT_ID', 'PLATEGA_SECRET'],
+  yookassa: ['YOOKASSA_SHOP_ID', 'YOOKASSA_SECRET'],
+  cloudpayments: ['CLOUDPAYMENTS_PUBLIC_ID', 'CLOUDPAYMENTS_API_SECRET'],
+  alipay: ['ALIPAY_APP_ID', 'ALIPAY_PRIVATE_KEY', 'ALIPAY_PUBLIC_KEY'],
+  wechat: [
+    'WECHAT_PAY_APP_ID',
+    'WECHAT_PAY_MCH_ID',
+    'WECHAT_PAY_API_V3_KEY',
+    'WECHAT_PAY_PRIVATE_KEY',
+    'WECHAT_PAY_SERIAL_NUMBER',
+  ],
 };
 
 const catalog = [
