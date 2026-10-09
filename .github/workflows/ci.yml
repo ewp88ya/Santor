@@ -112,6 +112,9 @@ jobs:
       - name: Validate server-rendered public website
         run: python3 scripts/check-public-site.py
 
+      - name: Validate operational shell scripts
+        run: bash -n scripts/register-telegram-webhook.sh scripts/telegram-production-check.sh scripts/deploy-public-site.sh
+
       - name: API typecheck
         run: pnpm --filter @santor/api typecheck
 
