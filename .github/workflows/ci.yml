@@ -113,7 +113,7 @@ jobs:
         run: python3 scripts/check-public-site.py
 
       - name: Validate operational shell scripts
-        run: bash -n scripts/register-telegram-webhook.sh scripts/telegram-production-check.sh scripts/deploy-public-site.sh
+        run: bash -n scripts/register-telegram-webhook.sh scripts/telegram-production-check.sh scripts/deploy-public-site.sh scripts/test-deployment-recovery.sh services/api/scripts/test-local.sh
 
       - name: API typecheck
         run: pnpm --filter @santor/api typecheck
@@ -142,6 +142,9 @@ jobs:
           trap 'rm -f .env.ci' EXIT
           docker compose --env-file .env.ci -f docker/docker-compose.yml config --quiet
           docker build -f docker/api/Dockerfile -t santor-api:ci .
+
+      - name: Validate deployment recovery and rollback in disposable stack
+        run: bash scripts/test-deployment-recovery.sh
 
       - name: Start web preview
         run: |
