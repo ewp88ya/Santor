@@ -5,31 +5,736 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#070b14" />
     <title>Santor — Private internet. Clear control.</title>
-    <meta name="description" content="Choose a Santor VPN access plan, compare General and WireGuard options, and manage your service through one account." />
+    <meta
+      name="description"
+      content="Choose a Santor VPN access plan, compare General and WireGuard options, and manage your service through one account."
+    />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="https://santor.app/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Santor" />
     <meta property="og:title" content="Santor — Private internet. Clear control." />
-    <meta property="og:description" content="Choose a Santor VPN access plan, compare General and WireGuard options, and manage your service through one account." />
+    <meta
+      property="og:description"
+      content="Choose a Santor VPN access plan, compare General and WireGuard options, and manage your service through one account."
+    />
     <meta property="og:url" content="https://santor.app/" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Santor — Private internet. Clear control." />
-    <meta name="twitter:description" content="Choose a Santor VPN access plan, compare General and WireGuard options, and manage your service through one account." />
+    <meta
+      name="twitter:description"
+      content="Choose a Santor VPN access plan, compare General and WireGuard options, and manage your service through one account."
+    />
     <style>
-      :root{color-scheme:dark;--bg:#070b14;--panel:#0e1627;--panel2:#111d31;--line:#25334b;--text:#f4f7ff;--muted:#a4b1c8;--accent:#a8b5ff;--cyan:#73eadc;--max:1160px}
-      *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#24376a 0,transparent 42%),radial-gradient(ellipse at 0% 36%,#102b36 0,transparent 30%),var(--bg);color:var(--text);font:16px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:inherit;text-decoration:none}a:hover{color:var(--cyan)}.wrap{width:min(var(--max),calc(100% - 44px));margin:auto}
-      .nav{height:82px;display:flex;align-items:center;justify-content:space-between;gap:22px;border-bottom:1px solid #ffffff12}.brand{display:flex;align-items:center;gap:11px;font-size:22px;font-weight:850;letter-spacing:-.05em;white-space:nowrap}.logo{width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--cyan));color:#07101b;font-weight:950;box-shadow:0 0 34px #8b9cff30}.navlinks{display:flex;align-items:center;gap:25px;color:var(--muted);font-size:14px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border:1px solid #ffffff28;border-radius:12px;font-weight:750;font-size:14px;transition:transform .18s,border-color .18s,background .18s}.btn:hover{transform:translateY(-2px);border-color:#73eadc80}.btn.primary{background:linear-gradient(110deg,#aab5ff,#73eadc);border:0;color:#07101b;box-shadow:0 10px 34px #73eadc18}.btn.ghost{background:#ffffff05}
-      .hero{padding:82px 0 58px;display:grid;grid-template-columns:1.04fr .96fr;gap:56px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:.17em;font-size:11px;font-weight:850}.eyebrow:before{content:"";width:20px;height:1px;background:currentColor}.hero h1{font-size:clamp(46px,6.2vw,78px);line-height:.99;letter-spacing:-.075em;margin:19px 0 24px;max-width:680px}.gradient{background:linear-gradient(100deg,#f7f8ff 12%,#aebaff 55%,#73eadc);-webkit-background-clip:text;background-clip:text;color:transparent}.lead{color:var(--muted);font-size:18px;max-width:610px;line-height:1.75}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:29px 0 23px}.micro{color:#8291ac;font-size:12px}.proofline{display:flex;gap:18px;flex-wrap:wrap;margin-top:24px;color:#c6d0e1;font-size:12px}.proofline span{display:flex;align-items:center;gap:7px}.check{color:var(--cyan);font-weight:900}
-      .hero-visual{min-height:430px;position:relative;overflow:hidden;border:1px solid #ffffff20;border-radius:30px;padding:26px;background:linear-gradient(145deg,#17243dce,#0a1221f2 70%);box-shadow:0 34px 100px #0007,inset 0 1px #ffffff10}.hero-visual:before{content:"";position:absolute;width:320px;height:320px;right:-95px;top:-100px;border-radius:50%;background:radial-gradient(circle,#8b9cff55,transparent 70%)}.hero-visual:after{content:"";position:absolute;width:260px;height:260px;left:-110px;bottom:-140px;border-radius:50%;background:radial-gradient(circle,#73eadc38,transparent 70%)}.visual-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;color:#aab7ce;font-size:11px;letter-spacing:.12em;text-transform:uppercase}.live-pill{border:1px solid #73eadc45;background:#73eadc0e;color:var(--cyan);border-radius:99px;padding:6px 10px;letter-spacing:.04em;font-size:10px}.globe{height:240px;display:grid;place-items:center;position:relative;z-index:1}.orbit{position:absolute;width:245px;height:175px;border:1px solid #a9b5ff55;border-radius:50%;transform:rotate(-28deg)}.orbit.two{width:245px;height:175px;transform:rotate(55deg);border-color:#73eadc48}.orbit.three{width:290px;height:210px;transform:rotate(15deg);border-color:#ffffff20}.core{width:112px;height:112px;border-radius:34px;display:grid;place-items:center;background:linear-gradient(140deg,#b8c2ff,#73eadc);color:#07101b;font-size:38px;font-weight:950;box-shadow:0 0 80px #aab5ff4d;z-index:2}.node{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 20px #73eadc;z-index:2}.n1{top:38px;left:27%}.n2{right:18%;top:82px}.n3{bottom:30px;left:30%}.connection-card{position:relative;z-index:2;border:1px solid #ffffff20;border-radius:17px;background:#07101ddf;padding:16px 17px;display:flex;align-items:center;justify-content:space-between;gap:15px}.connection-label{font-size:10px;letter-spacing:.12em;color:#8291ac;text-transform:uppercase}.connection-title{font-size:14px;font-weight:750;margin-top:3px}.connection-state{font-size:11px;color:var(--cyan);display:flex;align-items:center;gap:7px;white-space:nowrap}.state-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan)}
-      .section{padding:55px 0}.section-head{max-width:700px;margin-bottom:27px}.section h2{font-size:clamp(30px,4vw,45px);line-height:1.1;letter-spacing:-.055em;margin:11px 0 13px}.muted{color:var(--muted)}.feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.feature{padding:25px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#121e32d9,#0b1220d9);min-height:215px}.feature-icon{width:43px;height:43px;display:grid;place-items:center;border:1px solid #a8b5ff40;background:#a8b5ff10;color:var(--cyan);border-radius:14px;font-size:19px}.feature h3{font-size:18px;margin:15px 0 6px;letter-spacing:-.025em}.feature p{font-size:14px;margin:0;color:var(--muted)}.text-link{display:inline-flex;margin-top:14px;font-size:13px;font-weight:750;color:#c2cbff}
-      .pricing-band{margin-top:12px;padding:30px;border:1px solid #ffffff1c;border-radius:26px;background:linear-gradient(130deg,#141f35,#0c1423 72%);position:relative;overflow:hidden}.pricing-band:after{content:"";position:absolute;width:280px;height:280px;right:-130px;top:-160px;border-radius:50%;background:radial-gradient(circle,#8b9cff30,transparent 70%);pointer-events:none}.pricing-top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;position:relative;z-index:1}.pricing-top h2{margin:9px 0 8px}.mini-plans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px;position:relative;z-index:1}.mini-plan{padding:19px;border:1px solid #ffffff17;border-radius:16px;background:#07101b80}.mini-plan.popular{border-color:#a8b5ff88;background:linear-gradient(155deg,#202b49,#0b1424)}.mini-label{font-size:10px;font-weight:850;letter-spacing:.12em;color:var(--cyan)}.mini-plan h3{font-size:15px;margin:10px 0 2px}.price{font-size:31px;font-weight:850;letter-spacing:-.065em;line-height:1.25;margin:5px 0}.period{font-size:12px;color:var(--muted)}.mini-plan ul{padding-left:17px;margin:14px 0 0;color:var(--muted);font-size:12px}.mini-plan li{margin:4px 0}.pricing-note{font-size:12px;color:#8291ac;margin:16px 0 0}.wg-callout{margin-top:14px;padding:18px 20px;border:1px solid #73eadc30;border-radius:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;background:#73eadc08;position:relative;z-index:1}.wg-callout strong{display:block;font-size:15px}.wg-callout p{margin:2px 0 0;color:var(--muted);font-size:13px}.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;counter-reset:step}.step{border-top:1px solid #ffffff25;padding:22px 10px 0 0;counter-increment:step}.step:before{content:"0" counter(step);display:block;color:var(--cyan);font-size:12px;letter-spacing:.14em;font-weight:850;margin-bottom:17px}.step h3{margin:0 0 7px;font-size:17px}.step p{margin:0;color:var(--muted);font-size:14px}.cta-panel{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:30px;border:1px solid #ffffff20;border-radius:24px;background:radial-gradient(ellipse at 90% 0%,#30437470,transparent 48%),#101a2b}.cta-panel h2{margin:9px 0 8px}.cta-panel p{margin:0}.footer{border-top:1px solid #ffffff15;padding:29px 0 38px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;gap:24px;color:#8d9ab1;font-size:13px}.footlinks{display:flex;gap:17px;flex-wrap:wrap}.footer-brand{font-weight:850;color:#f4f7ff;font-size:16px}
-      @media(max-width:900px){.hero{grid-template-columns:1fr;gap:28px;padding-top:60px}.hero-visual{min-height:390px}.feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mini-plans{grid-template-columns:repeat(2,minmax(0,1fr))}.navlinks{gap:14px}.pricing-top{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.wrap{width:calc(100% - 30px)}.nav{height:auto;min-height:72px}.navlinks{gap:8px;font-size:11px}.navlinks .hide-mobile{display:none}.navlinks .btn{padding:8px 9px}.nav{gap:12px}.brand{font-size:20px;gap:8px}.logo{width:32px;height:32px}.hero{padding:47px 0 28px}.hero h1{font-size:clamp(43px,13vw,62px)}.lead{font-size:16px}.hero-visual{min-height:345px;padding:18px;border-radius:23px}.globe{height:210px}.orbit{width:205px;height:150px}.orbit.two{width:205px;height:150px}.orbit.three{width:235px;height:175px}.core{width:91px;height:91px;border-radius:28px}.connection-card{align-items:flex-start;flex-direction:column}.feature-grid,.mini-plans,.steps{grid-template-columns:1fr}.section{padding:38px 0}.pricing-band{padding:21px}.wg-callout,.cta-panel{align-items:flex-start;flex-direction:column;padding:22px}.footer{align-items:flex-start;flex-direction:column}.proofline{gap:10px 15px}}
-      @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+      :root {
+        color-scheme: dark;
+        --bg: #070b14;
+        --panel: #0e1627;
+        --panel2: #111d31;
+        --line: #25334b;
+        --text: #f4f7ff;
+        --muted: #a4b1c8;
+        --accent: #a8b5ff;
+        --cyan: #73eadc;
+        --max: 1160px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 24px;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 80% -10%, #24376a 0, transparent 42%),
+          radial-gradient(ellipse at 0% 36%, #102b36 0, transparent 30%), var(--bg);
+        color: var(--text);
+        font:
+          16px/1.65 Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      a:hover {
+        color: var(--cyan);
+      }
+      .wrap {
+        width: min(var(--max), calc(100% - 44px));
+        margin: auto;
+      }
+      .nav {
+        height: 82px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 22px;
+        border-bottom: 1px solid #ffffff12;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 22px;
+        font-weight: 850;
+        letter-spacing: -0.05em;
+        white-space: nowrap;
+      }
+      .logo {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent), var(--cyan));
+        color: #07101b;
+        font-weight: 950;
+        box-shadow: 0 0 34px #8b9cff30;
+      }
+      .navlinks {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 18px;
+        border: 1px solid #ffffff28;
+        border-radius: 12px;
+        font-weight: 750;
+        font-size: 14px;
+        transition:
+          transform 0.18s,
+          border-color 0.18s,
+          background 0.18s;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        border-color: #73eadc80;
+      }
+      .btn.primary {
+        background: linear-gradient(110deg, #aab5ff, #73eadc);
+        border: 0;
+        color: #07101b;
+        box-shadow: 0 10px 34px #73eadc18;
+      }
+      .btn.ghost {
+        background: #ffffff05;
+      }
+      .hero {
+        padding: 82px 0 58px;
+        display: grid;
+        grid-template-columns: 1.04fr 0.96fr;
+        gap: 56px;
+        align-items: center;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.17em;
+        font-size: 11px;
+        font-weight: 850;
+      }
+      .eyebrow:before {
+        content: '';
+        width: 20px;
+        height: 1px;
+        background: currentColor;
+      }
+      .hero h1 {
+        font-size: clamp(46px, 6.2vw, 78px);
+        line-height: 0.99;
+        letter-spacing: -0.075em;
+        margin: 19px 0 24px;
+        max-width: 680px;
+      }
+      .gradient {
+        background: linear-gradient(100deg, #f7f8ff 12%, #aebaff 55%, #73eadc);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 18px;
+        max-width: 610px;
+        line-height: 1.75;
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 29px 0 23px;
+      }
+      .micro {
+        color: #8291ac;
+        font-size: 12px;
+      }
+      .proofline {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-top: 24px;
+        color: #c6d0e1;
+        font-size: 12px;
+      }
+      .proofline span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .check {
+        color: var(--cyan);
+        font-weight: 900;
+      }
+      .hero-visual {
+        min-height: 430px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #ffffff20;
+        border-radius: 30px;
+        padding: 26px;
+        background: linear-gradient(145deg, #17243dce, #0a1221f2 70%);
+        box-shadow:
+          0 34px 100px #0007,
+          inset 0 1px #ffffff10;
+      }
+      .hero-visual:before {
+        content: '';
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        right: -95px;
+        top: -100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #8b9cff55, transparent 70%);
+      }
+      .hero-visual:after {
+        content: '';
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        left: -110px;
+        bottom: -140px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #73eadc38, transparent 70%);
+      }
+      .visual-top {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #aab7ce;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .live-pill {
+        border: 1px solid #73eadc45;
+        background: #73eadc0e;
+        color: var(--cyan);
+        border-radius: 99px;
+        padding: 6px 10px;
+        letter-spacing: 0.04em;
+        font-size: 10px;
+      }
+      .globe {
+        height: 240px;
+        display: grid;
+        place-items: center;
+        position: relative;
+        z-index: 1;
+      }
+      .orbit {
+        position: absolute;
+        width: 245px;
+        height: 175px;
+        border: 1px solid #a9b5ff55;
+        border-radius: 50%;
+        transform: rotate(-28deg);
+      }
+      .orbit.two {
+        width: 245px;
+        height: 175px;
+        transform: rotate(55deg);
+        border-color: #73eadc48;
+      }
+      .orbit.three {
+        width: 290px;
+        height: 210px;
+        transform: rotate(15deg);
+        border-color: #ffffff20;
+      }
+      .core {
+        width: 112px;
+        height: 112px;
+        border-radius: 34px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(140deg, #b8c2ff, #73eadc);
+        color: #07101b;
+        font-size: 38px;
+        font-weight: 950;
+        box-shadow: 0 0 80px #aab5ff4d;
+        z-index: 2;
+      }
+      .node {
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 20px #73eadc;
+        z-index: 2;
+      }
+      .n1 {
+        top: 38px;
+        left: 27%;
+      }
+      .n2 {
+        right: 18%;
+        top: 82px;
+      }
+      .n3 {
+        bottom: 30px;
+        left: 30%;
+      }
+      .connection-card {
+        position: relative;
+        z-index: 2;
+        border: 1px solid #ffffff20;
+        border-radius: 17px;
+        background: #07101ddf;
+        padding: 16px 17px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+      }
+      .connection-label {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: #8291ac;
+        text-transform: uppercase;
+      }
+      .connection-title {
+        font-size: 14px;
+        font-weight: 750;
+        margin-top: 3px;
+      }
+      .connection-state {
+        font-size: 11px;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        white-space: nowrap;
+      }
+      .state-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--cyan);
+      }
+      .section {
+        padding: 55px 0;
+      }
+      .section-head {
+        max-width: 700px;
+        margin-bottom: 27px;
+      }
+      .section h2 {
+        font-size: clamp(30px, 4vw, 45px);
+        line-height: 1.1;
+        letter-spacing: -0.055em;
+        margin: 11px 0 13px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .feature {
+        padding: 25px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: linear-gradient(145deg, #121e32d9, #0b1220d9);
+        min-height: 215px;
+      }
+      .feature-icon {
+        width: 43px;
+        height: 43px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #a8b5ff40;
+        background: #a8b5ff10;
+        color: var(--cyan);
+        border-radius: 14px;
+        font-size: 19px;
+      }
+      .feature h3 {
+        font-size: 18px;
+        margin: 15px 0 6px;
+        letter-spacing: -0.025em;
+      }
+      .feature p {
+        font-size: 14px;
+        margin: 0;
+        color: var(--muted);
+      }
+      .text-link {
+        display: inline-flex;
+        margin-top: 14px;
+        font-size: 13px;
+        font-weight: 750;
+        color: #c2cbff;
+      }
+      .pricing-band {
+        margin-top: 12px;
+        padding: 30px;
+        border: 1px solid #ffffff1c;
+        border-radius: 26px;
+        background: linear-gradient(130deg, #141f35, #0c1423 72%);
+        position: relative;
+        overflow: hidden;
+      }
+      .pricing-band:after {
+        content: '';
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        right: -130px;
+        top: -160px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #8b9cff30, transparent 70%);
+        pointer-events: none;
+      }
+      .pricing-top {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        position: relative;
+        z-index: 1;
+      }
+      .pricing-top h2 {
+        margin: 9px 0 8px;
+      }
+      .mini-plans {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 24px;
+        position: relative;
+        z-index: 1;
+      }
+      .mini-plan {
+        padding: 19px;
+        border: 1px solid #ffffff17;
+        border-radius: 16px;
+        background: #07101b80;
+      }
+      .mini-plan.popular {
+        border-color: #a8b5ff88;
+        background: linear-gradient(155deg, #202b49, #0b1424);
+      }
+      .mini-label {
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.12em;
+        color: var(--cyan);
+      }
+      .mini-plan h3 {
+        font-size: 15px;
+        margin: 10px 0 2px;
+      }
+      .price {
+        font-size: 31px;
+        font-weight: 850;
+        letter-spacing: -0.065em;
+        line-height: 1.25;
+        margin: 5px 0;
+      }
+      .period {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .mini-plan ul {
+        padding-left: 17px;
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .mini-plan li {
+        margin: 4px 0;
+      }
+      .pricing-note {
+        font-size: 12px;
+        color: #8291ac;
+        margin: 16px 0 0;
+      }
+      .wg-callout {
+        margin-top: 14px;
+        padding: 18px 20px;
+        border: 1px solid #73eadc30;
+        border-radius: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        background: #73eadc08;
+        position: relative;
+        z-index: 1;
+      }
+      .wg-callout strong {
+        display: block;
+        font-size: 15px;
+      }
+      .wg-callout p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        counter-reset: step;
+      }
+      .step {
+        border-top: 1px solid #ffffff25;
+        padding: 22px 10px 0 0;
+        counter-increment: step;
+      }
+      .step:before {
+        content: '0' counter(step);
+        display: block;
+        color: var(--cyan);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        font-weight: 850;
+        margin-bottom: 17px;
+      }
+      .step h3 {
+        margin: 0 0 7px;
+        font-size: 17px;
+      }
+      .step p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .cta-panel {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        padding: 30px;
+        border: 1px solid #ffffff20;
+        border-radius: 24px;
+        background: radial-gradient(ellipse at 90% 0%, #30437470, transparent 48%), #101a2b;
+      }
+      .cta-panel h2 {
+        margin: 9px 0 8px;
+      }
+      .cta-panel p {
+        margin: 0;
+      }
+      .footer {
+        border-top: 1px solid #ffffff15;
+        padding: 29px 0 38px;
+        margin-top: 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        color: #8d9ab1;
+        font-size: 13px;
+      }
+      .footlinks {
+        display: flex;
+        gap: 17px;
+        flex-wrap: wrap;
+      }
+      .footer-brand {
+        font-weight: 850;
+        color: #f4f7ff;
+        font-size: 16px;
+      }
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 28px;
+          padding-top: 60px;
+        }
+        .hero-visual {
+          min-height: 390px;
+        }
+        .feature-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .mini-plans {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .navlinks {
+          gap: 14px;
+        }
+        .pricing-top {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+      @media (max-width: 600px) {
+        .wrap {
+          width: calc(100% - 30px);
+        }
+        .nav {
+          height: auto;
+          min-height: 72px;
+        }
+        .navlinks {
+          gap: 8px;
+          font-size: 11px;
+        }
+        .navlinks .hide-mobile {
+          display: none;
+        }
+        .navlinks .btn {
+          padding: 8px 9px;
+        }
+        .nav {
+          gap: 12px;
+        }
+        .brand {
+          font-size: 20px;
+          gap: 8px;
+        }
+        .logo {
+          width: 32px;
+          height: 32px;
+        }
+        .hero {
+          padding: 47px 0 28px;
+        }
+        .hero h1 {
+          font-size: clamp(43px, 13vw, 62px);
+        }
+        .lead {
+          font-size: 16px;
+        }
+        .hero-visual {
+          min-height: 345px;
+          padding: 18px;
+          border-radius: 23px;
+        }
+        .globe {
+          height: 210px;
+        }
+        .orbit {
+          width: 205px;
+          height: 150px;
+        }
+        .orbit.two {
+          width: 205px;
+          height: 150px;
+        }
+        .orbit.three {
+          width: 235px;
+          height: 175px;
+        }
+        .core {
+          width: 91px;
+          height: 91px;
+          border-radius: 28px;
+        }
+        .connection-card {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .feature-grid,
+        .mini-plans,
+        .steps {
+          grid-template-columns: 1fr;
+        }
+        .section {
+          padding: 38px 0;
+        }
+        .pricing-band {
+          padding: 21px;
+        }
+        .wg-callout,
+        .cta-panel {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 22px;
+        }
+        .footer {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .proofline {
+          gap: 10px 15px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *:before,
+        *:after {
+          transition: none !important;
+        }
+      }
     </style>
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://santor.app/#organization","name":"Santor","url":"https://santor.app/"},{"@type":"WebSite","@id":"https://santor.app/#website","name":"Santor","url":"https://santor.app/","publisher":{"@id":"https://santor.app/#organization"}},{"@type":"SoftwareApplication","name":"Santor","applicationCategory":"SecurityApplication","operatingSystem":"Cross-platform","url":"https://santor.app/","description":"A platform for managing secure access services and related tools."}]}
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://santor.app/#organization",
+            "name": "Santor",
+            "url": "https://santor.app/"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://santor.app/#website",
+            "name": "Santor",
+            "url": "https://santor.app/",
+            "publisher": { "@id": "https://santor.app/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Santor",
+            "applicationCategory": "SecurityApplication",
+            "operatingSystem": "Cross-platform",
+            "url": "https://santor.app/",
+            "description": "A platform for managing secure access services and related tools."
+          }
+        ]
+      }
     </script>
   </head>
   <body>
@@ -37,7 +742,10 @@
       <header class="nav">
         <a class="brand" href="/" aria-label="Santor home"><span class="logo">S</span> Santor</a>
         <nav class="navlinks" aria-label="Main navigation">
-          <a href="/features/">Features</a><a href="/pricing/">Pricing</a><a class="hide-mobile" href="/faq/">FAQ</a><a class="hide-mobile" href="/contact/">Contact</a><a href="/login">Sign in</a><a class="btn primary" href="/register">Get started <span aria-hidden="true">↗</span></a>
+          <a href="/features/">Features</a><a href="/pricing/">Pricing</a
+          ><a class="hide-mobile" href="/faq/">FAQ</a
+          ><a class="hide-mobile" href="/contact/">Contact</a><a href="/login">Sign in</a
+          ><a class="btn primary" href="/register">Get started <span aria-hidden="true">↗</span></a>
         </nav>
       </header>
       <main>
@@ -45,45 +753,201 @@
           <div>
             <span class="eyebrow">Private access · One account</span>
             <h1>Private internet.<br /><span class="gradient">Clear control.</span></h1>
-            <p class="lead">Choose the connection option that fits you. Compare clear access durations and device limits, then manage your Santor service from one account.</p>
-            <div class="actions"><a class="btn primary" href="/register">Create your account <span aria-hidden="true">↗</span></a><a class="btn ghost" href="/pricing/">Explore plans</a></div>
-            <p class="micro">Transparent pricing · General and WireGuard options · Manage access in one place</p>
-            <div class="proofline"><span><b class="check">✓</b> Clear plan durations</span><span><b class="check">✓</b> Device limits shown upfront</span><span><b class="check">✓</b> One customer account</span></div>
+            <p class="lead">
+              Choose the connection option that fits you. Compare clear access durations and device
+              limits, then manage your Santor service from one account.
+            </p>
+            <div class="actions">
+              <a class="btn primary" href="/register"
+                >Create your account <span aria-hidden="true">↗</span></a
+              ><a class="btn ghost" href="/pricing/">Explore plans</a>
+            </div>
+            <p class="micro">
+              Transparent pricing · General and WireGuard options · Manage access in one place
+            </p>
+            <div class="proofline">
+              <span><b class="check">✓</b> Clear plan durations</span
+              ><span><b class="check">✓</b> Device limits shown upfront</span
+              ><span><b class="check">✓</b> One customer account</span>
+            </div>
           </div>
-          <div class="hero-visual" aria-label="Illustrative graphic representing a secure connection">
-            <div class="visual-top"><span>SANTOR / PRIVATE ACCESS</span><span class="live-pill">CONNECTION OPTIONS</span></div>
-            <div class="globe" aria-hidden="true"><span class="orbit"></span><span class="orbit two"></span><span class="orbit three"></span><span class="node n1"></span><span class="node n2"></span><span class="node n3"></span><span class="core">S</span></div>
-            <div class="connection-card"><div><div class="connection-label">Your access workspace</div><div class="connection-title">Choose. Connect. Manage.</div></div><div class="connection-state"><span class="state-dot"></span> Built around your account</div></div>
+          <div
+            class="hero-visual"
+            aria-label="Illustrative graphic representing a secure connection"
+          >
+            <div class="visual-top">
+              <span>SANTOR / PRIVATE ACCESS</span><span class="live-pill">CONNECTION OPTIONS</span>
+            </div>
+            <div class="globe" aria-hidden="true">
+              <span class="orbit"></span><span class="orbit two"></span
+              ><span class="orbit three"></span><span class="node n1"></span
+              ><span class="node n2"></span><span class="node n3"></span><span class="core">S</span>
+            </div>
+            <div class="connection-card">
+              <div>
+                <div class="connection-label">Your access workspace</div>
+                <div class="connection-title">Choose. Connect. Manage.</div>
+              </div>
+              <div class="connection-state">
+                <span class="state-dot"></span> Built around your account
+              </div>
+            </div>
           </div>
         </section>
         <section class="section" id="features">
-          <div class="section-head"><span class="eyebrow">Designed for clarity</span><h2>Less friction between you and your connection.</h2><p class="muted">The essentials are easy to compare before you create an account.</p></div>
+          <div class="section-head">
+            <span class="eyebrow">Designed for clarity</span>
+            <h2>Less friction between you and your connection.</h2>
+            <p class="muted">The essentials are easy to compare before you create an account.</p>
+          </div>
           <div class="feature-grid">
-            <article class="feature"><div class="feature-icon" aria-hidden="true">⌁</div><h3>Choose your connection</h3><p>Compare General Access and WireGuard plans, with the right duration and device allowance for each.</p><a class="text-link" href="/pricing/">Compare plans →</a></article>
-            <article class="feature"><div class="feature-icon" aria-hidden="true">◫</div><h3>Know what you pay</h3><p>Plan prices and access periods are shown upfront, so you can make an informed choice before checkout.</p><a class="text-link" href="/pricing/">See pricing →</a></article>
-            <article class="feature"><div class="feature-icon" aria-hidden="true">◎</div><h3>Manage in one place</h3><p>Use your Santor account to access available service and account-management features.</p><a class="text-link" href="/register">Create an account →</a></article>
+            <article class="feature">
+              <div class="feature-icon" aria-hidden="true">⌁</div>
+              <h3>Choose your connection</h3>
+              <p>
+                Compare General Access and WireGuard plans, with the right duration and device
+                allowance for each.
+              </p>
+              <a class="text-link" href="/pricing/">Compare plans →</a>
+            </article>
+            <article class="feature">
+              <div class="feature-icon" aria-hidden="true">◫</div>
+              <h3>Know what you pay</h3>
+              <p>
+                Plan prices and access periods are shown upfront, so you can make an informed choice
+                before checkout.
+              </p>
+              <a class="text-link" href="/pricing/">See pricing →</a>
+            </article>
+            <article class="feature">
+              <div class="feature-icon" aria-hidden="true">◎</div>
+              <h3>Manage in one place</h3>
+              <p>
+                Use your Santor account to access available service and account-management features.
+              </p>
+              <a class="text-link" href="/register">Create an account →</a>
+            </article>
           </div>
         </section>
         <section class="section" id="plans">
           <div class="pricing-band">
-            <div class="pricing-top"><div><span class="eyebrow">Straightforward plans</span><h2>Find your kind of access.</h2><p class="muted" style="margin:0">Start with General Access, or choose WireGuard for a dedicated protocol option.</p></div><a class="btn ghost" href="/pricing/">Compare all 8 plans ↗</a></div>
-            <div class="mini-plans">
-              <article class="mini-plan"><span class="mini-label">GENERAL · FREE</span><h3>General Free</h3><p class="price">Free</p><p class="period">3 days · 1 device</p><ul><li>No-cost starter plan</li><li>General access</li></ul></article>
-              <article class="mini-plan popular"><span class="mini-label">GENERAL · 1 MONTH</span><h3>General Pro 1M</h3><p class="price">$1.99</p><p class="period">30 days · 3 devices</p><ul><li>One-month access</li><li>General access</li></ul></article>
-              <article class="mini-plan"><span class="mini-label">GENERAL · 6 MONTHS</span><h3>General Pro 6M</h3><p class="price">$9.99</p><p class="period">180 days · 3 devices</p><ul><li>Six-month access</li><li>General access</li></ul></article>
-              <article class="mini-plan"><span class="mini-label">GENERAL · 12 MONTHS</span><h3>General Pro 12M</h3><p class="price">$14.99</p><p class="period">365 days · 3 devices</p><ul><li>Twelve-month access</li><li>General access</li></ul></article>
+            <div class="pricing-top">
+              <div>
+                <span class="eyebrow">Straightforward plans</span>
+                <h2>Find your kind of access.</h2>
+                <p class="muted" style="margin: 0">
+                  Start with General Access, or choose WireGuard for a dedicated protocol option.
+                </p>
+              </div>
+              <a class="btn ghost" href="/pricing/">Compare all 8 plans ↗</a>
             </div>
-            <div class="wg-callout"><div><strong>Prefer WireGuard?</strong><p>Plans from $4.99, with access durations from 30 to 365 days and up to 5 devices.</p></div><a class="btn ghost" href="/pricing/#wireguard">Explore WireGuard →</a></div>
-            <p class="pricing-note">Prices are in USD. Plans are access-duration packages; review the offer shown in your account before purchase.</p>
+            <div class="mini-plans">
+              <article class="mini-plan">
+                <span class="mini-label">GENERAL · FREE</span>
+                <h3>General Free</h3>
+                <p class="price">Free</p>
+                <p class="period">3 days · 1 device</p>
+                <ul>
+                  <li>No-cost starter plan</li>
+                  <li>General access</li>
+                </ul>
+              </article>
+              <article class="mini-plan popular">
+                <span class="mini-label">GENERAL · 1 MONTH</span>
+                <h3>General Pro 1M</h3>
+                <p class="price">$1.99</p>
+                <p class="period">30 days · 3 devices</p>
+                <ul>
+                  <li>One-month access</li>
+                  <li>General access</li>
+                </ul>
+              </article>
+              <article class="mini-plan">
+                <span class="mini-label">GENERAL · 6 MONTHS</span>
+                <h3>General Pro 6M</h3>
+                <p class="price">$9.99</p>
+                <p class="period">180 days · 3 devices</p>
+                <ul>
+                  <li>Six-month access</li>
+                  <li>General access</li>
+                </ul>
+              </article>
+              <article class="mini-plan">
+                <span class="mini-label">GENERAL · 12 MONTHS</span>
+                <h3>General Pro 12M</h3>
+                <p class="price">$14.99</p>
+                <p class="period">365 days · 3 devices</p>
+                <ul>
+                  <li>Twelve-month access</li>
+                  <li>General access</li>
+                </ul>
+              </article>
+            </div>
+            <div class="wg-callout">
+              <div>
+                <strong>Prefer WireGuard?</strong>
+                <p>
+                  Plans from $4.99, with access durations from 30 to 365 days and up to 5 devices.
+                </p>
+              </div>
+              <a class="btn ghost" href="/pricing/#wireguard">Explore WireGuard →</a>
+            </div>
+            <p class="pricing-note">
+              Prices are in USD. Plans are access-duration packages; review the offer shown in your
+              account before purchase.
+            </p>
           </div>
         </section>
         <section class="section" id="how-it-works">
-          <div class="section-head"><span class="eyebrow">How to get started</span><h2>Three clear steps. No guesswork.</h2><p class="muted">The public site explains your options; your account is where you continue.</p></div>
-          <div class="steps"><article class="step"><h3>Choose a plan</h3><p>Compare access type, duration, price, and supported device count.</p></article><article class="step"><h3>Create your account</h3><p>Register with your email and follow the available account flow.</p></article><article class="step"><h3>Manage your access</h3><p>Use the customer area to view and manage the services available to your account.</p></article></div>
+          <div class="section-head">
+            <span class="eyebrow">How to get started</span>
+            <h2>Three clear steps. No guesswork.</h2>
+            <p class="muted">
+              The public site explains your options; your account is where you continue.
+            </p>
+          </div>
+          <div class="steps">
+            <article class="step">
+              <h3>Choose a plan</h3>
+              <p>Compare access type, duration, price, and supported device count.</p>
+            </article>
+            <article class="step">
+              <h3>Create your account</h3>
+              <p>Register with your email and follow the available account flow.</p>
+            </article>
+            <article class="step">
+              <h3>Manage your access</h3>
+              <p>
+                Use the customer area to view and manage the services available to your account.
+              </p>
+            </article>
+          </div>
         </section>
-        <section class="section"><div class="cta-panel"><div><span class="eyebrow">Ready when you are</span><h2>Make your next connection simpler.</h2><p class="muted">Explore the plans, then continue through your Santor account.</p></div><div class="actions" style="margin:0"><a class="btn primary" href="/register">Get started ↗</a><a class="btn ghost" href="/faq/">Read the FAQ</a></div></div></section>
+        <section class="section">
+          <div class="cta-panel">
+            <div>
+              <span class="eyebrow">Ready when you are</span>
+              <h2>Make your next connection simpler.</h2>
+              <p class="muted">Explore the plans, then continue through your Santor account.</p>
+            </div>
+            <div class="actions" style="margin: 0">
+              <a class="btn primary" href="/register">Get started ↗</a
+              ><a class="btn ghost" href="/faq/">Read the FAQ</a>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer class="footer"><div><div class="footer-brand">Santor</div><div>Secure access. Clear choices.</div></div><nav class="footlinks" aria-label="Footer navigation"><a href="/features/">Features</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/contact/">Contact</a><a href="/imprint/">Imprint</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/refund/">Refunds</a></nav></footer>
+      <footer class="footer">
+        <div>
+          <div class="footer-brand">Santor</div>
+          <div>Secure access. Clear choices.</div>
+        </div>
+        <nav class="footlinks" aria-label="Footer navigation">
+          <a href="/features/">Features</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a
+          ><a href="/contact/">Contact</a><a href="/imprint/">Imprint</a
+          ><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/refund/">Refunds</a>
+        </nav>
+      </footer>
     </div>
   </body>
 </html>
