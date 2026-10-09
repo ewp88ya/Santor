@@ -69,6 +69,27 @@ jobs:
       - name: Seed database
         run: pnpm --filter @santor/api db:seed
 
+      - name: Verify PostgreSQL backup and restore in CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          backup_dir="${RUNNER_TEMP}/santor-backup-restore"
+          mkdir -p "$backup_dir"
+          docker run --rm --network host -e PGPASSWORD=santor -v "$backup_dir:/backup" postgres:16 \
+            pg_dump -h 127.0.0.1 -U santor -d santor --no-owner --no-privileges -f /backup/santor.sql
+          test -s "$backup_dir/santor.sql"
+          docker run --rm --network host -e PGPASSWORD=santor postgres:16 \
+            createdb -h 127.0.0.1 -U santor santor_restore_ci
+          docker run --rm --network host -e PGPASSWORD=santor -v "$backup_dir:/backup" postgres:16 \
+            psql -h 127.0.0.1 -U santor -d santor_restore_ci -v ON_ERROR_STOP=1 -f /backup/santor.sql
+          restored_tables="$(docker run --rm --network host -e PGPASSWORD=santor postgres:16 \
+            psql -h 127.0.0.1 -U santor -d santor_restore_ci -At -c "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public'")"
+          test "$restored_tables" -gt 0
+          echo "PostgreSQL backup/restore passed; restored public tables: $restored_tables"
+          docker run --rm --network host -e PGPASSWORD=santor postgres:16 \
+            dropdb -h 127.0.0.1 -U santor --if-exists santor_restore_ci
+          rm -rf "$backup_dir"
+
       - name: ESLint check
         run: pnpm exec eslint .
 
