@@ -540,7 +540,12 @@ function CustomerDashboard() {
   };
 
   const displayName = dashboard.user.name || dashboard.user.email.split('@')[0];
-  const initials = displayName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
   const remainingDays = subscription?.lifecycle.remainingDays;
 
   return (
@@ -548,16 +553,22 @@ function CustomerDashboard() {
       <header className="customer-topbar">
         <a className="customer-brand" href="/" aria-label="Santor home">
           <span className="customer-brand-mark">S</span>
-          <span>Santor<span className="customer-brand-dot">.</span></span>
+          <span>
+            Santor<span className="customer-brand-dot">.</span>
+          </span>
         </a>
         <nav className="customer-nav" aria-label="Dashboard navigation">
-          <a className="active" href="#overview">Overview</a>
+          <a className="active" href="#overview">
+            Overview
+          </a>
           <a href="#services">Services</a>
           <a href="#ai-assistant">Santor AI</a>
           <a href="#subscription-history">History</a>
         </nav>
         <div className="customer-account">
-          <span className="customer-avatar" aria-hidden="true">{initials || 'S'}</span>
+          <span className="customer-avatar" aria-hidden="true">
+            {initials || 'S'}
+          </span>
           <span className="customer-account-name">{displayName}</span>
           <Button onClick={logout}>Log out</Button>
         </div>
@@ -565,20 +576,46 @@ function CustomerDashboard() {
 
       <section className="dashboard-welcome" id="overview">
         <div>
-          <p className="eyebrow"><span className="status-pulse" /> YOUR SANTOR WORKSPACE</p>
-          <h1>Your internet,<br /><span>under your control.</span></h1>
-          <p className="dashboard-welcome-copy">Welcome back, {displayName}. Your services, subscription and AI assistant are all in one place.</p>
+          <p className="eyebrow">
+            <span className="status-pulse" /> YOUR SANTOR WORKSPACE
+          </p>
+          <h1>
+            Your internet,
+            <br />
+            <span>under your control.</span>
+          </h1>
+          <p className="dashboard-welcome-copy">
+            Welcome back, {displayName}. Your services, subscription and AI assistant are all in one
+            place.
+          </p>
         </div>
         <aside className="workspace-status">
-          <div className="workspace-status-top"><span>ACCOUNT STATUS</span><span className="workspace-status-icon">✦</span></div>
-          <div className="workspace-status-main"><span className="status-pulse" /> Account ready</div>
-          <p>Signed in as <strong>{dashboard.user.email}</strong></p>
-          <div className="workspace-status-footer"><span>EMAIL VERIFICATION</span><strong>{dashboard.user.emailVerified ? 'Verified' : 'Not verified'}</strong></div>
+          <div className="workspace-status-top">
+            <span>ACCOUNT STATUS</span>
+            <span className="workspace-status-icon">✦</span>
+          </div>
+          <div className="workspace-status-main">
+            <span className="status-pulse" /> Account ready
+          </div>
+          <p>
+            Signed in as <strong>{dashboard.user.email}</strong>
+          </p>
+          <div className="workspace-status-footer">
+            <span>EMAIL VERIFICATION</span>
+            <strong>{dashboard.user.emailVerified ? 'Verified' : 'Not verified'}</strong>
+          </div>
         </aside>
       </section>
 
-      <section className={`subscription-card premium-subscription-card ${expired ? 'expired' : 'active'}`}>
-        <div className="subscription-visual" aria-hidden="true"><span>✳</span><i /><i /><i /></div>
+      <section
+        className={`subscription-card premium-subscription-card ${expired ? 'expired' : 'active'}`}
+      >
+        <div className="subscription-visual" aria-hidden="true">
+          <span>✳</span>
+          <i />
+          <i />
+          <i />
+        </div>
         <div className="subscription-main">
           <p className="eyebrow">YOUR CURRENT PLAN</p>
           {expired ? (
@@ -589,76 +626,246 @@ function CustomerDashboard() {
             </>
           ) : (
             <>
-              <div className="subscription-title-row"><h2>{subscription.product.name}</h2><span className="plan-status"><span className="status-pulse" /> {subscription.status}</span></div>
-              <p className="subscription-description">Your Santor access plan is active and ready to manage.</p>
+              <div className="subscription-title-row">
+                <h2>{subscription.product.name}</h2>
+                <span className="plan-status">
+                  <span className="status-pulse" /> {subscription.status}
+                </span>
+              </div>
+              <p className="subscription-description">
+                Your Santor access plan is active and ready to manage.
+              </p>
               <div className="subscription-metrics">
-                <div><span>TIME REMAINING</span><strong>{remainingDays ?? '—'} <small>days</small></strong></div>
-                <div><span>PLAN CODE</span><strong>{subscription.product.code}</strong></div>
+                <div>
+                  <span>TIME REMAINING</span>
+                  <strong>
+                    {remainingDays ?? '—'} <small>days</small>
+                  </strong>
+                </div>
+                <div>
+                  <span>PLAN CODE</span>
+                  <strong>{subscription.product.code}</strong>
+                </div>
               </div>
             </>
           )}
         </div>
         <div className="subscription-actions">
           <span className="subscription-renewal-label">NEED MORE TIME?</span>
-          {dashboard.upgrade.available ? <Button onClick={() => { window.location.href = dashboard.upgrade.url; }}>Explore plans <span aria-hidden="true">↗</span></Button> : <a className="customer-secondary-link" href="/pricing/">Explore plans <span aria-hidden="true">↗</span></a>}
+          {dashboard.upgrade.available ? (
+            <Button
+              onClick={() => {
+                window.location.href = dashboard.upgrade.url;
+              }}
+            >
+              Explore plans <span aria-hidden="true">↗</span>
+            </Button>
+          ) : (
+            <a className="customer-secondary-link" href="/pricing/">
+              Explore plans <span aria-hidden="true">↗</span>
+            </a>
+          )}
         </div>
       </section>
 
       <section className="customer-section" id="services">
-        <div className="customer-section-heading"><div><p className="eyebrow">ONE ACCOUNT, CONNECTED TOOLS</p><h2>Your services</h2><p>Everything you use with Santor, at a glance.</p></div><span className="section-count">03 SERVICES</span></div>
+        <div className="customer-section-heading">
+          <div>
+            <p className="eyebrow">ONE ACCOUNT, CONNECTED TOOLS</p>
+            <h2>Your services</h2>
+            <p>Everything you use with Santor, at a glance.</p>
+          </div>
+          <span className="section-count">03 SERVICES</span>
+        </div>
         <div className="customer-service-grid premium-service-grid">
           <article className="service-tile vpn-tile">
-            <div className="service-tile-top"><span className="service-icon">⌁</span><span className="service-category">CONNECTIVITY</span></div>
-            <h3>Secure network access</h3><p>Review your current access plan and find the right next step for your VPN service.</p>
-            <a href="#current-plan" onClick={(event) => { event.preventDefault(); document.querySelector('.premium-subscription-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>View access <span>↗</span></a>
+            <div className="service-tile-top">
+              <span className="service-icon">⌁</span>
+              <span className="service-category">CONNECTIVITY</span>
+            </div>
+            <h3>Secure network access</h3>
+            <p>
+              Review your current access plan and find the right next step for your VPN service.
+            </p>
+            <a
+              href="#current-plan"
+              onClick={(event) => {
+                event.preventDefault();
+                document
+                  .querySelector('.premium-subscription-card')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            >
+              View access <span>↗</span>
+            </a>
           </article>
           <article className="service-tile tunnel-tile">
-            <div className="service-tile-top"><span className="service-icon">◈</span><span className="service-category">TUNNEL & PROXY</span></div>
-            <h3>Proxy access</h3><p>Keep your supported secure tunnel options and connection information within reach.</p>
+            <div className="service-tile-top">
+              <span className="service-icon">◈</span>
+              <span className="service-category">TUNNEL & PROXY</span>
+            </div>
+            <h3>Proxy access</h3>
+            <p>
+              Keep your supported secure tunnel options and connection information within reach.
+            </p>
             <span className="service-tile-note">Service overview</span>
           </article>
           <article className="service-tile ai-tile">
-            <div className="service-tile-top"><span className="service-icon">✳</span><span className="service-category">AI ASSISTANT</span></div>
-            <h3>Santor AI</h3><p>Ask questions and get assistance through your authenticated Santor account.</p>
-            <a href="#ai-assistant">Open assistant <span>↗</span></a>
+            <div className="service-tile-top">
+              <span className="service-icon">✳</span>
+              <span className="service-category">AI ASSISTANT</span>
+            </div>
+            <h3>Santor AI</h3>
+            <p>Ask questions and get assistance through your authenticated Santor account.</p>
+            <a href="#ai-assistant">
+              Open assistant <span>↗</span>
+            </a>
           </article>
         </div>
       </section>
 
       <div className="dashboard-lower-grid">
         <section className="ai-chat-card premium-ai-card" id="ai-assistant">
-          <div className="ai-card-heading"><div><p className="eyebrow">YOUR PERSONAL AI</p><h2>Ask Santor AI<span className="customer-brand-dot">.</span></h2><p>What can we help you figure out today?</p></div><span className="ai-orb" aria-hidden="true">✳</span></div>
-          <label className="ai-chat-label" htmlFor="ai-message">YOUR MESSAGE</label>
-          <textarea id="ai-message" value={aiMessage} onChange={(event) => setAiMessage(event.target.value)} placeholder="Ask a question about your Santor services..." rows={4} disabled={aiLoading} />
-          <div className="ai-chat-actions"><span>Authenticated with your Santor account</span><Button onClick={sendAiMessage} disabled={!aiMessage.trim() || aiLoading}>{aiLoading ? 'Sending...' : 'Send message ↗'}</Button></div>
-          {aiReply && <div className="ai-chat-reply" role="status"><strong>AI response</strong><p>{aiReply}</p></div>}
-          {aiError && <p className="ai-chat-error" role="alert">{aiError}</p>}
+          <div className="ai-card-heading">
+            <div>
+              <p className="eyebrow">YOUR PERSONAL AI</p>
+              <h2>
+                Ask Santor AI<span className="customer-brand-dot">.</span>
+              </h2>
+              <p>What can we help you figure out today?</p>
+            </div>
+            <span className="ai-orb" aria-hidden="true">
+              ✳
+            </span>
+          </div>
+          <label className="ai-chat-label" htmlFor="ai-message">
+            YOUR MESSAGE
+          </label>
+          <textarea
+            id="ai-message"
+            value={aiMessage}
+            onChange={(event) => setAiMessage(event.target.value)}
+            placeholder="Ask a question about your Santor services..."
+            rows={4}
+            disabled={aiLoading}
+          />
+          <div className="ai-chat-actions">
+            <span>Authenticated with your Santor account</span>
+            <Button onClick={sendAiMessage} disabled={!aiMessage.trim() || aiLoading}>
+              {aiLoading ? 'Sending...' : 'Send message ↗'}
+            </Button>
+          </div>
+          {aiReply && (
+            <div className="ai-chat-reply" role="status">
+              <strong>AI response</strong>
+              <p>{aiReply}</p>
+            </div>
+          )}
+          {aiError && (
+            <p className="ai-chat-error" role="alert">
+              {aiError}
+            </p>
+          )}
         </section>
 
         <section className="telegram-card premium-telegram-card" id="telegram">
-          <div className="telegram-card-top"><span className="telegram-symbol">➤</span><span className={`telegram-status ${dashboard.telegram.connected ? 'connected' : 'not-connected'}`}><span className="status-pulse" />{dashboard.telegram.connected ? 'CONNECTED' : 'NOT CONNECTED'}</span></div>
+          <div className="telegram-card-top">
+            <span className="telegram-symbol">➤</span>
+            <span
+              className={`telegram-status ${dashboard.telegram.connected ? 'connected' : 'not-connected'}`}
+            >
+              <span className="status-pulse" />
+              {dashboard.telegram.connected ? 'CONNECTED' : 'NOT CONNECTED'}
+            </span>
+          </div>
           <p className="eyebrow">YOUR MESSAGING LINK</p>
           <h2>Telegram</h2>
-          <p>{dashboard.telegram.connected ? `Connected${dashboard.telegram.username ? ` as @${dashboard.telegram.username}` : ''}. Telegram AI access is ready.` : 'Link your account to use Santor AI through Telegram.'}</p>
-          {!dashboard.telegram.connected && <Button onClick={connectTelegram} disabled={telegramLoading}>{telegramLoading ? 'Connecting...' : 'Connect Telegram ↗'}</Button>}
-          {telegramLink && <p className="telegram-link">If Telegram did not open, <a href={telegramLink} target="_blank" rel="noreferrer">open the connection link</a>.</p>}
-          {telegramError && <p className="telegram-error" role="alert">{telegramError}</p>}
+          <p>
+            {dashboard.telegram.connected
+              ? `Connected${dashboard.telegram.username ? ` as @${dashboard.telegram.username}` : ''}. Telegram AI access is ready.`
+              : 'Link your account to use Santor AI through Telegram.'}
+          </p>
+          {!dashboard.telegram.connected && (
+            <Button onClick={connectTelegram} disabled={telegramLoading}>
+              {telegramLoading ? 'Connecting...' : 'Connect Telegram ↗'}
+            </Button>
+          )}
+          {telegramLink && (
+            <p className="telegram-link">
+              If Telegram did not open,{' '}
+              <a href={telegramLink} target="_blank" rel="noreferrer">
+                open the connection link
+              </a>
+              .
+            </p>
+          )}
+          {telegramError && (
+            <p className="telegram-error" role="alert">
+              {telegramError}
+            </p>
+          )}
         </section>
       </div>
 
       <section className="subscription-list premium-history" id="subscription-history">
-        <div className="customer-section-heading"><div><p className="eyebrow">YOUR ACCOUNT ACTIVITY</p><h2>Subscription history</h2><p>Review your current and previous plans.</p></div><span className="section-count">{String(dashboard.subscriptions.length).padStart(2, '0')} RECORDS</span></div>
-        {dashboard.subscriptions.length ? dashboard.subscriptions.map((item, index) => (
-          <article className="history-row" key={`${item.product.code}-${item.status}-${index}`}>
-            <span className="history-plan-icon">◈</span>
-            <div className="history-plan"><strong>{item.product.name}</strong><span>{item.product.code}</span></div>
-            <span className={`history-status ${item.lifecycle.expired ? 'expired' : 'active'}`}><span className="status-pulse" />{item.status}</span>
-            <div className="history-remaining"><span>REMAINING</span><strong>{item.lifecycle.remainingDays ?? 0} days</strong></div>
-            {item.lifecycle.canUpgrade && <Button onClick={() => { window.location.href = item.lifecycle.upgradeUrl; }}>Upgrade ↗</Button>}
-          </article>
-        )) : <div className="history-empty"><p>No subscription history yet.</p><a href="/pricing/">Explore available plans ↗</a></div>}
+        <div className="customer-section-heading">
+          <div>
+            <p className="eyebrow">YOUR ACCOUNT ACTIVITY</p>
+            <h2>Subscription history</h2>
+            <p>Review your current and previous plans.</p>
+          </div>
+          <span className="section-count">
+            {String(dashboard.subscriptions.length).padStart(2, '0')} RECORDS
+          </span>
+        </div>
+        {dashboard.subscriptions.length ? (
+          dashboard.subscriptions.map((item, index) => (
+            <article className="history-row" key={`${item.product.code}-${item.status}-${index}`}>
+              <span className="history-plan-icon">◈</span>
+              <div className="history-plan">
+                <strong>{item.product.name}</strong>
+                <span>{item.product.code}</span>
+              </div>
+              <span className={`history-status ${item.lifecycle.expired ? 'expired' : 'active'}`}>
+                <span className="status-pulse" />
+                {item.status}
+              </span>
+              <div className="history-remaining">
+                <span>REMAINING</span>
+                <strong>{item.lifecycle.remainingDays ?? 0} days</strong>
+              </div>
+              {item.lifecycle.canUpgrade && (
+                <Button
+                  onClick={() => {
+                    window.location.href = item.lifecycle.upgradeUrl;
+                  }}
+                >
+                  Upgrade ↗
+                </Button>
+              )}
+            </article>
+          ))
+        ) : (
+          <div className="history-empty">
+            <p>No subscription history yet.</p>
+            <a href="/pricing/">Explore available plans ↗</a>
+          </div>
+        )}
       </section>
-      <footer className="customer-dashboard-footer"><a className="customer-brand" href="/"><span className="customer-brand-mark">S</span><span>Santor<span className="customer-brand-dot">.</span></span></a><span>Private internet. Clear control.</span><nav><a href="/pricing/">Plans</a><a href="/faq/">Help & FAQ</a><a href="/privacy/">Privacy</a></nav></footer>
+      <footer className="customer-dashboard-footer">
+        <a className="customer-brand" href="/">
+          <span className="customer-brand-mark">S</span>
+          <span>
+            Santor<span className="customer-brand-dot">.</span>
+          </span>
+        </a>
+        <span>Private internet. Clear control.</span>
+        <nav>
+          <a href="/pricing/">Plans</a>
+          <a href="/faq/">Help & FAQ</a>
+          <a href="/privacy/">Privacy</a>
+        </nav>
+      </footer>
     </main>
   );
 }
