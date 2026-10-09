@@ -3,7 +3,7 @@
 
 ## Reconciliation baseline
 
-**Authoritative repository baseline:** Santor `main` @ `e1eac169652ed0b6c811ec0ff804bf3906c1d342` (2026-10-09; includes CI Compose validation/container build and roadmap scope adjustment). Application features remain covered by the passing regression pipeline.
+**Latest application/CI baseline:** Santor `main` @ `a5f0a939b7b2c0c0bfa0cd1c35b502aae9d2fd12` (2026-10-09; CI/Telegram operational-script validation updates). The subsequent roadmap-only commit records the latest acceptance evidence.
 
 The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are superseded. This file is reconciled to the current `main` baseline. Phase 13 runtime completion is also recorded against LN-NeU `main` @ `9e2ac08d70d350ba5f6516b40f8edb3ae886290c`.
 
@@ -289,7 +289,7 @@ Application / Service Layer
 ## 13.2 External Service API Readiness
 - 🟢 API authentication / service-to-service authentication foundation
 - 🟢 API permission / scope model foundation
-- 🟢 Telegram integration implementation exists in Santor (webhook, AI dispatch, account identity/linking); final production contract verification remains pending
+- 🟢 Telegram webhook/AI dispatch/account-linking implementation exists. Production-check script now targets `api.santor.app`, verifies API health + Telegram `getMe`/`getWebhookInfo`, and POSTs a harmless no-message update to verify the real webhook contract. Webhook registration no longer discards pending updates. Live bot verification still requires the deployment's Telegram credentials and is not claimed as passed here.
 - ⏸️ Ads endpoint / data contract — deferred to external consumer project
 - 🟢 External-client rate limiting foundation
 - 🟢 External API audit logging foundation
@@ -319,7 +319,8 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 - ✅ Santor CI validates `docker/docker-compose.yml` with isolated placeholder values and builds the API container image (`e1eac16`, CI PASS).
 - ✅ LN-NeU CI validates production Compose with `--env-file`, fails fast when required AI/provider credentials are missing, and builds backend/AI images explicitly (`c4608c7`, CI PASS).
 - ✅ LN-NeU integration tests now use a CI-only port override, an explicit mock provider and dummy service credential; test failures are no longer suppressed (`c4608c7`, Test Pipeline PASS).
-- 🟡 Remaining: review health/recovery behavior, image publishing/deployment, backup/restore, monitoring, and rollback automation in a disposable environment.
+- ✅ PostgreSQL backup→restore round-trip is now tested in both CI pipelines.
+- 🟡 Remaining: review health/recovery behavior, image publishing/deployment, monitoring, and rollback automation in a disposable environment.
 - 🟡 Document production DB/Redis migration, backup/restore, monitoring, recovery, and rollback procedures as runnable acceptance checks.
 - 🟡 Validate existing public web health and frontend asset routes without altering DNS or touching `eu-core-01`.
 - ⏭️ Real node connectivity, new-node provisioning, regional failover, and capacity tests that require additional infrastructure are skipped/deferred by scope.
@@ -333,7 +334,8 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 ## Acceptance work that can be completed without Contabo / a new EU VPS
 - ✅ Production Compose configuration and container-image build/reference validation in CI (Santor + LN-NeU).
 - ✅ Application smoke checks, dashboard/API contract checks, auth/ownership/security regression, and integration tests have CI coverage; latest Santor CI and LN-NeU CI/Test Pipeline passed.
-- ⏳ Backup/restore and rollback procedures still need executable disposable-environment validation.
+- ✅ PostgreSQL backup→restore round-trip passed in both Santor and LN-NeU CI.
+- ⏳ Deployment rollback and full service recovery still need executable disposable-environment validation.
 - 🟡 Payment provider routing, webhook replay/race/idempotency, reconciliation, refund and failure recovery tested with deterministic mocks/sandbox fixtures.
 - 🟡 Release checklist, environment variable validation, secrets policy, monitoring/health/recovery requirements, and deployment rollback instructions.
 
@@ -351,11 +353,11 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 # EXECUTION GATE
 
 **Current GitHub main / CI snapshot (2026-10-09):**
-- Santor `main`: `e1eac169652ed0b6c811ec0ff804bf3906c1d342` — [CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37953244086), including Compose config validation and API container build.
-- LN-NeU `main`: `c4608c73aff4cc5eecc8c9ea4500008b52e612c9` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37953114693) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37953114542), including real container builds and non-masked integration tests.
+- Santor latest application/CI baseline: `a5f0a939b7b2c0c0bfa0cd1c35b502aae9d2fd12` — [CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37954256220), including Compose validation, API container build, database backup/restore, browser QA, and shell-script syntax validation.
+- LN-NeU latest main: `b51a5990cd53f1abc5c6c488466e7cbde7c78b3d` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37953786952) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37953786955), including real container builds, strict integration tests, and database backup/restore.
 - Phase 13 LN-NeU ↔ Santor integration remains **LOCKED / COMPLETE** based on recorded runtime evidence. Do not reopen it without a verified regression.
 - Customer dashboard UI release remains locked separately; mocked authenticated browser QA proves UI behavior only, not real VPN operations.
 - SentinelX inventory: `eu-core-01`, `asia-vpn-01`, and `dev-wsl` are connected. The Asia host audit is read-only; Docker daemon access is denied to the SentinelX user. Disk use is 80%, so any future maintenance needs a separate approved plan.
 
-**Execution snapshot:** the software-only Compose/CI fixes and non-destructive public smoke checks are complete and green. Public Santor routes `/`, `/login`, `/register`, `/dashboard`, `/pricing/`, `/features/`, `/faq/`, `/privacy/`, and `/terms/` returned HTTP 200; TLS certificate is valid through 2027-01-02. SentinelX still cannot inspect Docker because its agent user lacks socket permissions, and the Asia host root disk remains at 80% usage. Next software-only tasks are executable backup/restore and rollback checks plus review of monitoring/recovery. Contabo/EU VPS provisioning and real regional VPN failover are intentionally bypassed; live payments and live VPN acceptance remain explicitly skipped/deferred. Preserve local-only artifacts and never promote secrets or test environment values into production configuration.
+**Execution snapshot:** software-only Compose/CI fixes, PostgreSQL backup→restore round-trips in CI, and non-destructive public smoke checks are green. Public Santor routes `/`, `/login`, `/register`, `/dashboard`, `/pricing/`, `/features/`, `/faq/`, `/privacy/`, and `/terms/` returned HTTP 200; `https://api.santor.app/api/v1/health` and `/api/v1/site/config` returned JSON HTTP 200; TLS certificate is valid through 2027-01-02. The website domain intentionally serves the SPA fallback for `/api/*`, so API probes must use `api.santor.app`. Telegram scripts now test the correct API host and preserve pending updates, but live bot verification still requires existing Telegram credentials. SentinelX cannot inspect Docker because its agent user lacks socket permissions, and the Asia host root disk remains at 80% usage. Remaining software-only tasks are deployment rollback/recovery and monitoring checks. Contabo/EU VPS provisioning, live payment execution, and real VPN regional failover/connectivity acceptance are explicitly skipped/deferred. Preserve local-only artifacts and never promote secrets or test environment values into production configuration.
 <!-- prettier-ignore-end -->
