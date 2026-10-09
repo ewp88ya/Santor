@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: santor
+      POSTGRES_PASSWORD: santor_recovery_test_only
+      POSTGRES_DB: santor
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U santor -d santor']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  migrate:
+    image: santor-api:recovery-test
+    restart: 'no'
+    environment: &api-env
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://santor:santor_recovery_test_only@postgres:5432/santor?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${SANTOR_RECOVERY_JWT_SECRET:-santor-recovery-test-jwt-secret-only-not-production}
+      SANTOR_INTERNAL_WEBHOOK_SECRET: santor-recovery-test-webhook-secret-only-not-production
+      CORS_ORIGINS: http://127.0.0.1:13001
+    command: ['pnpm', 'prisma', 'migrate', 'deploy']
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  api:
+    image: santor-api:recovery-test
+    restart: unless-stopped
+    environment: *api-env
+    ports:
+      - '127.0.0.1:13001:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/v1/health').then(async r => { const x = await r.json(); process.exit(r.ok && x.status === 'ok' && x.database === 'connected' && x.redis === 'connected' ? 0 : 1) }).catch(() => process.exit(1))"
+      interval: 2s
+      timeout: 4s
+      retries: 30
