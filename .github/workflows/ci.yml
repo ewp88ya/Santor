@@ -100,6 +100,25 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Validate production Compose and build API container
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cat > .env.ci <<'EOF'
+          POSTGRES_USER=santor
+          POSTGRES_PASSWORD=ci-only-not-for-deployment
+          POSTGRES_DB=santor
+          DATABASE_URL=postgresql://santor:ci-only-not-for-deployment@postgres:5432/santor
+          REDIS_URL=redis://redis:6379
+          JWT_SECRET=ci-only-jwt-secret-not-for-production-0001
+          SANTOR_INTERNAL_WEBHOOK_SECRET=ci-only-webhook-secret-not-for-production-0001
+          CORS_ORIGINS=https://santor.app
+          EOF
+          trap 'rm -f .env.ci' EXIT
+          docker compose --env-file .env.ci -f docker/docker-compose.yml config --quiet
+          docker build -f docker/api/Dockerfile -t santor-api:ci .
+
       - name: Start web preview
         run: |
           nohup pnpm --filter @santor/web preview --host 127.0.0.1 > /tmp/santor-web-preview.log 2>&1 &
