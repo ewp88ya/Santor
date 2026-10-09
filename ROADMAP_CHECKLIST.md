@@ -302,62 +302,57 @@ External Service API Readiness retains reusable authentication, scope enforcemen
 
 ---
 
-# PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE
+# PHASE 14 — INFRASTRUCTURE & DEPLOYMENT READINESS (SCOPE-ADJUSTED)
 
-## 14.1 Provider Gate
-- ✅ Provider roles selected: OVHcloud = EU Core; Contabo = EU VPN; Hostinger Indonesia = ASIA VPN
-- 🟡 LightNode = APAC/US candidate; production customer-VPN use remains provider-policy confirmation dependent
-- ✅ OVH public/customer VPN excluded from architecture; OVH reserved for EU Core
-- ✅ Contabo WireGuard/WGDashboard path validated from provider documentation
-- ✅ Hostinger WireGuard deployment path validated from provider documentation
+**Scope decision (2026-10-09):** skip Contabo EU-VPN provisioning and any new EU VPS provisioning. This is an intentional scope exclusion, not an infrastructure deployment success. Do not touch `eu-core-01`, change DNS, or move existing VPN services as part of this work.
 
-## 14.2 VPS Provisioning
-- 🟢 Purchase/provisioning specifications locked for EU-CORE-01, EU-VPN-01, ASIA-VPN-01
-- 🟡 EU-CORE-01 — OVH VPS-2, Gravelines, Ubuntu 24.04 LTS; SentinelX host `eu-core-01` is registered/online. No host-level audit was run in this pass; retain the no-touch constraint. Provider-account confirmation and provisioning metadata still need recording.
-- ⏳ EU-VPN-01 — Contabo Cloud VPS 4, EU region, Ubuntu 24.04 LTS; no matching Contabo host is currently registered in SentinelX. Provisioning remains the active provider gate.
-- 🟡 ASIA-VPN-01 candidate — existing Hostinger host `asia-vpn-01` is registered/online at `187.126.113.168`; read-only audit observed Ubuntu 24.04, 1 vCPU, approximately 3.8 GiB RAM, and 48 GB root disk. Proxy/WireGuard provisioner systemd units are active, but Docker inspection was blocked by agent permissions. Because this host also serves Santor web, dedicated VPN isolation and provider-account confirmation are not yet signed off.
-- ⏳ For each role, record provider account confirmation, public IPv4/IPv6, datacenter, renewal price, and provisioning timestamp; run a role-appropriate baseline audit before marking provisioned/production-ready.
-- ⏳ Register any newly purchased server in SentinelX and validate live connectivity.
-- ⏸️ LightNode — do not provision until commercial/customer VPN policy is explicitly confirmed
+## 14.1 Provider / host scope
+- ✅ Provider-role architecture retained as documentation: OVH = EU Core; Hostinger Indonesia = ASIA VPN candidate.
+- ⏭️ Contabo / EU-VPN-01 purchase and provisioning — explicitly skipped by user; no purchase or server creation.
+- ⏭️ New EU VPS provisioning — explicitly skipped by user.
+- ⏸️ LightNode — remains out of scope until provider/customer-VPN policy is confirmed.
+- 🔒 `eu-core-01` remains protected; no host-level command, restart, deployment, or configuration change is authorized.
+- 🟡 Existing `asia-vpn-01` (`187.126.113.168`) is online on Ubuntu 24.04 with Nginx, Docker, `santor-proxy-provisioner`, and `santor-wireguard-provisioner` active. SentinelX runs as an unprivileged user and cannot read Docker daemon state; root disk is 80% used (38G/48G). This host is **not** signed off as isolated production VPN infrastructure and must not be described as such.
 
-## Remaining Phase 14
-- 🟢 Local Docker stack
-- ⏳ Production Docker stack
-- ⏳ Nginx / SSL
-- ⏳ Production PostgreSQL / Redis
-- 🟢 Santor API/Web local foundation
-- ⏳ LN-NeU production service
-- ⏳ WireGuard servers/nodes/agent/peer provisioning/health/connectivity
-- ⏳ General Free isolated infrastructure and capacity/queue policy
-- ⏳ General Pro Smart VPN/Smart VProxy production nodes
-- ⏳ WG production nodes/device enforcement/connectivity/recovery
-- ⏳ Monitoring/logging/backup/restore/CI/CD/rollback/secrets/health/recovery
+## 14.2 Work that can be completed without new VPS
+- ✅ Local/application foundation and CI pipeline are in place.
+- 🟡 Review and validate production Compose, environment interpolation, image references, health checks, resource/log limits, secret placeholders, and deployment/rollback automation in CI.
+- 🟡 Document production DB/Redis migration, backup/restore, monitoring, recovery, and rollback procedures as runnable acceptance checks.
+- 🟡 Validate existing public web health and frontend asset routes without altering DNS or touching `eu-core-01`.
+- ⏭️ Real node connectivity, new-node provisioning, regional failover, and capacity tests that require additional infrastructure are skipped/deferred by scope.
 
-**Gate condition:** Phase 13 remains LOCKED / COMPLETE. Phase 14 provider gate is complete; VPS provisioning is the active next gate. No server is marked provisioned until the provider account confirms creation and live connectivity.
+**Phase 14 outcome:** infrastructure *software/readiness work* can close after CI evidence and runbook validation. New VPS provisioning and multi-region runtime acceptance are excluded, not passed.
+
 ---
 
-# PHASE 15 — PRODUCTION LAUNCH & LIVE VALIDATION
+# PHASE 15 — RELEASE ACCEPTANCE & LIVE-DEPENDENCY EXCLUSIONS
 
-- ⏳ Production DB migration/seed/configuration
-- ⏳ Redis/API/Web/LN-NeU/WG/Nginx/SSL deployment
-- ⏳ Monitoring/backup/CI/CD/smoke/rollback
-- ⏳ Live payment execution
-- ⏳ Live payment webhooks/reconciliation/replay/race/idempotency
-- ⏳ Live refund/failure recovery/routing hardening
-- ⏳ Live VPN/node provisioning/connectivity/failover
-- ⏳ Production security sign-off
+## Acceptance work that can be completed without Contabo / a new EU VPS
+- 🟡 Production Compose configuration and container-image reference validation in CI.
+- 🟡 Application smoke checks, dashboard/API contract checks, auth/ownership/security regression, and integration tests.
+- 🟡 Backup/restore and rollback procedures validated in disposable CI environments where feasible.
+- 🟡 Payment provider routing, webhook replay/race/idempotency, reconciliation, refund and failure recovery tested with deterministic mocks/sandbox fixtures.
+- 🟡 Release checklist, environment variable validation, secrets policy, monitoring/health/recovery requirements, and deployment rollback instructions.
+
+## Explicitly skipped / cannot be claimed as live-verified
+- ⏭️ Contabo and new EU VPS provisioning.
+- ⏭️ Production migration or deployment to `eu-core-01`; protected host remains untouched.
+- ⏭️ Live payment execution, provider webhooks, real refunds/reconciliation unless provider sandbox/live credentials and a separately authorized test window are available.
+- ⏭️ Real VPN tunnel connectivity, new-node provisioning, regional failover, and production capacity tests requiring the skipped infrastructure.
+- ⏭️ Full production security sign-off for components that have not been deployed and observed in the target runtime.
+
+**Phase 15 outcome:** close the software/release-readiness scope only after CI and deterministic acceptance checks pass. Live-only items remain explicitly `SKIPPED/DEFERRED`; do not relabel them as production PASS.
 
 ---
 
 # EXECUTION GATE
 
-**Latest application-code baseline (checked 2026-10-09; subsequent Santor commits are roadmap/documentation-only):**
-- Santor: `51082fca9daaab53a3033221b716b8626278d1d1` — [CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37949658872).
-- LN-NeU: `b06ec0076198e1a214a43bcb5db5329ffde835c5` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304567) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304481).
-- Phase 13 LN-NeU ↔ Santor core integration remains **LOCKED / COMPLETE** based on the recorded live runtime validation. The newer main commits do not reopen that gate.
-- Customer dashboard UI release is locked separately; browser UI checks used a mocked authenticated payload and do not certify live VPN operations.
+**Current GitHub main / CI snapshot (2026-10-09):**
+- Santor `main`: `b8b2adade6d71815320e378bcb8503a1371d90a9` — [latest CI PASS](https://github.com/ewp88ya/Santor/actions/runs/37951970260). Latest change is roadmap-only; application baseline remains covered by the prior successful CI.
+- LN-NeU `main`: `b06ec0076198e1a214a43bcb5db5329ffde835c5` — [CI PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304567) and [Test Pipeline PASS](https://github.com/ewp88ya/LN-NeU/actions/runs/37934304481).
+- Phase 13 LN-NeU ↔ Santor integration remains **LOCKED / COMPLETE** based on recorded runtime evidence. Do not reopen it without a verified regression.
+- Customer dashboard UI release remains locked separately; mocked authenticated browser QA proves UI behavior only, not real VPN operations.
+- SentinelX inventory: `eu-core-01`, `asia-vpn-01`, and `dev-wsl` are connected. The Asia host audit is read-only; Docker daemon access is denied to the SentinelX user. Disk use is 80%, so any future maintenance needs a separate approved plan.
 
-**Phase 14 live inventory snapshot (2026-10-09):** SentinelX currently lists three connected hosts: `eu-core-01`, `asia-vpn-01`, and `dev-wsl`. The Hostinger `asia-vpn-01` read-only audit confirmed Ubuntu 24.04 and active Santor proxy/WireGuard provisioner units, but Docker state could not be verified with the agent's current permissions. Do not label it a dedicated, production-ready VPN node until isolation and runtime checks pass. The Contabo `EU-VPN-01` host is not yet registered.
-
-**Immediate next action:** continue **PHASE 14 — VPS / PRODUCTION INFRASTRUCTURE** with the Contabo EU-VPN-01 provider provisioning gate, then verify provider-account creation, register the host in SentinelX, and run the baseline audit. Existing connected hosts are not automatically marked production-ready. Provisioning requires the provider purchase/account action; no server purchase or paid change was made in this pass. Preserve local-only environment artifacts and do not promote them into the roadmap baseline. Phase 13 remains closed.
+**Execution order from here:** complete software-only security/configuration/CI fixes, validate them in GitHub Actions, then run non-destructive public application smoke checks. Contabo/EU VPS steps are intentionally bypassed. Preserve local-only artifacts and never promote secrets or test environment values into production configuration.
 <!-- prettier-ignore-end -->
