@@ -123,6 +123,14 @@ The previous roadmap PR (#1) and the former `4dd32899` integration snapshot are 
 
 **Current assessment:** dashboard application layer complete; repeat E2E after material integration changes.
 
+**Customer dashboard redesign — 2026-10-09 release lock**
+- ✅ Premium authenticated customer workspace UI implemented in `apps/web/src/App.tsx` and `apps/web/src/App.css`.
+- ✅ Responsive browser QA passed at desktop (1440px) and mobile (390px): dashboard sections render, CSS/assets load, no horizontal overflow, no browser console errors.
+- ✅ Production smoke check passed: `/`, `/login`, `/register`, `/dashboard`, `/pricing/` returned HTTP 200; referenced JS/CSS assets returned HTTP 200; `nginx -t` passed.
+- ✅ Production deployment preserves the public marketing homepage and static public routes.
+- ⚠️ Browser dashboard checks used a mocked authenticated API payload; this locks the **UI release only**, not a real customer-session E2E, VPN connectivity, or backend feature readiness.
+- 🔒 **UI progress locked** at Santor `main` commit `b9d1ab9ae40938ef75fb3c3a053dac5b2169f8eb`. Reopen only for a scoped dashboard change or a verified regression.
+
 ---
 
 # PHASE 7 — VPN NODE MANAGEMENT ARCHITECTURE
