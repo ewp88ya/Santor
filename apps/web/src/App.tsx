@@ -167,29 +167,109 @@ function PublicSite() {
           <p>Account creation happens when you choose to use a Santor service.</p>
         </div>
         <div className="plan-grid">
-          <article className="plan-card">
-            <span className="service-label">START</span>
-            <h3>Free</h3>
-            <p>Explore the Santor experience and manage your account.</p>
-            <a className="primary-action compact" href="/register">
-              Create account
-            </a>
-          </article>
-          <article className="plan-card featured">
-            <span className="service-label">CUSTOMER</span>
-            <h3>Choose your service</h3>
-            <p>Subscribe to VPN, tunnel or other Santor services from your customer account.</p>
-            <a className="primary-action compact" href="/register">
-              Get started
-            </a>
-          </article>
+          {[
+            {
+              code: 'general-free',
+              name: 'General Free',
+              price: 'Free',
+              term: '3 days',
+              devices: '1 device',
+              description: 'Try the general access plan.',
+            },
+            {
+              code: 'general-pro-1m',
+              name: 'General Pro 1M',
+              price: '$1.99',
+              term: '30 days',
+              devices: '3 devices',
+              description: 'General access for one month.',
+            },
+            {
+              code: 'general-pro-6m',
+              name: 'General Pro 6M',
+              price: '$9.99',
+              term: '180 days',
+              devices: '3 devices',
+              description: 'General access for six months.',
+            },
+            {
+              code: 'general-pro-12m',
+              name: 'General Pro 12M',
+              price: '$14.99',
+              term: '365 days',
+              devices: '3 devices',
+              description: 'General access for twelve months.',
+            },
+            {
+              code: 'wg-1m',
+              name: 'WireGuard 1M',
+              price: '$4.99',
+              term: '30 days',
+              devices: '5 devices',
+              description: 'WireGuard access for one month.',
+            },
+            {
+              code: 'wg-3m',
+              name: 'WireGuard 3M',
+              price: '$12.99',
+              term: '90 days',
+              devices: '5 devices',
+              description: 'WireGuard access for three months.',
+            },
+            {
+              code: 'wg-6m',
+              name: 'WireGuard 6M',
+              price: '$22.99',
+              term: '180 days',
+              devices: '5 devices',
+              description: 'WireGuard access for six months.',
+            },
+            {
+              code: 'wg-12m',
+              name: 'WireGuard 12M',
+              price: '$39.99',
+              term: '365 days',
+              devices: '5 devices',
+              description: 'WireGuard access for twelve months.',
+            },
+          ].map((plan) => (
+            <article
+              className={plan.code === 'general-pro-1m' ? 'plan-card featured' : 'plan-card'}
+              key={plan.code}
+            >
+              <span className="service-label">
+                {plan.code.startsWith('wg-') ? 'WIREGUARD' : 'GENERAL ACCESS'}
+              </span>
+              <h3>{plan.name}</h3>
+              <p className="plan-price">{plan.price}</p>
+              <p>{plan.description}</p>
+              <ul className="plan-facts">
+                <li>{plan.term} access</li>
+                <li>{plan.devices}</li>
+              </ul>
+              <a className="primary-action compact" href="/register">
+                Create account
+              </a>
+            </article>
+          ))}
         </div>
+        <p className="pricing-disclaimer">
+          Prices are shown in USD. Confirm the current offer and final price in your account before
+          purchase. Plans are access-duration packages; recurring billing must not be implied unless
+          checkout explicitly discloses it.
+        </p>
       </section>
 
       <footer className="public-footer">
         <strong>Santor</strong>
         <span>Secure access. Private by design.</span>
-        <a href="/">Customer area</a>
+        <div className="legal-links">
+          <a href="/imprint">Imprint</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/refund">Refunds &amp; cancellation</a>
+          <a href="/login">Customer login</a>
+        </div>
       </footer>
     </main>
   );
@@ -949,23 +1029,194 @@ function AdminDashboard() {
   );
 }
 
+type LegalPage = 'imprint' | 'privacy' | 'terms' | 'refund';
+
+function LegalScreen({ page }: { page: LegalPage }) {
+  const pages: Record<
+    LegalPage,
+    { title: string; intro: string; sections: Array<[string, string]> }
+  > = {
+    imprint: {
+      title: 'Imprint / Legal notice',
+      intro:
+        'Provider identification must be completed by the Santor business operator before commercial launch. This draft is not a substitute for a legally reviewed German Impressum.',
+      sections: [
+        [
+          'Service provider',
+          'Publish the actual legal name, legal form, service address and authorized representative before accepting customers.',
+        ],
+        [
+          'Contact',
+          'Publish a monitored business contact email and any legally required contact details before launch.',
+        ],
+        [
+          'Registration and tax details',
+          'Where applicable, enter the commercial register, registration court and VAT identification number. Do not publish details that have not been issued.',
+        ],
+      ],
+    },
+    privacy: {
+      title: 'Privacy notice',
+      intro:
+        'The final privacy notice must reflect the actual hosting, authentication, analytics, AI and payment providers used by Santor.',
+      sections: [
+        [
+          'Data controller',
+          'Identify the responsible legal person or individual and provide a working privacy contact.',
+        ],
+        [
+          'Data and purposes',
+          'Document account and authentication data, subscription and payment references, device/service connection data, support requests, security logs and AI inputs actually processed.',
+        ],
+        [
+          'Legal basis and retention',
+          'Specify the applicable GDPR legal basis, retention periods, processors, international transfers and safeguards for each activity.',
+        ],
+        [
+          'Your rights',
+          'Explain how users can exercise their GDPR rights and contact the competent supervisory authority.',
+        ],
+        [
+          'Cookies and third parties',
+          'Document cookies, analytics and third-party services actually enabled. Do not claim tracking is absent until verified.',
+        ],
+      ],
+    },
+    terms: {
+      title: 'Terms of service',
+      intro:
+        'This is a preparation draft, not final contractual terms. Complete and review the terms before accepting paid orders.',
+      sections: [
+        [
+          'Service and eligibility',
+          'Define the VPN/tunnel services offered, supported clients, availability limits, eligibility and account responsibilities.',
+        ],
+        [
+          'Plans and billing',
+          'Show the selected plan, total price, currency, access duration, applicable taxes and whether any plan renews automatically before the customer confirms an order.',
+        ],
+        [
+          'Acceptable use',
+          'Describe lawful use, security restrictions, abuse handling, suspension and complaint procedures.',
+        ],
+        [
+          'Availability and support',
+          'State realistic service limitations, maintenance practices and customer support channels. Avoid unverified uptime promises.',
+        ],
+        [
+          'Consumer rights',
+          'Explain applicable German/EU consumer rights and any valid statutory exceptions, reviewed for the actual service and delivery model.',
+        ],
+      ],
+    },
+    refund: {
+      title: 'Refunds and cancellation',
+      intro:
+        'Complete and check the commercial refund policy against mandatory German/EU consumer law before enabling live checkout.',
+      sections: [
+        [
+          'Cancellation',
+          'Explain how customers cancel accounts or recurring plans, when cancellation takes effect and how confirmation is provided. Do not imply recurring billing unless checkout discloses it.',
+        ],
+        [
+          'Refund requests',
+          'Publish the real support contact, required order information, processing steps and response time after approval.',
+        ],
+        [
+          'Statutory rights',
+          'Explain applicable withdrawal and conformity rights, including any valid exceptions and required customer acknowledgements for digital services.',
+        ],
+        [
+          'Billing disputes',
+          'Provide a clear path for customers to contact Santor about a billing issue.',
+        ],
+      ],
+    },
+  };
+  const content = pages[page];
+  return (
+    <main className="legal-page">
+      <nav className="public-nav">
+        <a className="brand" href="/">
+          Santor
+        </a>
+        <div className="public-nav-actions">
+          <a href="/#plans">Plans</a>
+          <a href="/login">Customer login</a>
+        </div>
+      </nav>
+      <article className="legal-document">
+        <a className="legal-back" href="/">
+          ← Back to Santor
+        </a>
+        <span className="eyebrow">SANTOR · LEGAL</span>
+        <h1>{content.title}</h1>
+        <p className="legal-intro">{content.intro}</p>
+        <div className="legal-notice">
+          <strong>Pre-launch review required</strong>
+          <p>
+            This page is a structured draft. It does not claim that Santor has completed legal
+            review or supplied all mandatory business information. Complete and approve it before
+            accepting live payments.
+          </p>
+        </div>
+        {content.sections.map(([heading, body]) => (
+          <section key={heading}>
+            <h2>{heading}</h2>
+            <p>{body}</p>
+          </section>
+        ))}
+        <p className="legal-updated">
+          Draft prepared 9 October 2026 · Requires operator completion and legal review
+        </p>
+      </article>
+      <footer className="public-footer">
+        <strong>Santor</strong>
+        <div className="legal-links">
+          <a href="/imprint">Imprint</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/refund">Refunds &amp; cancellation</a>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
 function App() {
+  const legalRoutes: Record<string, LegalPage> = {
+    '/imprint': 'imprint',
+    '/privacy': 'privacy',
+    '/terms': 'terms',
+    '/refund': 'refund',
+  };
+  const legalPage = legalRoutes[window.location.pathname];
+
   useEffect(() => {
     const authRoute =
       window.location.pathname === '/login' || window.location.pathname === '/register';
     const adminRoute = window.location.hostname === 'admin.santor.app';
 
-    document.title = authRoute
-      ? window.location.pathname === '/register'
-        ? 'Create a Santor account'
-        : 'Log in to Santor'
-      : 'Santor — Private internet, secure access, intelligent service';
+    document.title = legalPage
+      ? (
+          {
+            imprint: 'Imprint',
+            privacy: 'Privacy notice',
+            terms: 'Terms of service',
+            refund: 'Refunds and cancellation',
+          } as Record<LegalPage, string>
+        )[legalPage] + ' | Santor'
+      : authRoute
+        ? window.location.pathname === '/register'
+          ? 'Create a Santor account'
+          : 'Log in to Santor'
+        : 'Santor — Private internet, secure access, intelligent service';
 
     const robots = document.querySelector('meta[name="robots"]');
     if (robots) {
       robots.setAttribute(
         'content',
-        authRoute || adminRoute
+        authRoute || adminRoute || Boolean(legalPage)
           ? 'noindex, nofollow, noarchive'
           : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
       );
@@ -973,9 +1224,10 @@ function App() {
 
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', 'https://santor.app/');
-  }, []);
+  }, [legalPage]);
 
   if (isAdminHost) return <AdminDashboard />;
+  if (legalPage) return <LegalScreen page={legalPage} />;
 
   const hasCustomerToken = Boolean(localStorage.getItem('santor_token'));
   const hasAuthIntent =
