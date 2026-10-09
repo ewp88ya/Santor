@@ -9,7 +9,7 @@ async function withProbeTimeout<T>(operation: () => Promise<T>, probe: string): 
       Promise.resolve().then(operation),
       new Promise<never>((_, reject) => {
         timer = setTimeout(
-          () => reject(new Error(probe + ' health probe timed out after ' + PROBE_TIMEOUT_MS + 'ms')),
+          () => reject(new Error(`${probe} health probe timed out after ${PROBE_TIMEOUT_MS}ms`)),
           PROBE_TIMEOUT_MS,
         );
       }),
@@ -38,8 +38,9 @@ export default async function healthRoute(app: FastifyInstance) {
       app.log.error(error);
     }
 
+    const healthy = database === 'connected' && redis === 'connected';
     return {
-      status: database === 'connected' && redis === 'connected' ? 'ok' : 'degraded',
+      status: healthy ? 'ok' : 'degraded',
       service: 'santor-api',
       database,
       redis,

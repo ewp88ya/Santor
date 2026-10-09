@@ -26,10 +26,15 @@ describe('API health endpoint', () => {
       vi.fn().mockResolvedValue([{ '?column?': 1 }]),
       vi.fn().mockResolvedValue('PONG'),
     );
+
     const response = await app.inject({ method: 'GET', url: '/health' });
+
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
-      status: 'ok', service: 'santor-api', database: 'connected', redis: 'connected',
+      status: 'ok',
+      service: 'santor-api',
+      database: 'connected',
+      redis: 'connected',
     });
   });
 
@@ -38,9 +43,13 @@ describe('API health endpoint', () => {
       vi.fn().mockRejectedValue(new Error('database unavailable')),
       vi.fn().mockResolvedValue('PONG'),
     );
+
     const response = await app.inject({ method: 'GET', url: '/health' });
+
     expect(response.json()).toMatchObject({
-      status: 'degraded', database: 'disconnected', redis: 'connected',
+      status: 'degraded',
+      database: 'disconnected',
+      redis: 'connected',
     });
   });
 
@@ -49,11 +58,15 @@ describe('API health endpoint', () => {
       () => new Promise<never>(() => {}),
       vi.fn().mockResolvedValue('PONG'),
     );
+
     const startedAt = Date.now();
     const response = await app.inject({ method: 'GET', url: '/health' });
+
     expect(Date.now() - startedAt).toBeLessThan(2_500);
     expect(response.json()).toMatchObject({
-      status: 'degraded', database: 'disconnected', redis: 'connected',
+      status: 'degraded',
+      database: 'disconnected',
+      redis: 'connected',
     });
   }, 4_000);
 });
