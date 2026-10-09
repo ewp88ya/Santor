@@ -88,6 +88,9 @@ jobs:
       - name: Prettier check
         run: pnpm exec prettier --check .
 
+      - name: Validate server-rendered public website
+        run: python3 scripts/check-public-site.py
+
       - name: API typecheck
         run: pnpm --filter @santor/api typecheck
 
