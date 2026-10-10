@@ -20,6 +20,7 @@ import {
 } from '../wireguard/wireguard.service.js';
 
 import { auditLog } from '../audit/audit.service.js';
+import { provisionProxyDevice, revokeProxyProfile } from '../proxy/proxy.service.js';
 
 function devicePublicKey() {
   return randomUUID().replaceAll('-', '');
@@ -142,6 +143,41 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
 
   ensureActiveVPNAccess(vpnAccess.active);
 
+  // VLESS uses the independent proxy provisioner and must never create a WG peer.
+  if (vpnAccess.protocol === 'vless') {
+    if (!vpnAccess.vpnNode.active) {
+      throw createError(503, 'Proxy node is inactive');
+    }
+
+    const activeDevices = await countActiveDevices(vpnAccessId);
+    const product = vpnAccess.license?.subscription?.product;
+    if (!product) throw createError(503, 'Subscription product not configured');
+    const deviceLimit = getDeviceLimit(product.code, product.deviceLimit);
+    if (activeDevices >= deviceLimit) {
+      throw createError(403, `Device limit reached (${deviceLimit})`);
+    }
+
+    const device = await createDevice({
+      vpnAccessId,
+      name,
+      publicKey: devicePublicKey(),
+    });
+    try {
+      await provisionProxyDevice(device.id, device.name);
+    } catch (error) {
+      await prisma.device.delete({ where: { id: device.id } });
+      throw error;
+    }
+    await auditLog({
+      userId,
+      action: 'DEVICE_CREATED',
+      resource: 'DEVICE',
+      resourceId: device.id,
+      metadata: { protocol: 'vless' },
+    });
+    return findDeviceById(device.id);
+  }
+
   ensureValidVPNNode(vpnAccess.vpnNode);
 
   const activeDevices = await countActiveDevices(vpnAccessId);
@@ -258,7 +294,12 @@ export async function disableDevice(userId: string, deviceId: string) {
     return device;
   }
 
-  await revokeWireGuardPeer(deviceId);
+  if (device.vpnAccess?.protocol === 'vless') {
+    // Revoke the proxy identity before marking the device inactive.
+    await revokeProxyProfile(userId, deviceId);
+  } else {
+    await revokeWireGuardPeer(deviceId);
+  }
 
   const result = await revokeDevice(deviceId);
 
