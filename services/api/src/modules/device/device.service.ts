@@ -149,10 +149,6 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
 
   // VLESS uses the independent proxy provisioner and must never create a WG peer.
   if (vpnAccess.protocol === 'vless') {
-    if (!vpnAccess.vpnNode.active) {
-      throw createError(503, 'Proxy node is inactive');
-    }
-
     const activeDevices = await countActiveDevices(vpnAccessId);
     const product = vpnAccess.license?.subscription?.product;
     if (!product) throw createError(503, 'Subscription product not configured');
@@ -250,7 +246,9 @@ export async function getDevice(userId: string, id: string) {
 
   ensureActiveVPNAccess(device.vpnAccess?.active ?? false);
 
-  ensureValidVPNNode(device.vpnAccess?.vpnNode);
+  if (device.vpnAccess?.protocol !== 'vless') {
+    ensureValidVPNNode(device.vpnAccess?.vpnNode);
+  }
 
   return device;
 }
@@ -280,7 +278,9 @@ export async function getDevices(userId: string, vpnAccessId: string) {
 
   ensureActiveVPNAccess(vpnAccess.active);
 
-  ensureValidVPNNode(vpnAccess.vpnNode);
+  if (vpnAccess.protocol !== 'vless') {
+    ensureValidVPNNode(vpnAccess.vpnNode);
+  }
 
   return listDevices(vpnAccessId);
 }
