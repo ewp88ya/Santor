@@ -15,29 +15,39 @@ type SiteConfig = {
   services: Array<{ title: string; description: string; label: string }>;
 };
 
+type DashboardSubscription = {
+  id: string;
+  status: string;
+  lifecycle: {
+    expired: boolean;
+    remainingDays: number | null;
+    canUpgrade: boolean;
+    upgradeUrl: string;
+  };
+  product: { name: string; code: string };
+  license?: {
+    id: string;
+    status: string;
+    vpnAccess: {
+      id: string;
+      protocol: string;
+      active: boolean;
+      devices: Array<{
+        id: string;
+        name: string;
+        active: boolean;
+        downloadUrl?: string | null;
+        profileUrl?: string | null;
+      }>;
+    } | null;
+  } | null;
+};
+
 type Dashboard = {
   user: { id: string; name: string | null; email: string; status: string; emailVerified: boolean };
   telegram: { connected: boolean; username: string | null; linkedAt: string | null };
-  subscription: {
-    status: string;
-    lifecycle: {
-      expired: boolean;
-      remainingDays: number | null;
-      canUpgrade: boolean;
-      upgradeUrl: string;
-    };
-    product: { name: string; code: string };
-  } | null;
-  subscriptions: Array<{
-    status: string;
-    lifecycle: {
-      expired: boolean;
-      remainingDays: number | null;
-      canUpgrade: boolean;
-      upgradeUrl: string;
-    };
-    product: { name: string; code: string };
-  }>;
+  subscription: DashboardSubscription | null;
+  subscriptions: DashboardSubscription[];
   upgrade: { available: boolean; url: string };
 };
 
@@ -422,6 +432,11 @@ function CustomerDashboard() {
   const [telegramLink, setTelegramLink] = useState('');
   const [telegramError, setTelegramError] = useState('');
   const [telegramLoading, setTelegramLoading] = useState(false);
+  const [tunnelDeviceName, setTunnelDeviceName] = useState('Android - Happ');
+  const [tunnelProfile, setTunnelProfile] = useState('');
+  const [tunnelProfileError, setTunnelProfileError] = useState('');
+  const [tunnelProfileNotice, setTunnelProfileNotice] = useState('');
+  const [tunnelProfileLoading, setTunnelProfileLoading] = useState(false);
   const [loading, setLoading] = useState(Boolean(token));
 
   useEffect(() => {
@@ -536,6 +551,78 @@ function CustomerDashboard() {
       setTelegramError(err instanceof Error ? err.message : 'Unable to connect Telegram');
     } finally {
       setTelegramLoading(false);
+    }
+  };
+
+  const generateTunnelProfile = async () => {
+    if (!token || !subscription?.license?.id || tunnelProfileLoading) return;
+    setTunnelProfileLoading(true);
+    setTunnelProfileError('');
+    setTunnelProfileNotice('');
+    setTunnelProfile('');
+    try {
+      let access = subscription.license.vpnAccess;
+      if (!access) {
+        const accessResponse = await fetch(`${API_URL}/api/v1/vpn-access`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ licenseId: subscription.license.id }),
+        });
+        const accessData = await accessResponse.json().catch(() => null);
+        if (!accessResponse.ok) {
+          throw new Error(accessData?.error?.message ?? accessData?.message ?? 'Unable to provision tunnel access');
+        }
+        access = accessData;
+      }
+      if (access.protocol !== 'vless' || !access.active) {
+        throw new Error('Tunnel access is not active or is not a VLESS profile.');
+      }
+
+      let device = access.devices?.find((item) => item.active);
+      if (!device) {
+        const deviceResponse = await fetch(`${API_URL}/api/v1/devices`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ vpnAccessId: access.id, name: tunnelDeviceName.trim() || 'Android - Happ' }),
+        });
+        const deviceData = await deviceResponse.json().catch(() => null);
+        if (!deviceResponse.ok || !deviceData?.id) {
+          throw new Error(deviceData?.error?.message ?? deviceData?.message ?? 'Unable to provision this device');
+        }
+        device = deviceData;
+      }
+
+      const profileResponse = await fetch(
+        `${API_URL}/api/v1/proxy/profile/${encodeURIComponent(device.id)}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const profileData = await profileResponse.json().catch(() => null);
+      if (!profileResponse.ok || typeof profileData?.profile !== 'string' || !profileData.profile.startsWith('vless://')) {
+        throw new Error(profileData?.error?.message ?? profileData?.message ?? 'The proxy provisioner did not return a valid VLESS profile');
+      }
+      setTunnelProfile(profileData.profile);
+      setTunnelProfileNotice('Profile generated after server provisioning succeeded. Import it into Happ on Android.');
+    } catch (err) {
+      setTunnelProfileError(err instanceof Error ? err.message : 'Unable to generate tunnel profile');
+    } finally {
+      setTunnelProfileLoading(false);
+    }
+  };
+
+  const copyTunnelProfile = async () => {
+    if (!tunnelProfile) return;
+    setTunnelProfileError('');
+    try {
+      await navigator.clipboard.writeText(tunnelProfile);
+      setTunnelProfileNotice('Profile copied. Open Happ and import from clipboard.');
+    } catch {
+      setTunnelProfileError('Clipboard access was blocked by the browser. Select and copy the profile text manually.');
     }
   };
 
@@ -723,6 +810,54 @@ function CustomerDashboard() {
           </article>
         </div>
       </section>
+
+      {subscription?.product.code.toUpperCase().startsWith('GENERAL-') && !expired && (
+        <section className="customer-section tunnel-profile-panel" id="tunnel-profile">
+          <div className="customer-section-heading">
+            <div>
+              <p className="eyebrow">SECURE TUNNEL · VLESS</p>
+              <h2>Connect with Happ</h2>
+              <p>Create a device-bound profile. Santor shows the import link only after the proxy server confirms provisioning.</p>
+            </div>
+            <span className="section-count">ANDROID · HAPP</span>
+          </div>
+          <div className="tunnel-profile-card">
+            <label htmlFor="tunnel-device-name">Device name</label>
+            <input
+              id="tunnel-device-name"
+              value={tunnelDeviceName}
+              onChange={(event) => setTunnelDeviceName(event.target.value)}
+              maxLength={80}
+              placeholder="Android - Happ"
+              disabled={tunnelProfileLoading}
+            />
+            <div className="tunnel-profile-actions">
+              <Button onClick={generateTunnelProfile} disabled={tunnelProfileLoading || !subscription.license?.id}>
+                {tunnelProfileLoading ? 'Provisioning…' : tunnelProfile ? 'Regenerate / Verify Profile' : 'Generate Profile'}
+              </Button>
+              <Button onClick={copyTunnelProfile} disabled={!tunnelProfile}>
+                Copy Profile
+              </Button>
+            </div>
+            {tunnelProfile && (
+              <label htmlFor="tunnel-profile-url">VLESS profile · import into Happ</label>
+            )}
+            {tunnelProfile && (
+              <textarea
+                id="tunnel-profile-url"
+                className="tunnel-profile-value"
+                value={tunnelProfile}
+                readOnly
+                rows={3}
+                spellCheck={false}
+              />
+            )}
+            {tunnelProfileNotice && <p className="tunnel-profile-notice" role="status">{tunnelProfileNotice}</p>}
+            {tunnelProfileError && <p className="tunnel-profile-error" role="alert">{tunnelProfileError}</p>}
+            <p className="tunnel-profile-footnote">The profile is private to this account and device. Do not share it. Generate does not mark the VPN test as passed; connection, public IP, DNS and bypass routing still need to be checked on Android.</p>
+          </div>
+        </section>
+      )}
 
       <div className="dashboard-lower-grid">
         <section className="ai-chat-card premium-ai-card" id="ai-assistant">
