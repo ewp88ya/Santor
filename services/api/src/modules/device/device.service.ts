@@ -160,7 +160,7 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
     const device = await createDevice({
       vpnAccessId,
       name,
-      publicKey: devicePublicKey(),
+      publicKey: null,
     });
     try {
       await provisionProxyDevice(device.id);
