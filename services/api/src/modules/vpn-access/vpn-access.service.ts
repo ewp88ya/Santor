@@ -8,7 +8,6 @@ import {
   findVPNAccessByLicense,
   findVPNAccessOwnership,
   findActiveVPNNode,
-  findActiveProxyNode,
 } from './vpn-access.repository.js';
 
 import { getVPNMode } from '../../config/vpn-mode.js';
@@ -92,11 +91,10 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
     return existing;
   }
 
-  const vpnNode = protocol === 'vless'
-    ? await findActiveProxyNode(db)
-    : await findActiveVPNNode(db);
+  // VLESS uses the proxy provisioner independently of VPNNode/WireGuard.
+  const vpnNode = protocol === 'wireguard' ? await findActiveVPNNode(db) : null;
 
-  if (!vpnNode) {
+  if (protocol === 'wireguard' && !vpnNode) {
     throw createError(503, 'No active VPN node available');
   }
 
@@ -107,7 +105,7 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
       {
         licenseId,
         protocol,
-        vpnNodeId: vpnNode.id,
+        vpnNodeId: vpnNode?.id ?? null,
       },
       db,
     );
