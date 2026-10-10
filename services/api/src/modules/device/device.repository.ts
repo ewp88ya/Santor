@@ -1,6 +1,6 @@
 import { prisma } from '../../config/database.js';
 
-export async function createDevice(data: { vpnAccessId: string; name: string; publicKey: string }) {
+export async function createDevice(data: { vpnAccessId: string; name: string; publicKey: string | null }) {
   return prisma.device.create({
     data,
   });
