@@ -141,6 +141,10 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
 
   ensureActiveSubscription(vpnAccess.license?.subscription);
 
+  if (vpnAccess.license?.status !== 'active') {
+    throw createError(403, 'Active license required');
+  }
+
   ensureActiveVPNAccess(vpnAccess.active);
 
   // VLESS uses the independent proxy provisioner and must never create a WG peer.
