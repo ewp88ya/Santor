@@ -115,6 +115,9 @@ jobs:
       - name: Validate operational shell scripts
         run: bash -n scripts/register-telegram-webhook.sh scripts/telegram-production-check.sh scripts/deploy-public-site.sh scripts/test-deployment-recovery.sh services/api/scripts/test-local.sh
 
+      - name: Proxy provisioner unit tests
+        run: python3 -m unittest discover -s ops/proxy-provisioner -p 'test_*.py' -v
+
       - name: API typecheck
         run: pnpm --filter @santor/api typecheck
 

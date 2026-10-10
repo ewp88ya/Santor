@@ -3,6 +3,8 @@ import json
 import os
 import re
 import subprocess
+import socket
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
@@ -13,6 +15,7 @@ KEY_FILE = Path("/etc/santor-proxy/provisioning.key")
 USERS_FILE = Path("/etc/santor-proxy/users.json")
 XRAY_CONFIG = Path("/opt/santor/ops/xray/config.json")
 XRAY_BIN = "/usr/local/bin/xray"
+XRAY_CONTAINER_GID = 65532
 USER_RE = re.compile(r"^[0-9a-fA-F-]{36}$")
 
 def auth(h):
@@ -80,13 +83,38 @@ def render(users):
             {"protocol": "blackhole", "tag": "blocked"}
         ]
     }
+    previous_config = XRAY_CONFIG.read_bytes() if XRAY_CONFIG.exists() else None
     tmp = XRAY_CONFIG.with_suffix(".tmp")
     tmp.write_text(json.dumps(cfg, indent=2) + "\n")
+    os.chown(tmp, 0, XRAY_CONTAINER_GID)
     os.chmod(tmp, 0o640)
+    try:
+        subprocess.run([XRAY_BIN, "run", "-test", "-config", str(tmp)], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
     tmp.replace(XRAY_CONFIG)
-    subprocess.run([XRAY_BIN, "run", "-test", "-config", str(XRAY_CONFIG)], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    subprocess.run(["docker", "restart", "santor-xray"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    subprocess.run(["docker", "inspect", "--format", "{{.State.Running}}", "santor-xray"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        subprocess.run(["docker", "exec", "santor-xray", XRAY_BIN, "run", "-test", "-config", "/etc/xray/config.json"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        subprocess.run(["docker", "restart", "santor-xray"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            try:
+                with socket.create_connection(("127.0.0.1", 10000), timeout=1):
+                    break
+            except OSError:
+                time.sleep(1)
+        else:
+            raise RuntimeError("Xray container did not reopen its inbound listener within 30 seconds")
+    except Exception:
+        if previous_config is not None:
+            rollback = XRAY_CONFIG.with_suffix(".rollback")
+            rollback.write_bytes(previous_config)
+            os.chown(rollback, 0, XRAY_CONTAINER_GID)
+            os.chmod(rollback, 0o640)
+            rollback.replace(XRAY_CONFIG)
+            subprocess.run(["docker", "restart", "santor-xray"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        raise
 
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, code, payload):
