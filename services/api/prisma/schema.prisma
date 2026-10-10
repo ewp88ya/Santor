@@ -197,8 +197,8 @@ model VPNAccess {
   licenseId String  @unique
   license   License @relation(fields: [licenseId], references: [id], onDelete: Cascade)
 
-  vpnNodeId String
-  vpnNode   VPNNode @relation(fields: [vpnNodeId], references: [id])
+  vpnNodeId String?
+  vpnNode   VPNNode? @relation(fields: [vpnNodeId], references: [id])
 
   protocol String
 
