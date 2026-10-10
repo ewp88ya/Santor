@@ -21,21 +21,33 @@ function encode(value: string) {
   return encodeURIComponent(value);
 }
 
+export async function provisionProxyDevice(deviceId: string, deviceName: string) {
+  const uuid = uuidV5(deviceId);
+  const email = `santor-${deviceId}@proxy`;
+  await provisionProxyUser(uuid, email);
+}
+
 export async function getProxyProfile(userId: string, deviceId: string) {
   const device = await findDeviceById(deviceId);
   if (!device || !device.active) {
     throw createError(404, 'Active device not found');
   }
 
-  const subscription = device.vpnAccess?.license?.subscription;
+  const access = device.vpnAccess;
+  const subscription = access?.license?.subscription;
   if (!subscription || subscription.userId !== userId) {
-    throw createError(403, 'Device does not belong to current user');
+    throw createError(404, 'Device not found');
+  }
+  if (subscription.status !== 'active' || (subscription.endDate && subscription.endDate.getTime() <= Date.now())) {
+    throw createError(403, 'Active subscription required');
+  }
+  if (!access?.active || access.protocol !== 'vless') {
+    throw createError(409, 'Active VLESS access required');
   }
 
+  // Only return a profile after the remote provisioner confirms this user exists.
+  await provisionProxyDevice(device.id, device.name);
   const uuid = uuidV5(device.id);
-  const email = `santor-${device.id}@proxy`;
-  await provisionProxyUser(uuid, email);
-
   const name = `Santor Proxy - ${device.name}`;
   const query = new URLSearchParams({
     encryption: 'none',
