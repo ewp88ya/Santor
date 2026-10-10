@@ -21,7 +21,7 @@ function encode(value: string) {
   return encodeURIComponent(value);
 }
 
-export async function provisionProxyDevice(deviceId: string, deviceName: string) {
+export async function provisionProxyDevice(deviceId: string) {
   const uuid = uuidV5(deviceId);
   const email = `santor-${deviceId}@proxy`;
   await provisionProxyUser(uuid, email);
