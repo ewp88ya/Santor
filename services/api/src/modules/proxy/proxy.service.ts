@@ -34,11 +34,12 @@ export async function getProxyProfile(userId: string, deviceId: string) {
   }
 
   const access = device.vpnAccess;
-  const subscription = access?.license?.subscription;
-  if (!subscription || subscription.userId !== userId) {
+  const license = access?.license;
+  const subscription = license?.subscription;
+  if (!license || !subscription || subscription.userId !== userId) {
     throw createError(404, 'Device not found');
   }
-  if (subscription.status !== 'active' || (subscription.endDate && subscription.endDate.getTime() <= Date.now())) {
+  if (license.status !== 'active' || subscription.status !== 'active' || (subscription.endDate && subscription.endDate.getTime() <= Date.now())) {
     throw createError(403, 'Active subscription required');
   }
   if (!access?.active || access.protocol !== 'vless') {
