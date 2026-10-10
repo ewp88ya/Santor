@@ -163,7 +163,7 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
       publicKey: devicePublicKey(),
     });
     try {
-      await provisionProxyDevice(device.id, device.name);
+      await provisionProxyDevice(device.id);
     } catch (error) {
       await prisma.device.delete({ where: { id: device.id } });
       throw error;
