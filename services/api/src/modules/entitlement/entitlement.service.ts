@@ -81,24 +81,10 @@ async function activateEntitlementWithinTransaction(subscriptionId: string, tx: 
   });
 
   /*
-   * GENERAL:
-   *
-   * Entitlement activation is complete at the application/database layer.
-   * General VPN provisioning is handled separately.
-   */
-  if (mode === 'general') {
-    return {
-      ...updatedSubscription,
-      mode,
-    };
-  }
-
-  /*
-   * WIREGUARD:
-   *
-   * generateVPNAccess receives the SAME Prisma transaction client.
-   * Therefore VPN access creation/update participates in the
-   * payment -> entitlement atomic transaction.
+   * Provision access by product mode inside the SAME transaction.
+   * WireGuard creates a WireGuard access record; general access creates
+   * a VLESS access record for the separate proxy provisioner. No WG peer
+   * is created for VLESS here; that happens in the proxy-device flow.
    */
   const vpnAccess = await generateVPNAccess(updatedSubscription.license!.id, tx);
 
