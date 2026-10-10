@@ -47,7 +47,7 @@ export async function getProxyProfile(userId: string, deviceId: string) {
   }
 
   // Only return a profile after the remote provisioner confirms this user exists.
-  await provisionProxyDevice(device.id, device.name);
+  await provisionProxyDevice(device.id);
   const uuid = uuidV5(device.id);
   const name = `Santor Proxy - ${device.name}`;
   const query = new URLSearchParams({
