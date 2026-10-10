@@ -55,15 +55,24 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
     throw createError(404, 'License not found');
   }
 
+  if (
+    ownership.status !== 'active' ||
+    ownership.subscription.status !== 'active' ||
+    (ownership.subscription.endDate && ownership.subscription.endDate.getTime() <= Date.now())
+  ) {
+    throw createError(403, 'Active subscription required');
+  }
+
   const mode = getVPNMode(ownership.subscription.product.code);
 
-  if (mode !== 'wireguard') {
-    throw createError(409, `VPN access provisioning is not supported for ${mode} mode`);
-  }
+  const protocol = mode === 'general' ? 'vless' : 'wireguard';
 
   const existing = await findVPNAccessByLicense(licenseId, db);
 
   if (existing) {
+    if (existing.protocol !== protocol) {
+      throw createError(409, 'VPN access protocol does not match subscription mode');
+    }
     if (!existing.active) {
       return db.vPNAccess.update({
         where: {
@@ -82,9 +91,10 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
     return existing;
   }
 
-  const vpnNode = await findActiveVPNNode(db);
+  // VLESS uses the proxy provisioner independently of VPNNode/WireGuard.
+  const vpnNode = protocol === 'wireguard' ? await findActiveVPNNode(db) : null;
 
-  if (!vpnNode) {
+  if (protocol === 'wireguard' && !vpnNode) {
     throw createError(503, 'No active VPN node available');
   }
 
@@ -94,8 +104,8 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
     vpnAccess = await createVPNAccess(
       {
         licenseId,
-        protocol: 'wireguard',
-        vpnNodeId: vpnNode.id,
+        protocol,
+        vpnNodeId: vpnNode?.id ?? null,
       },
       db,
     );

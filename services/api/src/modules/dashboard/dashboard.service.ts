@@ -63,7 +63,7 @@ export async function getDashboard(userId: string) {
               ? {
                   id: subscription.license.vpnAccess.id,
                   protocol: subscription.license.vpnAccess.protocol,
-                  serverNode: subscription.license.vpnAccess.vpnNode.hostname,
+                  serverNode: subscription.license.vpnAccess.vpnNode?.hostname ?? null,
                   active: subscription.license.vpnAccess.active,
 
                   devices: subscription.license.vpnAccess.devices.map((device) => ({
@@ -71,7 +71,14 @@ export async function getDashboard(userId: string) {
                     name: device.name,
                     active: device.active,
                     publicKey: device.publicKey,
-                    downloadUrl: `/api/v1/wireguard/config/${device.id}`,
+                    downloadUrl:
+                      subscription.license!.vpnAccess!.protocol === 'wireguard'
+                        ? `/api/v1/wireguard/config/${device.id}`
+                        : null,
+                    profileUrl:
+                      subscription.license!.vpnAccess!.protocol === 'vless'
+                        ? `/api/v1/proxy/profile/${device.id}`
+                        : null,
                   })),
                 }
               : null,

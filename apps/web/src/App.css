@@ -1862,3 +1862,71 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Customer VLESS profile provisioning */
+.tunnel-profile-panel {
+  margin-top: 28px;
+}
+.tunnel-profile-card {
+  display: grid;
+  gap: 12px;
+  max-width: 880px;
+  padding: 24px;
+  border: 1px solid #2b2b39;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #12121d, #0d0d14);
+}
+.tunnel-profile-card label {
+  color: #d7d7e5;
+  font-size: 13px;
+  font-weight: 700;
+}
+.tunnel-profile-card input,
+.tunnel-profile-value {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  color: #f5f5fb;
+  border: 1px solid #353545;
+  border-radius: 10px;
+  background: #09090f;
+  font: inherit;
+}
+.tunnel-profile-value {
+  overflow-wrap: anywhere;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.tunnel-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tunnel-profile-notice,
+.tunnel-profile-error,
+.tunnel-profile-footnote {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tunnel-profile-notice {
+  color: #8fe3b0;
+}
+.tunnel-profile-error {
+  color: #ff9a9a;
+}
+.tunnel-profile-footnote {
+  color: #9292a2;
+}
+@media (max-width: 640px) {
+  .tunnel-profile-card {
+    padding: 16px;
+  }
+  .tunnel-profile-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

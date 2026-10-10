@@ -101,24 +101,24 @@ describe('Entitlement Service', () => {
 
     generateVPNAccessMock.mockResolvedValue({
       id: 'vpn-access-1',
-      protocol: 'wireguard',
+      protocol: 'vless',
     });
   });
 
   describe('activation', () => {
-    it('activates a General entitlement without creating VPN access', async () => {
+    it('activates a General entitlement and provisions VLESS access in the transaction', async () => {
       const result = await activateEntitlement('sub-1');
 
       expect(result.mode).toBe('general');
-
+      expect(result.vpnAccess).toEqual({ id: 'vpn-access-1', protocol: 'vless' });
       expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
       expect(prismaMock.subscription.update).toHaveBeenCalledTimes(1);
       expect(prismaMock.license.update).toHaveBeenCalledTimes(1);
-
-      expect(generateVPNAccessMock).not.toHaveBeenCalled();
+      expect(generateVPNAccessMock).toHaveBeenCalledWith('license-1', prismaMock);
     });
 
     it('activates a WireGuard entitlement and provisions VPN access inside the transaction', async () => {
+      generateVPNAccessMock.mockResolvedValue({ id: 'vpn-access-1', protocol: 'wireguard' });
       prismaMock.subscription.findUnique.mockResolvedValue(buildSubscription('WG-1M'));
 
       prismaMock.subscription.update.mockResolvedValue(buildUpdatedSubscription('WG-1M'));

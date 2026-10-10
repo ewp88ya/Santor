@@ -8,7 +8,7 @@ export async function createVPNAccess(
   data: {
     licenseId: string;
     protocol: string;
-    vpnNodeId: string;
+    vpnNodeId: string | null;
   },
   db: PrismaClientOrTransaction = prisma,
 ) {
@@ -50,9 +50,12 @@ export async function findVPNAccessOwnership(
     },
     select: {
       id: true,
+      status: true,
       subscription: {
         select: {
           userId: true,
+          status: true,
+          endDate: true,
           product: {
             select: {
               code: true,
