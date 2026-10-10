@@ -87,6 +87,7 @@ export async function generateWireGuardPeer(deviceId: string) {
 
   const device = await getDeviceWithNode(deviceId);
   const node = device.vpnAccess.vpnNode;
+  if (!node) throw createError(503, 'VPN node not configured');
 
   validateNode(node);
 
@@ -116,6 +117,7 @@ export async function revokeWireGuardPeer(deviceId: string) {
 
   const device = await getDeviceWithNode(deviceId);
   const node = device.vpnAccess.vpnNode;
+  if (!node) throw createError(503, 'VPN node not configured');
 
   if (node.provisioningUrl && node.provisioningKey) {
     await revokeProvisionedWireGuardPeer(
@@ -166,6 +168,7 @@ export async function regenerateWireGuardConfig(userId: string, deviceId: string
   }
 
   const node = peer.device.vpnAccess.vpnNode;
+  if (!node) throw createError(503, 'VPN node not configured');
 
   validateNode(node);
 
@@ -229,6 +232,7 @@ export async function getWireGuardConfig(userId: string, deviceId: string) {
   }
 
   const node = peer.device.vpnAccess.vpnNode;
+  if (!node) throw createError(503, 'VPN node not configured');
 
   if (!node.active) {
     throw createError(503, 'VPN node is inactive');
