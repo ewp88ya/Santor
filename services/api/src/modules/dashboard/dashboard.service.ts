@@ -63,7 +63,7 @@ export async function getDashboard(userId: string) {
               ? {
                   id: subscription.license.vpnAccess.id,
                   protocol: subscription.license.vpnAccess.protocol,
-                  serverNode: subscription.license.vpnAccess.vpnNode.hostname,
+                  serverNode: subscription.license.vpnAccess.vpnNode?.hostname ?? null,
                   active: subscription.license.vpnAccess.active,
 
                   devices: subscription.license.vpnAccess.devices.map((device) => ({
