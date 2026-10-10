@@ -8,7 +8,7 @@ export async function createVPNAccess(
   data: {
     licenseId: string;
     protocol: string;
-    vpnNodeId: string;
+    vpnNodeId: string | null;
   },
   db: PrismaClientOrTransaction = prisma,
 ) {
@@ -84,9 +84,4 @@ export async function findActiveVPNNode(db: PrismaClientOrTransaction = prisma) 
  * references a node for regional/account ownership, but VLESS provisioning
  * never invokes WireGuard peer/config operations.
  */
-export async function findActiveProxyNode(db: PrismaClientOrTransaction = prisma) {
-  return db.vPNNode.findFirst({
-    where: { active: true },
-    orderBy: { createdAt: 'asc' },
-  });
-}
+
