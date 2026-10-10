@@ -17,8 +17,11 @@ describe('Phase 12 — VPN ownership security', () => {
   it('rejects VPN access provisioning for another user license', async () => {
     repositoryMock.findVPNAccessOwnership.mockResolvedValue({
       id: 'license-1',
+      status: 'active',
       subscription: {
         userId: 'owner-1',
+        status: 'active',
+        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
         product: { code: 'WG-1M' },
       },
     });
@@ -36,13 +39,17 @@ describe('Phase 12 — VPN ownership security', () => {
   it('allows the VPN access owner to continue provisioning', async () => {
     repositoryMock.findVPNAccessOwnership.mockResolvedValue({
       id: 'license-1',
+      status: 'active',
       subscription: {
         userId: 'owner-1',
+        status: 'active',
+        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
         product: { code: 'WG-1M' },
       },
     });
     repositoryMock.findVPNAccessByLicense.mockResolvedValue({
       id: 'vpn-access-1',
+      protocol: 'wireguard',
       active: true,
       license: { id: 'license-1' },
       vpnNode: { id: 'node-1' },
