@@ -578,9 +578,16 @@ function CustomerDashboard() {
         });
         const accessData = await accessResponse.json().catch(() => null);
         if (!accessResponse.ok) {
-          throw new Error(accessData?.error?.message ?? accessData?.message ?? 'Unable to provision tunnel access');
+          throw new Error(
+            accessData?.error?.message ??
+              accessData?.message ??
+              'Unable to provision tunnel access',
+          );
         }
         access = accessData;
+      }
+      if (!access) {
+        throw new Error('Tunnel access was not returned by the API.');
       }
       if (access.protocol !== 'vless' || !access.active) {
         throw new Error('Tunnel access is not active or is not a VLESS profile.');
@@ -596,13 +603,21 @@ function CustomerDashboard() {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ vpnAccessId: access.id, name: tunnelDeviceName.trim() || 'Android - Happ' }),
+          body: JSON.stringify({
+            vpnAccessId: access.id,
+            name: tunnelDeviceName.trim() || 'Android - Happ',
+          }),
         });
         const deviceData = await deviceResponse.json().catch(() => null);
         if (!deviceResponse.ok || !deviceData?.id) {
-          throw new Error(deviceData?.error?.message ?? deviceData?.message ?? 'Unable to provision this device');
+          throw new Error(
+            deviceData?.error?.message ?? deviceData?.message ?? 'Unable to provision this device',
+          );
         }
         device = deviceData;
+      }
+      if (!device) {
+        throw new Error('Tunnel device was not returned by the API.');
       }
       setTunnelDeviceId(device.id);
 
@@ -611,13 +626,25 @@ function CustomerDashboard() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const profileData = await profileResponse.json().catch(() => null);
-      if (!profileResponse.ok || typeof profileData?.profile !== 'string' || !profileData.profile.startsWith('vless://')) {
-        throw new Error(profileData?.error?.message ?? profileData?.message ?? 'The proxy provisioner did not return a valid VLESS profile');
+      if (
+        !profileResponse.ok ||
+        typeof profileData?.profile !== 'string' ||
+        !profileData.profile.startsWith('vless://')
+      ) {
+        throw new Error(
+          profileData?.error?.message ??
+            profileData?.message ??
+            'The proxy provisioner did not return a valid VLESS profile',
+        );
       }
       setTunnelProfile(profileData.profile);
-      setTunnelProfileNotice('Profile generated after server provisioning succeeded. Import it into Happ on Android.');
+      setTunnelProfileNotice(
+        'Profile generated after server provisioning succeeded. Import it into Happ on Android.',
+      );
     } catch (err) {
-      setTunnelProfileError(err instanceof Error ? err.message : 'Unable to generate tunnel profile');
+      setTunnelProfileError(
+        err instanceof Error ? err.message : 'Unable to generate tunnel profile',
+      );
     } finally {
       setTunnelProfileLoading(false);
     }
@@ -630,7 +657,9 @@ function CustomerDashboard() {
       await navigator.clipboard.writeText(tunnelProfile);
       setTunnelProfileNotice('Profile copied. Open Happ and import from clipboard.');
     } catch {
-      setTunnelProfileError('Clipboard access was blocked by the browser. Select and copy the profile text manually.');
+      setTunnelProfileError(
+        'Clipboard access was blocked by the browser. Select and copy the profile text manually.',
+      );
     }
   };
 
@@ -825,7 +854,10 @@ function CustomerDashboard() {
             <div>
               <p className="eyebrow">SECURE TUNNEL · VLESS</p>
               <h2>Connect with Happ</h2>
-              <p>Create a device-bound profile. Santor shows the import link only after the proxy server confirms provisioning.</p>
+              <p>
+                Create a device-bound profile. Santor shows the import link only after the proxy
+                server confirms provisioning.
+              </p>
             </div>
             <span className="section-count">ANDROID · HAPP</span>
           </div>
@@ -840,8 +872,15 @@ function CustomerDashboard() {
               disabled={tunnelProfileLoading}
             />
             <div className="tunnel-profile-actions">
-              <Button onClick={generateTunnelProfile} disabled={tunnelProfileLoading || !subscription.license?.id}>
-                {tunnelProfileLoading ? 'Provisioning…' : tunnelProfile ? 'Regenerate / Verify Profile' : 'Generate Profile'}
+              <Button
+                onClick={generateTunnelProfile}
+                disabled={tunnelProfileLoading || !subscription.license?.id}
+              >
+                {tunnelProfileLoading
+                  ? 'Provisioning…'
+                  : tunnelProfile
+                    ? 'Regenerate / Verify Profile'
+                    : 'Generate Profile'}
               </Button>
               <Button onClick={copyTunnelProfile} disabled={!tunnelProfile}>
                 Copy Profile
@@ -860,9 +899,21 @@ function CustomerDashboard() {
                 spellCheck={false}
               />
             )}
-            {tunnelProfileNotice && <p className="tunnel-profile-notice" role="status">{tunnelProfileNotice}</p>}
-            {tunnelProfileError && <p className="tunnel-profile-error" role="alert">{tunnelProfileError}</p>}
-            <p className="tunnel-profile-footnote">The profile is private to this account and device. Do not share it. Generate does not mark the VPN test as passed; connection, public IP, DNS and bypass routing still need to be checked on Android.</p>
+            {tunnelProfileNotice && (
+              <p className="tunnel-profile-notice" role="status">
+                {tunnelProfileNotice}
+              </p>
+            )}
+            {tunnelProfileError && (
+              <p className="tunnel-profile-error" role="alert">
+                {tunnelProfileError}
+              </p>
+            )}
+            <p className="tunnel-profile-footnote">
+              The profile is private to this account and device. Do not share it. Generate does not
+              mark the VPN test as passed; connection, public IP, DNS and bypass routing still need
+              to be checked on Android.
+            </p>
           </div>
         </section>
       )}

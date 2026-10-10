@@ -39,7 +39,11 @@ export async function getProxyProfile(userId: string, deviceId: string) {
   if (!license || !subscription || subscription.userId !== userId) {
     throw createError(404, 'Device not found');
   }
-  if (license.status !== 'active' || subscription.status !== 'active' || (subscription.endDate && subscription.endDate.getTime() <= Date.now())) {
+  if (
+    license.status !== 'active' ||
+    subscription.status !== 'active' ||
+    (subscription.endDate && subscription.endDate.getTime() <= Date.now())
+  ) {
     throw createError(403, 'Active subscription required');
   }
   if (!access?.active || access.protocol !== 'vless') {
