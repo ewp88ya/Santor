@@ -56,6 +56,14 @@ export async function generateVPNAccess(licenseId: string, db: PrismaClientOrTra
     throw createError(404, 'License not found');
   }
 
+  if (
+    ownership.status !== 'active' ||
+    ownership.subscription.status !== 'active' ||
+    (ownership.subscription.endDate && ownership.subscription.endDate.getTime() <= Date.now())
+  ) {
+    throw createError(403, 'Active subscription required');
+  }
+
   const mode = getVPNMode(ownership.subscription.product.code);
 
   const protocol = mode === 'general' ? 'vless' : 'wireguard';
