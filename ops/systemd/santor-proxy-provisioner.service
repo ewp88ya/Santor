@@ -1,0 +1,18 @@
+[Unit]
+Description=Santor Xray Proxy Provisioner
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /opt/santor/ops/proxy-provisioner/server.py
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/etc/santor-proxy /usr/local/etc/xray /opt/santor/ops/xray
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -40,11 +40,22 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(len(clients), 1)
         self.assertEqual(clients[0]["id"], "00000000-0000-4000-8000-000000000001")
         self.assertEqual(stat.S_IMODE(self.config_path.stat().st_mode), 0o640)
-        self.chown_mock.assert_called_once_with(self.config_path.with_suffix(".tmp"), 0, server.XRAY_CONTAINER_GID)
+        self.chown_mock.assert_called_once_with(self.config_path.with_suffix(".tmp.json"), 0, server.XRAY_CONTAINER_GID)
         self.assertTrue(any(call.args[0][:4] == [server.XRAY_BIN, "run", "-test", "-config"] for call in self.run_mock.call_args_list))
         self.assertTrue(any(call.args[0][:3] == ["docker", "exec", "santor-xray"] for call in self.run_mock.call_args_list))
         self.assertTrue(any(call.args[0][:2] == ["docker", "restart"] for call in self.run_mock.call_args_list))
         self.socket_mock.assert_called_once_with(("127.0.0.1", 10000), timeout=1)
+
+    def test_invalid_candidate_keeps_previous_config_and_does_not_restart(self):
+        previous = self.config_path.read_text()
+        self.run_mock.side_effect = server.subprocess.CalledProcessError(1, "xray")
+
+        with self.assertRaises(server.subprocess.CalledProcessError):
+            server.render([])
+
+        self.assertEqual(self.config_path.read_text(), previous)
+        self.assertFalse(self.config_path.with_suffix(".tmp.json").exists())
+        self.assertEqual(self.run_mock.call_count, 1)
 
     def test_listener_timeout_restores_previous_config(self):
         previous = self.config_path.read_text()
