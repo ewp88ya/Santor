@@ -79,9 +79,3 @@ export async function findActiveVPNNode(db: PrismaClientOrTransaction = prisma) 
   });
 }
 
-/**
- * The proxy gateway has its own provisioner and endpoint. VPNAccess still
- * references a node for regional/account ownership, but VLESS provisioning
- * never invokes WireGuard peer/config operations.
- */
-
