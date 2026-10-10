@@ -31,7 +31,7 @@ def load_users():
         return []
 
 def save_users(users):
-    tmp = USERS_FILE.with_suffix(".tmp")
+    tmp = USERS_FILE.with_suffix(".tmp.json")
     tmp.write_text(json.dumps(users, indent=2) + "\n")
     os.chmod(tmp, 0o600)
     tmp.replace(USERS_FILE)
@@ -84,7 +84,7 @@ def render(users):
         ]
     }
     previous_config = XRAY_CONFIG.read_bytes() if XRAY_CONFIG.exists() else None
-    tmp = XRAY_CONFIG.with_suffix(".tmp")
+    tmp = XRAY_CONFIG.with_suffix(".tmp.json")
     tmp.write_text(json.dumps(cfg, indent=2) + "\n")
     os.chown(tmp, 0, XRAY_CONTAINER_GID)
     os.chmod(tmp, 0o640)
