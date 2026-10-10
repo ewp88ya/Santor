@@ -20,7 +20,7 @@ import {
 } from '../wireguard/wireguard.service.js';
 
 import { auditLog } from '../audit/audit.service.js';
-import { provisionProxyDevice, revokeProxyProfile } from '../proxy/proxy.service.js';
+import { revokeProxyProfile } from '../proxy/proxy.service.js';
 
 function devicePublicKey() {
   return randomUUID().replaceAll('-', '');
@@ -162,12 +162,6 @@ export async function addDevice(userId: string, vpnAccessId: string, name: strin
       name,
       publicKey: null,
     });
-    try {
-      await provisionProxyDevice(device.id);
-    } catch (error) {
-      await prisma.device.delete({ where: { id: device.id } });
-      throw error;
-    }
     await auditLog({
       userId,
       action: 'DEVICE_CREATED',
