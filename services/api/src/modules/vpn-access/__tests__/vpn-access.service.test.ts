@@ -42,8 +42,11 @@ import { generateOwnedVPNAccess, generateVPNAccess } from '../vpn-access.service
 function buildOwnership(userId = 'user-1', productCode = 'WG-1M') {
   return {
     id: 'license-1',
+    status: 'active',
     subscription: {
       userId,
+      status: 'active',
+      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
       product: {
         code: productCode,
       },
@@ -51,17 +54,20 @@ function buildOwnership(userId = 'user-1', productCode = 'WG-1M') {
   };
 }
 
-function buildVPNAccess(active = true) {
+function buildVPNAccess(active = true, protocol = 'wireguard') {
   return {
     id: 'vpn-access-1',
     licenseId: 'license-1',
-    protocol: 'wireguard',
+    protocol,
     active,
-    vpnNode: {
-      id: 'node-1',
-      active: true,
-      protocol: 'wireguard',
-    },
+    vpnNode:
+      protocol === 'wireguard'
+        ? {
+            id: 'node-1',
+            active: true,
+            protocol: 'wireguard',
+          }
+        : null,
   };
 }
 
@@ -103,20 +109,32 @@ describe('VPN Access Service', () => {
       expect(createVPNAccessMock).not.toHaveBeenCalled();
     });
 
-    it('rejects non-WireGuard products', async () => {
-      findVPNAccessOwnershipMock.mockResolvedValue(buildOwnership('user-1', 'GENERAL-PRO'));
+    it('rejects inactive or expired entitlements before provisioning', async () => {
+      findVPNAccessOwnershipMock.mockResolvedValue({
+        ...buildOwnership(),
+        status: 'inactive',
+      });
 
-      getVPNModeMock.mockReturnValue('general');
-
-      await expect(generateVPNAccess('license-1')).rejects.toThrow(
-        'VPN access provisioning is not supported for general mode',
-      );
-
+      await expect(generateVPNAccess('license-1')).rejects.toThrow('Active subscription required');
       expect(findVPNAccessByLicenseMock).not.toHaveBeenCalled();
+      expect(createVPNAccessMock).not.toHaveBeenCalled();
+    });
+
+    it('creates VLESS access for general products without requiring a WireGuard node', async () => {
+      findVPNAccessOwnershipMock.mockResolvedValue(buildOwnership('user-1', 'GENERAL-PRO'));
+      getVPNModeMock.mockReturnValue('general');
+      const created = buildVPNAccess(true, 'vless');
+      createVPNAccessMock.mockResolvedValue(created);
+      prismaMock.vPNAccess.update.mockResolvedValue(created);
+
+      const result = await generateVPNAccess('license-1');
 
       expect(findActiveVPNNodeMock).not.toHaveBeenCalled();
-
-      expect(createVPNAccessMock).not.toHaveBeenCalled();
+      expect(createVPNAccessMock).toHaveBeenCalledWith(
+        { licenseId: 'license-1', protocol: 'vless', vpnNodeId: null },
+        prismaMock,
+      );
+      expect(result).toEqual(created);
     });
 
     it('reactivates an existing inactive VPN access', async () => {
