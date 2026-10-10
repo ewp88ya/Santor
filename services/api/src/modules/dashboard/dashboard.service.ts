@@ -71,7 +71,12 @@ export async function getDashboard(userId: string) {
                     name: device.name,
                     active: device.active,
                     publicKey: device.publicKey,
-                    downloadUrl: `/api/v1/wireguard/config/${device.id}`,
+                    downloadUrl: subscription.license!.vpnAccess!.protocol === 'wireguard'
+                      ? `/api/v1/wireguard/config/${device.id}`
+                      : null,
+                    profileUrl: subscription.license!.vpnAccess!.protocol === 'vless'
+                      ? `/api/v1/proxy/profile/${device.id}`
+                      : null,
                   })),
                 }
               : null,
