@@ -433,6 +433,7 @@ function CustomerDashboard() {
   const [telegramError, setTelegramError] = useState('');
   const [telegramLoading, setTelegramLoading] = useState(false);
   const [tunnelDeviceName, setTunnelDeviceName] = useState('Android - Happ');
+  const [tunnelDeviceId, setTunnelDeviceId] = useState('');
   const [tunnelProfile, setTunnelProfile] = useState('');
   const [tunnelProfileError, setTunnelProfileError] = useState('');
   const [tunnelProfileNotice, setTunnelProfileNotice] = useState('');
@@ -466,6 +467,10 @@ function CustomerDashboard() {
     setAiError('');
     setTelegramLink('');
     setTelegramError('');
+    setTunnelDeviceId('');
+    setTunnelProfile('');
+    setTunnelProfileError('');
+    setTunnelProfileNotice('');
   };
 
   if (!token)
@@ -581,7 +586,9 @@ function CustomerDashboard() {
         throw new Error('Tunnel access is not active or is not a VLESS profile.');
       }
 
-      let device = access.devices?.find((item) => item.active);
+      let device = tunnelDeviceId
+        ? { id: tunnelDeviceId, active: true }
+        : access.devices?.find((item) => item.active);
       if (!device) {
         const deviceResponse = await fetch(`${API_URL}/api/v1/devices`, {
           method: 'POST',
@@ -597,6 +604,7 @@ function CustomerDashboard() {
         }
         device = deviceData;
       }
+      setTunnelDeviceId(device.id);
 
       const profileResponse = await fetch(
         `${API_URL}/api/v1/proxy/profile/${encodeURIComponent(device.id)}`,
