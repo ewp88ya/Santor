@@ -50,9 +50,12 @@ export async function findVPNAccessOwnership(
     },
     select: {
       id: true,
+      status: true,
       subscription: {
         select: {
           userId: true,
+          status: true,
+          endDate: true,
           product: {
             select: {
               code: true,
